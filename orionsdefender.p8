@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
-version 16
+version 27
 __lua__
+--general code
 ship_image = 017
 ship_x = 64
 ship_y = 120
@@ -128,6 +129,100 @@ function start_battle()
  end
 end
 
+function destroy()
+ for e in all(enemies) do
+  del(enemies,e)
+ end
+ for eb in all(enemy_bullets) do
+  del(enemy_bullets,eb)
+ end
+end
+
+function give_rewards()
+ x = flr(rnd(10))
+ if (x == 0) x = 1
+ fuel += x
+ r_fuel = x
+ rewards_given= true
+end
+
+function restart()
+ if btnp(4) or btnp(5) then
+  rewards = false
+  rewards_given = false
+ end
+end
+-->8
+--encounters
+encounters = {}
+encounter_spawn_x = {12,36,64,96,108}
+
+function create_encounter()
+ local encounter = {}
+ number = flr(rnd(6))
+ if (number == 0) number = 1
+ encounter.x = encounter_spawn_x[number]
+ encounter.y = 0
+ add(encounters, encounter)
+end
+
+function draw_encounter(e)
+ spr(002,e.x, e.y)
+end
+
+function move_encounter(e)
+ e.y += 3
+ 
+ if e.x >= ship_x-4 and
+    e.x <= ship_x+6 and
+    e.y >= ship_y-4 and
+    e.y <= ship_y+6 then
+  del(encounters,e)
+  battle = true
+ end
+end
+-->8
+--player
+bullets = {}
+
+function fire()
+ if btnp(4) and 
+    battling == true then
+  local bullet = {}
+  bullet.x = ship_x
+  bullet.y = ship_y - 8
+  add(bullets, bullet)
+ end
+end
+
+function draw_bullet(b)
+ spr(001,b.x,b.y)
+end
+
+function move_bullet(b)
+ b.y -= 4
+ 
+ for e in all(enemies) do
+  if e.x >= b.x-4 and
+     e.x <= b.x+6 and
+     e.y >= b.y-4 and
+     e.y <= b.y+6 then 
+   score += 100
+   enemy_count -= 1
+  	del(bullets,b)	 
+  	del(enemies,e)
+  end
+ end
+end
+
+function move()
+ if (btn(1) and ship_x < 120) ship_x+=2
+ if (btn(0) and ship_x > 0) ship_x-=2
+ --if (btn(2) and ship_y > 0) ship_y-=2
+ --if (btn(3) and ship_y < 120) ship_y+=2
+end
+-->8
+--enemies
 function create_enemy_bullet(e)
  for e in all(enemies) do
   local enemy_bullet = {}
@@ -177,97 +272,6 @@ function move_enemy(e)
    e.move_forward = true
   end
  end
-end
-
-function destroy()
- for e in all(enemies) do
-  del(enemies,e)
- end
- for eb in all(enemy_bullets) do
-  del(enemy_bullets,eb)
- end
-end
-
-function give_rewards()
- x = flr(rnd(10))
- if (x == 0) x = 1
- fuel += x
- r_fuel = x
- rewards_given= true
-end
-
-function restart()
- if btnp(4) or btnp(5) then
-  rewards = false
-  rewards_given = false
- end
-end
--->8
-encounters = {}
-encounter_spawn_x = {12,36,64,96,108}
-
-function create_encounter()
- local encounter = {}
- number = flr(rnd(6))
- if (number == 0) number = 1
- encounter.x = encounter_spawn_x[number]
- encounter.y = 0
- add(encounters, encounter)
-end
-
-function draw_encounter(e)
- spr(002,e.x, e.y)
-end
-
-function move_encounter(e)
- e.y += 3
- 
- if e.x >= ship_x-4 and
-    e.x <= ship_x+6 and
-    e.y >= ship_y-4 and
-    e.y <= ship_y+6 then
-  del(encounters,e)
-  battle = true
- end
-end
--->8
-bullets = {}
-
-function fire()
- if btnp(4) and 
-    battling == true then
-  local bullet = {}
-  bullet.x = ship_x
-  bullet.y = ship_y - 8
-  add(bullets, bullet)
- end
-end
-
-function draw_bullet(b)
- spr(001,b.x,b.y)
-end
-
-function move_bullet(b)
- b.y -= 4
- 
- for e in all(enemies) do
-  if e.x >= b.x-4 and
-     e.x <= b.x+6 and
-     e.y >= b.y-4 and
-     e.y <= b.y+6 then 
-   score += 100
-   enemy_count -= 1
-  	del(bullets,b)	 
-  	del(enemies,e)
-  end
- end
-end
-
-function move()
- if (btn(1) and ship_x < 120) ship_x+=2
- if (btn(0) and ship_x > 0) ship_x-=2
- --if (btn(2) and ship_y > 0) ship_y-=2
- --if (btn(3) and ship_y < 120) ship_y+=2
 end
 __gfx__
 0000000000000000000000000e800880011115500003300000000000000000000000000000000000000000000000000000000000000000000000000000000000
