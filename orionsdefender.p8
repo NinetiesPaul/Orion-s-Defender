@@ -5,31 +5,30 @@ __lua__
 ship_image = 017
 ship_x = 64
 ship_y = 120
-fuel = 51
+fuel = 101
+fuel_comsumption = 0.025
 health = 5
 armor = 5
 score = 0
+difficulty = 1
+scraps = 50
 
 clock = 0
 
 battling = false
 battle = false
+rewards = false
+rewards_given = false
 
 enemies = {}
 enemy_bullets = {}
 enemy_count = 0
 
-rewards = false
-rewards_given = false
-
-r_fuel = 0
-r_armor = 0
-r_health = 0 
-
 function _draw()
  if battling == false then
   cls()
-  print(score,0,0)
+  print("score " .. score,0,0)
+  print("scraps " .. scraps,0,10)
   
   spr(003,108,0)
   print(health,120,1)
@@ -43,7 +42,8 @@ function _draw()
  end
  if battling == true then
   cls()
-  print(score,0,0)
+  print("score " .. score,0,0)
+  print("scraps " .. scraps,0,10)
 
   spr(003,108,0)
   print(health,120,1)
@@ -63,6 +63,8 @@ function _draw()
  if health <= 0 or fuel <= 0 then
   cls()
   print("game over",44,64)
+  if (health <= 0) print("you were destroyed",54,72)
+  if (fuel <= 0) print("you ran out of fuel",34,72)
   
   battling = false
   battle = false
@@ -72,9 +74,8 @@ function _draw()
   cls()
   
   print("you've won!", 40,64)
-  print("added "..r_fuel.." fuel.", 40,72)
-  print("added "..r_armor.." armor.", 40,80)
-  print("added "..r_health.." health.", 40,88)
+  print("added "..r_fuel.." fuel", 40,72)
+  print("added "..r_scraps.." scraps", 40,80)
   destroy()
  end
 end
@@ -83,7 +84,7 @@ function _update()
  clock+=1
  move()
  fire()
- if (rewards != true) fuel-=0.05
+ if (rewards != true) fuel-=fuel_comsumption
  if (clock % 30 == 0 and battling == false and rewards == false) create_encounter()
  foreach(enemies, move_enemy)
  foreach(bullets, move_bullet)
@@ -129,20 +130,14 @@ function start_battle()
  end
 end
 
-function destroy()
- for e in all(enemies) do
-  del(enemies,e)
- end
- for eb in all(enemy_bullets) do
-  del(enemy_bullets,eb)
- end
-end
-
 function give_rewards()
- x = flr(rnd(10))
- if (x == 0) x = 1
+ x = flr(rnd(5))
+ if (x == 0) x = 1 * difficulty
  fuel += x
  r_fuel = x
+ scraps_reward = x * 10
+ scraps += scraps_reward
+ r_scraps = scraps_reward
  rewards_given= true
 end
 
@@ -150,6 +145,15 @@ function restart()
  if btnp(4) or btnp(5) then
   rewards = false
   rewards_given = false
+ end
+end
+
+function destroy()
+ for e in all(enemies) do
+  del(enemies,e)
+ end
+ for eb in all(enemy_bullets) do
+  del(enemy_bullets,eb)
  end
 end
 -->8
@@ -226,6 +230,7 @@ end
 function create_enemy_bullet(e)
  for e in all(enemies) do
   local enemy_bullet = {}
+  enemy_bullet.damage = difficulty * 1
   enemy_bullet.x = e.x
   enemy_bullet.y = e.y+8
   enemy_bullet.dy = e.dy
@@ -249,8 +254,8 @@ function move_enemy_bullet(eb)
     eb.y >= ship_y-4 and
     eb.y <= ship_y+6 then
   del(enemy_bullets,eb)
-  if (armor == 0) health-=1
-  if (armor > 0) armor-=1
+  if (armor == 0) health-=eb.damage
+  if (armor > 0) armor-=eb.damage
  end	
 end
 
