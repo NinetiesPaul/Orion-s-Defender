@@ -11,7 +11,7 @@ health = 5
 armor = 5
 score = 0
 difficulty = 1
-scraps = 50
+scraps = 20
 
 clock = 0
 
@@ -52,7 +52,7 @@ function _draw()
   spr(005,108,20)
   print(flr(fuel),119,21)
   
-  print(enemy_count,120,120)
+  print("enemies left " .. enemy_count,0,120)
   
   spr(ship_image,ship_x,ship_y)
   if (clock % 30 == 0) create_enemy_bullet()
@@ -105,6 +105,7 @@ end
 function start_battle()
  enemy_count = flr(rnd(6))
  if (enemy_count == 0) enemy_count = 1
+ enemy_count = enemy_count * difficulty
  
  for enemy_count = enemy_count,0,-1 do
   local enemy = {}
