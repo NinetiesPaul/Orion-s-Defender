@@ -26,6 +26,7 @@ clock = 0
 
 battling = false
 battle = false
+store = true
 rewards = false
 rewards_given = false
 
@@ -36,6 +37,10 @@ enemy_count = 0
 function _draw()
  cls()
  
+ if store == true and battling == false and battle == false then
+ 
+ end
+ 
  if battling == false then
   draw_ui()
   draw_threat()
@@ -44,6 +49,7 @@ function _draw()
 		
   foreach(encounters, draw_encounter)
  end
+ 
  if battling == true then
   draw_ui()
   if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
@@ -55,6 +61,7 @@ function _draw()
   foreach(enemy_bullets, draw_enemy_bullet)
   foreach(bullets, draw_bullet)
  end
+ 
  if health <= 0 or fuel <= 0 then
   cls()
   print("game over",44,64)
@@ -65,6 +72,7 @@ function _draw()
   battle = false
   destroy()
  end
+ 
  if rewards == true then
   cls()
   print("you've won!", 40,64)
