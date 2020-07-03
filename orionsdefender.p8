@@ -2,10 +2,12 @@ pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
 --general code
-threat_level = 006
-threat_level_1 = {006,007,008}
-threat_level_2 = {022,023,024}
-threat_level_3 = {038,0383,040}
+threat_level_sprs = {
+{006,007,008},
+{022,023,024},
+{038,039,040}
+}
+threat_y = 1
 
 ship_spr = 017
 ship_x = 64
@@ -172,12 +174,25 @@ function draw_ui()
 end
 
 function update_threat()
+	if (score > 200 and score < 400) difficulty = 2
+	if (score > 1000) difficulty = 3
+	
 	if (difficulty == 2) threat_level = 022
 	if (difficulty == 3) threat_level = 038
 end
 
 function draw_threat()
-	spr(threat_level,120,0)
+	threat_x = difficulty
+	update = 5
+	if (threat_x == 2) update = 3
+	if (threat_x == 3) update = 2
+	
+	if (clock % update == 0) then
+	 threat_y += 1
+	 if(threat_y > 3) threat_y = 1
+	end
+	
+	spr(threat_level_sprs[threat_x][threat_y],120,0)
 end
 -->8
 --encounters
