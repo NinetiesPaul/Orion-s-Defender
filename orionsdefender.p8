@@ -13,7 +13,7 @@ ship_spr = 017
 ship_x = 64
 ship_y = 120
 fuel = 101
-fuel_comsumption = 0.025
+fuel_comsumption = 0.02
 health = 5
 armor = 5
 score = 0
@@ -24,8 +24,14 @@ scraps = 20
 
 clock = 0
 
-battling = false
-battle = false
+views = {
+1, -- 1 world
+2, -- 2 battle
+3, -- 3 rewards
+4, -- 4 store
+5} -- 5 game over
+current_view = views[1]
+
 rewards = false
 rewards_given = false
 
@@ -36,7 +42,7 @@ enemy_count = 0
 function _draw()
  cls()
  
- if battling == false then
+ if current_view == 1 then
   draw_ui()
   draw_threat()
   
@@ -45,7 +51,7 @@ function _draw()
   foreach(encounters, draw_encounter)
  end
  
- if battling == true then
+ if current_view == 2 then
   draw_ui()
   if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
   if (clock % 30 == 0) create_enemy_bullet()
@@ -57,18 +63,16 @@ function _draw()
   foreach(bullets, draw_bullet)
  end
  
- if health <= 0 or fuel <= 0 then
+ if current_view == 5 then
   cls()
   print("game over",44,64)
   if (health <= 0) print("you were destroyed",54,72)
   if (fuel <= 0) print("you ran out of fuel",34,72)
   
-  battling = false
-  battle = false
   destroy()
  end
  
- if rewards == true then
+ if current_view == 3 and rewards_given == true then
   cls()
   print("you've won!", 40,64)
   print("added "..r_fuel.." fuel", 40,72)
@@ -83,22 +87,19 @@ function _update()
  move()
  fire()
  update_threat()
- if (rewards != true) fuel-=fuel_comsumption
- if (clock % 30 == 0 and battling == false and rewards == false) create_encounter()
+ 
+ 
+ if (current_view == 1) fuel-=fuel_comsumption
+ if (clock % 30 == 0 and current_view == 1) create_encounter()
  foreach(enemies, move_enemy)
  foreach(bullets, move_bullet)
  foreach(enemy_bullets, move_enemy_bullet)
  foreach(encounters, move_encounter)
- if (battle == true and battling == false) start_battle()
- if battle == true and
-    battling == true and
-    enemy_count == 0 then
-  battling = false
-  battle = false
-  rewards = true
- end
- if (rewards == true and rewards_given == false) give_rewards()
- restart()
+ if (current_view == 2 and enemy_count == 0) start_battle()
+ if current_view == 3 then
+ 	if (rewards_given == false) give_rewards() 
+		if (rewards_given == true) restart()
+	end
 end
 
 function start_battle()
@@ -122,7 +123,6 @@ function start_battle()
  end
  
  enemy_count += 1
- battling = true
  ship_x = 64
  ship_y = 104
  for e in all(encounters) do
@@ -137,12 +137,12 @@ function give_rewards()
  scraps_reward = x * 10
  scraps += scraps_reward
  r_scraps = scraps_reward
- rewards_given= true
+ rewards_given = true
 end
 
 function restart()
- if btnp(4) or btnp(5) then
-  rewards = false
+ if btnp(4) or btnp(5) and current_view == 3 then
+  current_view = views[1]
   rewards_given = false
  end
 end
@@ -164,10 +164,13 @@ function draw_ui()
  print(health,10,112)
  spr(004,0,120)
  print(armor,10,122)
- spr(005,106,120)
- print(flr(fuel),115,122)
  
- if battling == true then
+ if current_view == 1 then
+ 	spr(005,106,120)
+ 	print(flr(fuel),115,122)
+ end
+ 
+ if current_view == 2 then
  	spr(016,106,112)
  	print(enemy_count,115,114)
  end
@@ -219,7 +222,7 @@ function move_encounter(e)
     e.y >= ship_y-4 and
     e.y <= ship_y+6 then
   del(encounters,e)
-  battle = true
+  current_view = views[2]
  end
 end
 -->8
@@ -228,7 +231,7 @@ bullets = {}
 
 function fire()
  if btnp(4) and 
-    battling == true then
+    current_view == 2 then
   local bullet = {}
   bullet.x = ship_x
   bullet.y = ship_y - 8
@@ -257,6 +260,8 @@ function move_bullet(b)
    	enemy_count -= 1
    	score += 100
   	end
+  	
+  	if (enemy_count == 0) current_view = views[3]
   end
  end
 end
@@ -308,6 +313,7 @@ function move_enemy_bullet(eb)
   	armor-=eb.damage
   	if (armor < 0) armor = 0
   end
+  if (health <= 0) current_view = views[5]
  end	
 end
 
