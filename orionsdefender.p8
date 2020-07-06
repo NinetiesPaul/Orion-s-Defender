@@ -44,6 +44,7 @@ function _draw()
 		
   foreach(encounters, draw_encounter)
  end
+ 
  if battling == true then
   draw_ui()
   if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
@@ -55,6 +56,7 @@ function _draw()
   foreach(enemy_bullets, draw_enemy_bullet)
   foreach(bullets, draw_bullet)
  end
+ 
  if health <= 0 or fuel <= 0 then
   cls()
   print("game over",44,64)
@@ -65,6 +67,7 @@ function _draw()
   battle = false
   destroy()
  end
+ 
  if rewards == true then
   cls()
   print("you've won!", 40,64)
@@ -99,8 +102,7 @@ function _update()
 end
 
 function start_battle()
- enemy_count = flr(rnd(6))
- if (enemy_count == 0) enemy_count = 1
+ enemy_count = flr(rnd(6)) + 1
  enemy_count = enemy_count * difficulty
  
  for enemy_count = enemy_count,0,-1 do
@@ -114,8 +116,7 @@ function start_battle()
   enemy.ly = enemy.y+rnd(30)+30
   enemy.move_forward = true
   enemy.health = 3 * difficulty
-  dy = flr(rnd(4))
-	 if (dy == 0) dy = 1
+  dy = flr(rnd(4))  +1
   enemy.dy = dy
   add(enemies, enemy)
  end
@@ -130,8 +131,7 @@ function start_battle()
 end
 
 function give_rewards()
- x = flr(rnd(5))
- if (x == 0) x = 1 * difficulty
+ x = difficulty * flr(rnd(5)) + 1
  fuel += x
  r_fuel = x
  scraps_reward = x * 10
@@ -174,8 +174,8 @@ function draw_ui()
 end
 
 function update_threat()
-	if (score > 200 and score < 400) difficulty = 2
-	if (score > 1000) difficulty = 3
+	if (score > 2000 and score < 4000) difficulty = 2
+	if (score > 4000) difficulty = 3
 	
 	if (difficulty == 2) threat_level = 022
 	if (difficulty == 3) threat_level = 038
@@ -201,8 +201,7 @@ encounter_spawn_x = {12,36,64,96,108}
 
 function create_encounter()
  local encounter = {}
- number = flr(rnd(6))
- if (number == 0) number = 1
+ number = flr(rnd(5)) + 1
  encounter.x = encounter_spawn_x[number]
  encounter.y = 0
  add(encounters, encounter)
