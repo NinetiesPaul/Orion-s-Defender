@@ -9,18 +9,9 @@ threat_level_sprs = {
 }
 threat_y = 1
 
-ship_spr = 017
-ship_x = 64
-ship_y = 120
-fuel = 25
-fuel_comsumption = 0.02
-health = 5
-armor = 5
 score = 0
-bullet_damage = 1
-bullet_cooldown = 3
 difficulty = 1
-scraps = 20
+scraps = 10
 
 clock = 0
 
@@ -34,6 +25,7 @@ current_view = views[1]
 
 rewards = false
 rewards_given = false
+last_encounter_store = false
 
 function _draw()
  cls()
@@ -82,11 +74,12 @@ function _draw()
  	print("buy fuel -- $4", 10, 32)
  	print("repair hull -- $5", 10, 40)
  	print("repair armor -- $6", 10, 48)
- 	print("upgrade hull -- $50", 10, 56)
- 	print("upgrade armor -- $75", 10, 64)
+ 	print("upgrade hull -- $" .. next_health_upgrade_cost, 10, 56)
+ 	print("upgrade armor -- $" .. next_armor_upgrade_cost, 10, 64)
+ 	print("upgrade gun -- $" .. next_gun_upgrade_cost, 10, 72)
  	
  	if (clock % 90 == 0) shop_last_bought = ""
- 	print(shop_last_bought, 10, 72)
+ 	print(shop_last_bought, 10, 22)
  	
  	print("up or down - change", 0, 120)
  	print("z - select", 0,104)
@@ -110,7 +103,6 @@ function _update()
  move()
  fire()
  update_threat()
- 
  
  if (current_view == 1) fuel-=fuel_comsumption
  if (clock % 30 == 0 and current_view == 1) create_encounter()
@@ -177,12 +169,9 @@ function restart()
 end
 
 function destroy()
- for e in all(enemies) do
-  del(enemies,e)
- end
- for eb in all(enemy_bullets) do
-  del(enemy_bullets,eb)
- end
+ enemies = {}
+ enemy_bullets = {}
+ bullets = {}
 end
 
 function draw_ui()
@@ -241,6 +230,7 @@ function create_encounter()
  encounter.x = encounter_spawn_x[number]
  encounter.y = 0
  encounter.type = types[flr(rnd(2)) + 1]
+ if (last_encounter_store == true) encounter.type = 1
  add(encounters, encounter)
 end
 
@@ -256,8 +246,14 @@ function move_encounter(e)
     e.y >= ship_y-4 and
     e.y <= ship_y+6 then
   del(encounters,e)
-  if (e.type == 1) current_view = views[2]
- 	if (e.type == 2) current_view = views[4]
+  if e.type == 1 then
+   current_view = views[2]
+ 		last_encounter_store = false
+ 	end
+ 	if e.type == 2 then
+ 		current_view = views[4]
+ 		last_encounter_store = true
+ 	end
  end
  
  if (e.y >= 128) then
@@ -266,6 +262,22 @@ function move_encounter(e)
 end
 -->8
 --player
+ship_spr = 017
+ship_x = 64
+ship_y = 120
+fuel = 25
+fuel_comsumption = 0.02
+stat_multiplier = 5
+stat_lvl = {1,2,3}
+current_stat_armor_lvl = 1
+current_stat_health_lvl = 1
+current_stat_gun_lvl = 1
+current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
+current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+health = current_max_health
+armor = current_max_armor
+bullet_damage = current_stat_gun_lvl
+bullet_cooldown = 3
 bullets = {}
 
 function fire()
@@ -389,6 +401,9 @@ shop_selector_y = 30
 shop_selector_pos = 1
 shop_selector_spr_pointer = 1
 shop_last_bought = ""
+next_armor_upgrade_cost = 75 * current_stat_armor_lvl
+next_health_upgrade_cost = 50 * current_stat_health_lvl
+next_gun_upgrade_cost = 100 * current_stat_gun_lvl
 
 function nav_store()
 	if btnp(5) then
@@ -408,45 +423,83 @@ function nav_store()
 		end
 		
 		if shop_selector_pos == 2 then
-			if scraps >= 5 then
-				health += 1
-				scraps -= 5
-				shop_last_bought = "repaired 1 hull point"
-			else 
-				shop_last_bought = "not enough scrap"
+			if health < current_max_health then
+				if scraps >= 5 then
+					health += 1
+					scraps -= 5
+					shop_last_bought = "repaired 1 hull point"
+				else 
+					shop_last_bought = "not enough scrap"
+				end
+			else
+			 shop_last_bought = "current at max health"
 			end
 		end
 		
 		if shop_selector_pos == 3 then
-			if scraps >= 6 then
-				armor += 1
-				scraps -= 6
-				shop_last_bought = "repaired 1 armor point"
-			else 
-				shop_last_bought = "not enough scrap"
+			if armor < current_max_armor then
+				if scraps >= 6 then
+					armor += 1
+					scraps -= 6
+					shop_last_bought = "repaired 1 armor point"
+				else 
+					shop_last_bought = "not enough scrap"
+				end
+			else
+			 shop_last_bought = "current at max armor"
 			end
 		end
 		
 		if shop_selector_pos == 4 then
-			if scraps >= 50 then
-				scraps -= 50
-				shop_last_bought = "hull upgraded"
-			else 
-				shop_last_bought = "not enough scrap"
+			if current_stat_health_lvl < 3 then
+				if scraps >= next_health_upgrade_cost then
+					scraps -= next_health_upgrade_cost
+					current_stat_health_lvl += 1
+					next_health_upgrade_cost = 50 * current_stat_health_lvl
+					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
+					shop_last_bought = "hull upgraded"
+				else 
+					shop_last_bought = "not enough scrap"
+				end
+			else
+				shop_last_bought = "hull maxed out"
 			end
 		end
 
 		if shop_selector_pos == 5 then
-			if scraps >= 75 then
-				scraps -= 75
-				shop_last_bought = "armor upgraded"
-			else 
-				shop_last_bought = "not enough scrap"
+			if current_stat_armor_lvl < 3 then
+				if scraps >= next_armor_upgrade_cost then
+					scraps -= next_armor_upgrade_cost
+					current_stat_armor_lvl += 1
+					next_armor_upgrade_cost = 75 * current_stat_armor_lvl
+					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+					shop_last_bought = "armor upgraded"
+				else 
+					shop_last_bought = "not enough scrap"
+				end
+			else
+				shop_last_bought = "armor maxed out"
 			end
-		end		
+		end
+
+		if shop_selector_pos == 6 then
+			if current_stat_gun_lvl < 3 then
+				if scraps >= next_gun_upgrade_cost then
+					scraps -= next_gun_upgrade_cost
+					current_stat_gun_lvl += 1
+					bullet_damage = current_stat_gun_lvl 
+					next_gun_upgrade_cost = 100 * current_stat_gun_lvl
+					shop_last_bought = "gun upgraded"
+				else 
+					shop_last_bought = "not enough scrap"
+				end
+			else
+				shop_last_bought = "gun maxed out"
+			end
+		end
 	end
  
- if btnp(3) and shop_selector_pos < 5 then
+ if btnp(3) and shop_selector_pos < 6 then
   shop_selector_y += 8
   shop_selector_pos += 1
  end
