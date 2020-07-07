@@ -35,16 +35,6 @@ current_view = views[1]
 rewards = false
 rewards_given = false
 
-enemies = {}
-enemy_bullets = {}
-enemy_count = 0
-
-shop_selector_spr = {002,018,034}
-shop_selector_y = 30
-shop_selector_pos = 1
-shop_selector_spr_pointer = 1
-shop_last_bought = ""
-
 function _draw()
  cls()
  
@@ -135,7 +125,9 @@ function _update()
 	end
 	if current_view == 4 then
 		nav_store()
-  -- animate_shop_selector()
+	end
+	if current_view != 1 then
+		encounters = {}
 	end
 end
 
@@ -267,6 +259,10 @@ function move_encounter(e)
   if (e.type == 1) current_view = views[2]
  	if (e.type == 2) current_view = views[4]
  end
+ 
+ if (e.y >= 128) then
+ 	del(encounters,e)
+ end
 end
 -->8
 --player
@@ -317,12 +313,18 @@ function move()
 end
 -->8
 --enemies
+enemies = {}
+enemy_bullets = {}
+enemy_count = 0
+
 function create_enemy_bullet(e)
  for e in all(enemies) do
   local enemy_bullet = {}
   enemy_bullet.damage = difficulty * 1
   enemy_bullet.x = e.x
   enemy_bullet.y = e.y+8
+  enemy_bullet.angle=atan2(ship_x - e.x, ship_y - e.y)
+  enemy_bullet.v = flr(rnd(3)) + 1
   enemy_bullet.dy = e.dy
   add(enemy_bullets,enemy_bullet)
  end
@@ -342,7 +344,8 @@ function draw_enemy_bullet(eb)
 end
 
 function move_enemy_bullet(eb)
-	eb.y+=eb.dy
+	eb.x+=cos(eb.angle) * eb.v
+	eb.y+=sin(eb.angle) * eb.v
 	
  if eb.x >= ship_x-4 and
     eb.x <= ship_x+6 and
@@ -381,6 +384,11 @@ function move_enemy(e)
 end
 -->8
 -- store
+shop_selector_spr = {002,018,034}
+shop_selector_y = 30
+shop_selector_pos = 1
+shop_selector_spr_pointer = 1
+shop_last_bought = ""
 
 function nav_store()
 	if btnp(5) then
