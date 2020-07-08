@@ -2,32 +2,75 @@ pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
 --general code
-threat_level_sprs = {
-{006,007,008},
-{022,023,024},
-{038,039,040}
-}
-threat_y = 1
-
-score = 0
-difficulty = 1
-scraps = 10
-
-clock = 0
-
-views = {
-1, -- 1 world
-2, -- 2 battle
-3, -- 3 rewards
-4, -- 4 store
-5} -- 5 game over
-current_view = views[1]
-
-rewards = false
-rewards_given = false
-last_encounter_store = false
 
 function _init()
+	-- encounters variable
+	encounters = {}
+	types = {
+		1, -- battle
+		2 -- store
+	}
+	encounter_spawn_x = {
+		12,
+		36,
+		64,
+		96,
+		108
+	}
+	-- threat variables
+	threat_level_sprs = {
+		{006,007,008}, -- low
+		{022,023,024}, -- normal
+		{038,039,040}  -- high
+	}
+	threat_y = 1
+	views = {
+	1, -- 1 world
+	2, -- 2 battle
+	3, -- 3 rewards
+	4, -- 4 store
+	5 -- 5 game over
+	}
+	-- general purpose variables
+	score = 0
+	difficulty = 1
+	clock = 0
+	current_view = views[1]
+	rewards = false
+	rewards_given = false
+	-- player variables
+	scraps = 10
+	ship_spr = 017
+	ship_x = 64
+	ship_y = 120
+	fuel = 25
+	fuel_comsumption = 0.02
+	stat_multiplier = 5
+	stat_lvl = {1,2,3}
+	current_stat_armor_lvl = 1
+	current_stat_health_lvl = 1
+	current_stat_gun_lvl = 1
+	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
+	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+	health = current_max_health
+	armor = current_max_armor
+	bullet_damage = current_stat_gun_lvl
+	bullet_cooldown = 3
+	bullets = {}
+	-- store variables
+	shop_selector_spr = {002,018,034}
+	shop_selector_y = 30
+	shop_selector_pos = 1
+	shop_selector_spr_pointer = 1
+	shop_last_bought = ""
+	next_armor_upgrade_cost = 75 * current_stat_armor_lvl
+	next_health_upgrade_cost = 50 * current_stat_health_lvl
+	next_gun_upgrade_cost = 100 * current_stat_gun_lvl
+	last_encounter_store = true
+	-- enemy variables
+	enemies = {}
+	enemy_bullets = {}
+	enemy_count = 0
 
 end
 
@@ -57,15 +100,17 @@ function _draw()
  
  if current_view == 3 and rewards_given == true then
   cls()
+  destroy()
+  
   print("you've won!", 40,64)
   print("added "..r_fuel.." fuel", 40,72)
   print("added "..r_scraps.." scraps", 40,80)
-  
-  destroy()
+ 	print("press z or x to continue", 18, 104)
  end
  
  if current_view == 4 then
  	draw_ui()
+ 	destroy()
  	
  	print("buy fuel -- $4", 10, 32)
  	print("repair hull -- $5", 10, 40)
@@ -86,11 +131,12 @@ function _draw()
  
  if current_view == 5 then
   cls()
+  destroy()
+  
   print("game over",44,64)
   if (health <= 0) print("you were destroyed",54,72)
   if (fuel <= 0) print("you ran out of fuel",34,72)
-  
-  destroy()
+ print("press z or x to restart", 18, 104)
  end
 end
 
@@ -116,6 +162,9 @@ function _update()
 	end
 	if current_view != 1 then
 		encounters = {}
+	end
+	if current_view == 5 then
+		restart_from_gameover()
 	end
 end
 
@@ -209,14 +258,14 @@ function draw_threat()
 	
 	spr(threat_level_sprs[threat_x][threat_y],0,120)
 end
+
+function restart_from_gameover()
+ if btnp(4) or btnp(5) then
+  _init()
+ end
+end
 -->8
 --encounters
-types = {
-1, -- battle
-2 -- store
-}
-encounters = {}
-encounter_spawn_x = {12,36,64,96,108}
 
 function create_encounter()
  local encounter = {}
@@ -256,23 +305,6 @@ function move_encounter(e)
 end
 -->8
 --player
-ship_spr = 017
-ship_x = 64
-ship_y = 120
-fuel = 25
-fuel_comsumption = 0.02
-stat_multiplier = 5
-stat_lvl = {1,2,3}
-current_stat_armor_lvl = 1
-current_stat_health_lvl = 1
-current_stat_gun_lvl = 1
-current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
-current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
-health = current_max_health
-armor = current_max_armor
-bullet_damage = current_stat_gun_lvl
-bullet_cooldown = 3
-bullets = {}
 
 function fire()
  if btnp(4) and 
@@ -319,9 +351,6 @@ function move()
 end
 -->8
 --enemies
-enemies = {}
-enemy_bullets = {}
-enemy_count = 0
 
 function create_enemy_bullet(e)
  for e in all(enemies) do
@@ -390,14 +419,6 @@ function move_enemy(e)
 end
 -->8
 -- store
-shop_selector_spr = {002,018,034}
-shop_selector_y = 30
-shop_selector_pos = 1
-shop_selector_spr_pointer = 1
-shop_last_bought = ""
-next_armor_upgrade_cost = 75 * current_stat_armor_lvl
-next_health_upgrade_cost = 50 * current_stat_health_lvl
-next_gun_upgrade_cost = 100 * current_stat_gun_lvl
 
 function nav_store()
 	if btnp(5) then
