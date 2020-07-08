@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 27
+version 29
 __lua__
 --general code
 threat_level_sprs = {
@@ -26,6 +26,10 @@ current_view = views[1]
 rewards = false
 rewards_given = false
 last_encounter_store = false
+
+function _init()
+
+end
 
 function _draw()
  cls()
@@ -61,15 +65,7 @@ function _draw()
  end
  
  if current_view == 4 then
- 	print ("store", 0, 0, 7)
- 	print("$ " .. scraps,0,10)
- 	
-	 spr(003,83,0)
-	 print(health,92,2)
-	 spr(004,97,0)
-	 print(armor,106,2)
-	 spr(005,111,0)
-	 print(fuel,120,2)
+ 	draw_ui()
  	
  	print("buy fuel -- $4", 10, 32)
  	print("repair hull -- $5", 10, 40)
@@ -172,21 +168,19 @@ function destroy()
  enemies = {}
  enemy_bullets = {}
  bullets = {}
+ encounters = {}
 end
 
 function draw_ui()
- print("★ " .. score,0,0, 7)
- print("$ " .. scraps,0,10)
+ print("$" .. scraps,0,0)
+ if (current_view != 4) print("★ " .. score,0,7, 7)
  
- spr(003,0,110)
- print(health,10,112)
- spr(004,0,120)
- print(armor,10,122)
- 
- if current_view == 1 then
- 	spr(005,106,120)
- 	print(flr(fuel),115,122)
- end
+ spr(003,77,0)
+ print(health,86,2)
+ spr(004,94,0)
+ print(armor,103,2)
+ spr(005,111,0)
+ print(fuel,120,2)
  
  if current_view == 2 then
  	spr(016,106,112)
@@ -213,7 +207,7 @@ function draw_threat()
 	 if(threat_y > 3) threat_y = 1
 	end
 	
-	spr(threat_level_sprs[threat_x][threat_y],120,0)
+	spr(threat_level_sprs[threat_x][threat_y],0,120)
 end
 -->8
 --encounters
