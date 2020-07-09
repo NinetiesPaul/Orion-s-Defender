@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
---general code
+-- general code
 
 function _init()
 	-- encounters variable
@@ -25,19 +25,20 @@ function _init()
 	}
 	threat_y = 1
 	views = {
-	1, -- 1 world
-	2, -- 2 battle
-	3, -- 3 rewards
-	4, -- 4 store
-	5 -- 5 game over
+		1, -- 1 world
+		2, -- 2 battle
+		3, -- 3 rewards
+		4, -- 4 store
+		5 -- 5 game over
 	}
 	-- general purpose variables
 	score = 0
 	difficulty = 1
 	clock = 0
 	current_view = views[1]
-	rewards = false
 	rewards_given = false
+	r_fuel = 0
+	r_scraps = 0
 	-- player variables
 	scraps = 10
 	ship_spr = 017
@@ -55,7 +56,8 @@ function _init()
 	health = current_max_health
 	armor = current_max_armor
 	bullet_damage = current_stat_gun_lvl
-	bullet_cooldown = 3
+	bullet_cooldown = 0
+	bullet_cooldown_rate = 3
 	bullets = {}
 	-- store variables
 	shop_selector_spr = {002,018,034}
@@ -71,7 +73,6 @@ function _init()
 	enemies = {}
 	enemy_bullets = {}
 	enemy_count = 0
-
 end
 
 function _draw()
@@ -93,13 +94,13 @@ function _draw()
   
   spr(ship_spr,ship_x,ship_y)
   
+  draw_cooldown()
   foreach(enemies, draw_enemy)
   foreach(enemy_bullets, draw_enemy_bullet)
   foreach(bullets, draw_bullet)
  end
  
- if current_view == 3 and rewards_given == true then
-  cls()
+ if current_view == 3 then
   destroy()
   
   print("you've won!", 40,64)
@@ -130,47 +131,52 @@ function _draw()
  end
  
  if current_view == 5 then
-  cls()
   destroy()
   
   print("game over",44,64)
   if (health <= 0) print("you were destroyed",54,72)
   if (fuel <= 0) print("you ran out of fuel",34,72)
- print("press z or x to restart", 18, 104)
+ 	print("press z or x to restart", 18, 104)
  end
 end
 
 function _update()
  clock+=1
  move()
- fire()
  update_threat()
  
- if (current_view == 1) fuel-=fuel_comsumption
- if (clock % 30 == 0 and current_view == 1) create_encounter()
- foreach(enemies, move_enemy)
- foreach(bullets, move_bullet)
- foreach(enemy_bullets, move_enemy_bullet)
- foreach(encounters, move_encounter)
- if (current_view == 2 and enemy_count == 0) start_battle()
+ if current_view == 1 then
+  fuel -= fuel_comsumption
+  if (clock % 30 == 0) create_encounter()
+ end
+ if current_view == 2 then
+ 	if (enemy_count == 0)	start_battle()
+ 	if (bullet_cooldown == 0) fire()
+  if clock % 30 == 0 and bullet_cooldown != 0 then
+ 		bullet_cooldown -= 1
+ 	end
+ end
  if current_view == 3 then
- 	if (rewards_given == false) give_rewards() 
-		if (rewards_given == true) restart()
+ 	rewards()
 	end
 	if current_view == 4 then
 		nav_store()
 	end
-	if current_view != 1 then
-		encounters = {}
-	end
 	if current_view == 5 then
 		restart_from_gameover()
 	end
+	if current_view != 1 then
+		encounters = {}
+	end
+	
+	foreach(enemies, move_enemy)
+ foreach(bullets, move_bullet)
+ foreach(enemy_bullets, move_enemy_bullet)
+ foreach(encounters, move_encounter)
 end
 
 function start_battle()
- enemy_count = flr(rnd(6)) + 1
- enemy_count = enemy_count * difficulty
+ enemy_count = flr(rnd(3)) + 1 * difficulty
  
  for enemy_count = enemy_count,0,-1 do
   local enemy = {}
@@ -196,20 +202,20 @@ function start_battle()
  end
 end
 
-function give_rewards()
- x = difficulty * flr(rnd(5)) + 1
- fuel += x
- r_fuel = x
- scraps_reward = x * 10
- scraps += scraps_reward
- r_scraps = scraps_reward
- rewards_given = true
-end
-
-function restart()
- if btnp(4) or btnp(5) and current_view == 3 then
-  current_view = views[1]
-  rewards_given = false
+function rewards()
+	if rewards_given == false then
+	 x = difficulty * flr(rnd(5)) + 1
+	 fuel += x
+	 r_fuel = x
+	 scraps_reward = x * 10
+	 scraps += scraps_reward
+	 r_scraps = scraps_reward
+	 rewards_given = true
+	else 
+		if btnp(4) or btnp(5) then
+	  current_view = views[1]
+	  rewards_given = false
+	 end
  end
 end
 
@@ -265,7 +271,7 @@ function restart_from_gameover()
  end
 end
 -->8
---encounters
+-- encounters
 
 function create_encounter()
  local encounter = {}
@@ -303,15 +309,20 @@ function move_encounter(e)
  	del(encounters,e)
  end
 end
+
+function draw_cooldown()
+	pos_cdb_ship_y = ship_y + 6
+	line(ship_x+9,pos_cdb_ship_y,ship_x+9,pos_cdb_ship_y+bullet_cooldown,10)	
+end
 -->8
---player
+-- player
 
 function fire()
- if btnp(4) and 
-    current_view == 2 then
+ if btnp(4) then
   local bullet = {}
   bullet.x = ship_x
   bullet.y = ship_y - 8
+  bullet_cooldown = bullet_cooldown_rate
   add(bullets, bullet)
  end
 end
@@ -350,7 +361,7 @@ function move()
  --if (btn(3) and ship_y < 120) ship_y+=2
 end
 -->8
---enemies
+-- enemies
 
 function create_enemy_bullet(e)
  for e in all(enemies) do
