@@ -178,7 +178,6 @@ end
 function start_battle()
  enemy_count = (flr(rnd(3)) + 1) * difficulty
  
- --for enemy_count = enemy_count,0,-1 do
  while(enemy_count > 0)
  do
   local enemy = {}
