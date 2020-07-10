@@ -211,6 +211,7 @@ function rewards()
 	 scraps += scraps_reward
 	 r_scraps = scraps_reward
 	 rewards_given = true
+	 bullet_cooldown = 0
 	else 
 		if btnp(4) or btnp(5) then
 	  current_view = views[1]
@@ -312,13 +313,15 @@ end
 
 function draw_cooldown()
 	pos = bullet_cooldown_rate - bullet_cooldown
+	bar_color = (bullet_cooldown > 0) and 10 or 11
+	
 	for i = pos, 0, -1 do
 	line(
 	ship_x+9,
 	ship_y+7,
 	ship_x+9,
 	ship_y+(7-i),
-	10)	
+	bar_color)	
 	end
 end
 -->8
@@ -376,7 +379,7 @@ function create_enemy_bullet(e)
   enemy_bullet.x = e.x
   enemy_bullet.y = e.y+8
   enemy_bullet.angle=atan2(ship_x - e.x, ship_y - e.y)
-  enemy_bullet.v = flr(rnd(3)) + 1
+  enemy_bullet.v = (flr(rnd(2)) + 1) * difficulty
   enemy_bullet.dy = e.dy
   add(enemy_bullets,enemy_bullet)
  end
@@ -384,11 +387,9 @@ end
 
 function draw_enemy(e)
  spr(e.spr,e.x,e.y)
- print(e.health,e.x+9,e.y)
+ print(e.health,e.x+9,e.y, 10)
 
  if (clock % 5 == 0 and e.spr == 032) e.spr = 016  
- --endpoint = e.x+16
- --line(e.x+8,e.y,endpoint,e.y, 11)
 end
 
 function draw_enemy_bullet(eb)
@@ -439,6 +440,7 @@ end
 
 function nav_store()
 	if btnp(5) then
+		sfx(00)
 	 current_view = views[1]
 		shop_last_bought = ""
 	end
@@ -446,10 +448,12 @@ function nav_store()
 	if btnp(4) then
 		if shop_selector_pos == 1 then
 			if scraps >= 4 then
+				sfx(01)
 				fuel += 1
 				scraps -= 4
 				shop_last_bought = "bought 1 fuel"
 			else 
+				sfx(00)
 				shop_last_bought = "not enough scrap"
 			end
 		end
@@ -457,13 +461,16 @@ function nav_store()
 		if shop_selector_pos == 2 then
 			if health < current_max_health then
 				if scraps >= 5 then
+					sfx(01)
 					health += 1
 					scraps -= 5
 					shop_last_bought = "repaired 1 hull point"
-				else 
+				else
+					sfx(00)
 					shop_last_bought = "not enough scrap"
 				end
 			else
+				sfx(00)
 			 shop_last_bought = "current at max health"
 			end
 		end
@@ -471,13 +478,16 @@ function nav_store()
 		if shop_selector_pos == 3 then
 			if armor < current_max_armor then
 				if scraps >= 6 then
+					sfx(01)
 					armor += 1
 					scraps -= 6
 					shop_last_bought = "repaired 1 armor point"
-				else 
+				else
+					sfx(00)
 					shop_last_bought = "not enough scrap"
 				end
 			else
+				sfx(00)
 			 shop_last_bought = "current at max armor"
 			end
 		end
@@ -485,15 +495,18 @@ function nav_store()
 		if shop_selector_pos == 4 then
 			if current_stat_health_lvl < 3 then
 				if scraps >= next_health_upgrade_cost then
+					sfx(01)
 					scraps -= next_health_upgrade_cost
 					current_stat_health_lvl += 1
 					next_health_upgrade_cost = 50 * current_stat_health_lvl
 					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
 					shop_last_bought = "hull upgraded"
 				else 
+					sfx(00)
 					shop_last_bought = "not enough scrap"
 				end
 			else
+				sfx(00)
 				shop_last_bought = "hull maxed out"
 			end
 		end
@@ -501,15 +514,18 @@ function nav_store()
 		if shop_selector_pos == 5 then
 			if current_stat_armor_lvl < 3 then
 				if scraps >= next_armor_upgrade_cost then
+					sfx(01)
 					scraps -= next_armor_upgrade_cost
 					current_stat_armor_lvl += 1
 					next_armor_upgrade_cost = 75 * current_stat_armor_lvl
 					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
 					shop_last_bought = "armor upgraded"
 				else 
+					sfx(00)
 					shop_last_bought = "not enough scrap"
 				end
 			else
+				sfx(00)
 				shop_last_bought = "armor maxed out"
 			end
 		end
@@ -517,26 +533,31 @@ function nav_store()
 		if shop_selector_pos == 6 then
 			if current_stat_gun_lvl < 3 then
 				if scraps >= next_gun_upgrade_cost then
+					sfx(01)
 					scraps -= next_gun_upgrade_cost
 					current_stat_gun_lvl += 1
 					bullet_damage = current_stat_gun_lvl 
 					next_gun_upgrade_cost = 100 * current_stat_gun_lvl
 					shop_last_bought = "gun upgraded"
-				else 
+				else
+					sfx(00)
 					shop_last_bought = "not enough scrap"
 				end
 			else
+				sfx(00)
 				shop_last_bought = "gun maxed out"
 			end
 		end
 	end
  
  if btnp(3) and shop_selector_pos < 6 then
+  sfx(02)
   shop_selector_y += 8
   shop_selector_pos += 1
  end
 	
 	if btnp(2) and shop_selector_pos > 1 then
+		sfx(02)
 		shop_selector_y -= 8
   shop_selector_pos -= 1
 	end
@@ -718,4 +739,6 @@ __gff__
 0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-0001000000000000000000001000000000000000000160001600016000160001600017000190001a0001c0001d0001f0002000021000000000000000000000000000000000000000000000000000000000000000
+000100000000000000040000100000000230000000016000160003000029000060003007008000050002b070090000a0001100015000000001b0001e0002200031000280002a0002d00032000370003d00017000
+000100000000000000000000000000000000000000000000000000000000000000002a070000002e0003007000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100003f07000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
