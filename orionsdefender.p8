@@ -43,7 +43,7 @@ function _init()
 	scraps = 10
 	ship_spr = 017
 	ship_x = 64
-	ship_y = 120
+	ship_y = 118
 	fuel = 25
 	fuel_comsumption = 0.02
 	stat_multiplier = 5
@@ -72,11 +72,11 @@ function _init()
 	-- enemy variables
 	enemies = {}
 	enemy_bullets = {}
-	enemy_count = 0
 end
 
 function _draw()
  cls()
+ rect(0,0,127,127,7)
  
  if current_view == 1 then
   draw_ui()
@@ -123,9 +123,9 @@ function _draw()
  	if (clock % 90 == 0) shop_last_bought = ""
  	print(shop_last_bought, 10, 22)
  	
- 	print("up or down - change", 0, 120)
- 	print("z - select", 0,104)
- 	print("x - exit", 0, 112)
+ 	print("up or down - change", 2, 120)
+ 	print("z - select", 2,104)
+ 	print("x - exit", 2, 112)
  	
  	animate_shop_selector()
  end
@@ -134,8 +134,8 @@ function _draw()
   destroy()
   
   print("game over",44,64)
-  if (health <= 0) print("you were destroyed",54,72)
-  if (fuel <= 0) print("you ran out of fuel",34,72)
+  if (health <= 0) print("you were destroyed",24,72)
+  if (fuel <= 0) print("you ran out of fuel",23,72)
  	print("press z or x to restart", 18, 104)
  end
 end
@@ -150,7 +150,7 @@ function _update()
   if (clock % 30 == 0) create_encounter()
  end
  if current_view == 2 then
- 	if (enemy_count == 0)	start_battle()
+ 	if (count(enemies) == 0)	start_battle()
  	if (bullet_cooldown == 0) fire()
   if clock % 30 == 0 and bullet_cooldown != 0 then
  		bullet_cooldown -= 1
@@ -176,9 +176,11 @@ function _update()
 end
 
 function start_battle()
- enemy_count = flr(rnd(3)) + 1 * difficulty
+ enemy_count = (flr(rnd(3)) + 1) * difficulty
  
- for enemy_count = enemy_count,0,-1 do
+ --for enemy_count = enemy_count,0,-1 do
+ while(enemy_count > 0)
+ do
   local enemy = {}
   enemy.spr = 016
   enemy.x = flr(rnd(15))+15
@@ -192,11 +194,10 @@ function start_battle()
   dy = flr(rnd(4))  +1
   enemy.dy = dy
   add(enemies, enemy)
+  enemy_count -= 1
  end
  
- enemy_count += 1
  ship_x = 64
- ship_y = 104
  for e in all(encounters) do
   del(encounters,e)
  end
@@ -227,19 +228,19 @@ function destroy()
 end
 
 function draw_ui()
- print("$" .. scraps,0,0)
- if (current_view != 4) print("★ " .. score,0,7, 7)
+ print("$" .. scraps,2,2)
+ if (current_view != 4) print("★ " .. score,2,8, 7)
  
- spr(003,77,0)
- print(health,86,2)
- spr(004,94,0)
- print(armor,103,2)
- spr(005,111,0)
- print(fuel,120,2)
+ spr(003,76,2)
+ print(health,85,4)
+ spr(004,93,2)
+ print(armor,102,4)
+ spr(005,110,2)
+ print(fuel,119,4)
  
  if current_view == 2 then
- 	spr(016,106,112)
- 	print(enemy_count,115,114)
+ 	spr(016,2,118)
+ 	print(count(enemies),11,120)
  end
 end
 
@@ -262,7 +263,7 @@ function draw_threat()
 	 if(threat_y > 3) threat_y = 1
 	end
 	
-	spr(threat_level_sprs[threat_x][threat_y],0,120)
+	spr(threat_level_sprs[threat_x][threat_y],2,118)
 end
 
 function restart_from_gameover()
@@ -311,8 +312,15 @@ function move_encounter(e)
 end
 
 function draw_cooldown()
-	pos_cdb_ship_y = ship_y + 6
-	line(ship_x+9,pos_cdb_ship_y,ship_x+9,pos_cdb_ship_y+bullet_cooldown,10)	
+	pos = bullet_cooldown_rate - bullet_cooldown
+	for i = pos, 0, -1 do
+	line(
+	ship_x+9,
+	ship_y+7,
+	ship_x+9,
+	ship_y+(7-i),
+	10)	
+	end
 end
 -->8
 -- player
@@ -345,11 +353,10 @@ function move_bullet(b)
    
    if (e.health <= 0) then
   	 del(enemies,e)
-   	enemy_count -= 1
    	score += 100
   	end
   	
-  	if (enemy_count == 0) current_view = views[3]
+  	if (count(enemies) == 0) current_view = views[3]
   end
  end
 end
