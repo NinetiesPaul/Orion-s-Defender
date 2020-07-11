@@ -59,6 +59,7 @@ function _init()
 	bullet_cooldown = 0
 	bullet_cooldown_rate = 3
 	bullets = {}
+	warned = true
 	-- store variables
 	shop_selector_spr = {002,018,034}
 	shop_selector_y = 30
@@ -72,6 +73,7 @@ function _init()
 	-- enemy variables
 	enemies = {}
 	enemy_bullets = {}
+	enemy_bullets_cdr = {60,45,30}
 end
 
 function _draw()
@@ -90,7 +92,7 @@ function _draw()
  if current_view == 2 then
   draw_ui()
   if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
-  if (clock % 30 == 0) create_enemy_bullet()
+  create_enemy_bullet()
   
   spr(ship_spr,ship_x,ship_y)
   
@@ -155,8 +157,10 @@ function _update()
   if clock % 30 == 0 and bullet_cooldown != 0 then
  		bullet_cooldown -= 1
  	end
+ 	gun_ready()
  end
  if current_view == 3 then
+ 	warned = true
  	rewards()
 	end
 	if current_view == 4 then
@@ -190,6 +194,8 @@ function start_battle()
   enemy.ly = enemy.y+rnd(30)+30
   enemy.move_forward = true
   enemy.health = 3 * difficulty
+  enemy.fire = true
+  enemy.cdr = enemy_bullets_cdr[flr(rnd(3)) + 1]
   dy = flr(rnd(4))  +1
   enemy.dy = dy
   add(enemies, enemy)
@@ -197,14 +203,12 @@ function start_battle()
  end
  
  ship_x = 64
- for e in all(encounters) do
-  del(encounters,e)
- end
+ encounters = {}
 end
 
 function rewards()
 	if rewards_given == false then
-	 x = difficulty * flr(rnd(5)) + 1
+	 x = difficulty * (flr(rnd(5)) + 1)
 	 fuel += x
 	 r_fuel = x
 	 scraps_reward = x * 10
@@ -316,12 +320,19 @@ function draw_cooldown()
 	bar_color = (bullet_cooldown > 0) and 10 or 11
 	
 	for i = pos, 0, -1 do
-	line(
-	ship_x+9,
-	ship_y+7,
-	ship_x+9,
-	ship_y+(7-i),
-	bar_color)	
+		line(
+		ship_x+9,
+		ship_y+7,
+		ship_x+9,
+		ship_y+(7-i),
+		bar_color)	
+	end
+end
+
+function gun_ready()
+	if bullet_cooldown == 0 and warned == false then
+	 sfx(03)
+	 warned = true
 	end
 end
 -->8
@@ -333,6 +344,8 @@ function fire()
   bullet.x = ship_x
   bullet.y = ship_y - 8
   bullet_cooldown = bullet_cooldown_rate
+  warned = false
+  sfx(07)
   add(bullets, bullet)
  end
 end
@@ -351,11 +364,13 @@ function move_bullet(b)
      e.y <= b.y+6 then 
    e.health -= bullet_damage
    e.spr = 032
+   sfx(04)
   	del(bullets,b)
    
    if (e.health <= 0) then
   	 del(enemies,e)
    	score += 100
+   	sfx(05)
   	end
   	
   	if (count(enemies) == 0) current_view = views[3]
@@ -374,15 +389,21 @@ end
 
 function create_enemy_bullet(e)
  for e in all(enemies) do
-  local enemy_bullet = {}
-  enemy_bullet.damage = difficulty * 1
-  enemy_bullet.x = e.x
-  enemy_bullet.y = e.y+8
-  enemy_bullet.angle=atan2(ship_x - e.x, ship_y - e.y)
-  enemy_bullet.v = (flr(rnd(2)) + 1) * difficulty
-  enemy_bullet.dy = e.dy
-  add(enemy_bullets,enemy_bullet)
- end
+ 	if e.fire == true then
+ 		e.fire = false
+	  local enemy_bullet = {}
+	  enemy_bullet.damage = difficulty * 1
+	  enemy_bullet.x = e.x
+	  enemy_bullet.y = e.y+8
+	  enemy_bullet.angle=atan2(ship_x - e.x, ship_y - e.y)
+	  enemy_bullet.v = (flr(rnd(2)) + 1) + difficulty
+	  enemy_bullet.dy = e.dy
+	  sfx(08)
+	  add(enemy_bullets,enemy_bullet)
+	 else
+	 	if (clock % e.cdr == 0) e.fire = true
+	 end
+	end
 end
 
 function draw_enemy(e)
@@ -406,6 +427,7 @@ function move_enemy_bullet(eb)
     eb.y <= ship_y+6 then
   del(enemy_bullets,eb)
   ship_spr = 033
+  sfx(06)
   
   if (armor == 0) health-=eb.damage
   if (armor > 0) then 
@@ -742,3 +764,9 @@ __sfx__
 000100000000000000040000100000000230000000016000160003000029000060003007008000050002b070090000a0001100015000000001b0001e0002200031000280002a0002d00032000370003d00017000
 000100000000000000000000000000000000000000000000000000000000000000002a070000002e0003007000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100003f07000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00010000350003a000120501405016050190501b0501e050200502305026070280702b0702f0502c0002f00000000320003700037000000000000000000000000000000000000000000000000000000000000000
+0001000000000000000000000000300502f050323502c3502c0502a050321502e1702b15022050292502525022250202502415022150211501805016050150500000000000000000000000000000000000000000
+00020000000000000004500045002e6002e6002e6002c6702b670296702e60025670246702e6002e600206702e6001d6701a670196701667014670116700e6700d67005500006000060000600000000160001600
+00030000086701d6701d6701d6701d6701d670146701d6701d6700f6701d6700c6701d6701d6701d67027500285002a5002c5002d5002e500315003150033500355003e6003e6003e6003e6003e6003e6003e600
+0001000000000000000000000000000701a1701b1701c1701e17020170201702217024170261702717027170281702b1702d1702f100311003310036100361000000000000000000000000000000000000000000
+00010000000000000000000000002f1502c150291502715026150251501b1501a1500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
