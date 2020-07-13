@@ -60,6 +60,14 @@ function _init()
 	bullet_cooldown_rate = 3
 	bullets = {}
 	warned = true
+	random_factor = 0.97
+	collateral_type =
+	{
+		1, -- motor damage
+		2, -- aiming damage
+		3 -- firing damage
+	}
+	
 	-- store variables
 	shop_selector_spr = {002,018,034}
 	shop_selector_y = 30
@@ -196,8 +204,8 @@ function start_battle()
   enemy.health = 3 * difficulty
   enemy.fire = true
   enemy.cdr = enemy_bullets_cdr[flr(rnd(3)) + 1]
-  dy = flr(rnd(4))  +1
-  enemy.dy = dy
+  enemy.collateral = false
+  enemy.dy = flr(rnd(4)) + 1
   add(enemies, enemy)
   enemy_count -= 1
  end
@@ -343,6 +351,11 @@ function fire()
   local bullet = {}
   bullet.x = ship_x
   bullet.y = ship_y - 8
+  bullet.critical = (rnd() > random_factor) and true or false
+  bullet.collateral = (rnd() > random_factor) and true or false
+  bullet.collateral_type = (bullet.collateral == true) and collateral_type[flr(rnd(3)) + 1] or false
+  bullet.spr = (bullet.critical == true) and 049 or 001
+  
   bullet_cooldown = bullet_cooldown_rate
   warned = false
   sfx(07)
@@ -351,7 +364,7 @@ function fire()
 end
 
 function draw_bullet(b)
- spr(001,b.x,b.y)
+ spr(b.spr,b.x,b.y)
 end
 
 function move_bullet(b)
@@ -361,9 +374,15 @@ function move_bullet(b)
   if e.x >= b.x-4 and
      e.x <= b.x+6 and
      e.y >= b.y-4 and
-     e.y <= b.y+6 then 
-   e.health -= bullet_damage
+     e.y <= b.y+6 then
+   damage = bullet_damage
+   if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
+   e.health -= damage
    e.spr = 032
+   if b.collateral == true and e.collateral == false then
+   	e.collateral = b.collateral_type
+   end
+   
    sfx(04)
   	del(bullets,b)
    
@@ -389,15 +408,16 @@ end
 
 function create_enemy_bullet(e)
  for e in all(enemies) do
- 	if e.fire == true then
+ 	if e.fire == true and e.collateral != 3 then
  		e.fire = false
 	  local enemy_bullet = {}
 	  enemy_bullet.damage = difficulty * 1
 	  enemy_bullet.x = e.x
 	  enemy_bullet.y = e.y+8
-	  enemy_bullet.angle=atan2(ship_x - e.x, ship_y - e.y)
+	  enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
 	  enemy_bullet.v = (flr(rnd(2)) + 1) + difficulty
 	  enemy_bullet.dy = e.dy
+	  enemy_bullet.aimless = (e.collateral == 2) and true or false
 	  sfx(08)
 	  add(enemy_bullets,enemy_bullet)
 	 else
@@ -408,7 +428,7 @@ end
 
 function draw_enemy(e)
  spr(e.spr,e.x,e.y)
- print(e.health,e.x+9,e.y, 10)
+ print(e.health,e.x + 9,e.y, 10)
 
  if (clock % 5 == 0 and e.spr == 032) e.spr = 016  
 end
@@ -418,8 +438,8 @@ function draw_enemy_bullet(eb)
 end
 
 function move_enemy_bullet(eb)
-	eb.x+=cos(eb.angle) * eb.v
-	eb.y+=sin(eb.angle) * eb.v
+	eb.x += (eb.aimless == false) and cos(eb.angle) * eb.v or 0
+	eb.y += (eb.aimless == false) and sin(eb.angle) * eb.v or eb.v
 	
  if eb.x >= ship_x-4 and
     eb.x <= ship_x+6 and
@@ -439,23 +459,25 @@ function move_enemy_bullet(eb)
 end
 
 function move_enemy(e)
- if e.move_forward == true then
-  if (e.x<e.lx) e.x+=0.5
-  if (e.y<e.ly) e.y+=0.5
-  if e.y>=e.ly and
-     e.x>=e.lx then
-   e.move_forward = false
-  end
- end
- 
- if e.move_forward == false then
-  if (e.x>e.sx) e.x-=0.5
-  if (e.y>e.sy) e.y-=0.5
-  if e.y<=e.sy and
-     e.x<=e.sx then
-   e.move_forward = true
-  end
- end
+	if e.collateral != 1 then
+	 if e.move_forward == true then
+	  if (e.x<e.lx) e.x+=0.5
+	  if (e.y<e.ly) e.y+=0.5
+	  if e.y>=e.ly and
+	     e.x>=e.lx then
+	   e.move_forward = false
+	  end
+	 end
+	 
+	 if e.move_forward == false then
+	  if (e.x>e.sx) e.x-=0.5
+	  if (e.y>e.sy) e.y-=0.5
+	  if e.y<=e.sy and
+	     e.x<=e.sx then
+	   e.move_forward = true
+	  end
+	 end
+	end
 end
 -->8
 -- store
@@ -597,8 +619,8 @@ end
 __gfx__
 0000000000000000000000000e800880011111d000b3333000333300003333000033330000000000000000000000000000000000000000000000000000000000
 008888000000000099999900efe88ee81ccccc6d0b7bbbb30b7bbb300b7bbb300b7bbb3000000000000000000000000000000000000000000000000000000000
-087fee80000aa0009aaaaa908eeeeee81cccccc1b7bbbbb337bbbbb337bbbbb337b77bb300000000000000000000000000000000000000000000000000000000
-08feee8000a7aa0009aaaaa98eeeeee81cccccc13b5bb5b33bbbbbb33bb77bb33b7bb7b300000000000000000000000000000000000000000000000000000000
+087fee80000fa0009aaaaa908eeeeee81cccccc1b7bbbbb337bbbbb337bbbbb337b77bb300000000000000000000000000000000000000000000000000000000
+08feee8000f7aa0009aaaaa98eeeeee81cccccc13b5bb5b33bbbbbb33bb77bb33b7bb7b300000000000000000000000000000000000000000000000000000000
 08eeee8000aaaa0009aaaaa98eeeeee801cccc103bb55bb33bbbbbb33bb77bb33b7bb7b300000000000000000000000000000000000000000000000000000000
 08eeee80000aa0009aaaaa9008eeee8001cccc103b5bb5b33bbbbbb33bbbbbb33bb77bb300000000000000000000000000000000000000000000000000000000
 008888000000000099999900008ee800001cc1003bbbbbb303bbbb3003bbbb3003bbbb3000000000000000000000000000000000000000000000000000000000
@@ -621,10 +643,10 @@ __gfx__
 00000000088888800000000000088000000110000333333000222200002222000022220000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000e80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000e788000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000008888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000008ee800001cc1003bbbbbb300000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000088000000110000333333000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
