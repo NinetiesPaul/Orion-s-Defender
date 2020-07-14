@@ -29,13 +29,15 @@ function _init()
 		2, -- 2 battle
 		3, -- 3 rewards
 		4, -- 4 store
-		5 -- 5 game over
+		5, -- 5 game over
+		6, -- 6 start screen
+		7 -- 7 tutorial
 	}
 	-- general purpose variables
 	score = 0
 	difficulty = 1
 	clock = 0
-	current_view = views[1]
+	current_view = views[6]
 	rewards_given = false
 	r_fuel = 0
 	r_scraps = 0
@@ -155,6 +157,41 @@ function _draw()
   if (fuel <= 0) print("you ran out of fuel",23,72)
  	print("press z or x to restart", 18, 104)
  end
+ 
+ if current_view == 6 then
+  print("orion's defender",44,64)
+  print("press z or x to start", 18, 104)
+ end
+ 
+ if current_view == 7 then
+ 	print("help screen", 40, 2)
+ 	
+ 	spr(017, 2, 12)
+ 	print("this is your ship. \nyou can only move sideways", 11, 10)
+ 	
+ 	spr(001, 1, 26)
+ 	print("when in battle, \npress 'z' to shoot", 10, 24)
+ 	spr(049, 1, 39)
+ 	print("a red shot means critical\ndamage", 10, 37)
+ 
+ 	spr(000, 1, 53)
+ 	print("this is an encounter pickup\nit can be anything", 10, 52)
+ 
+ 	spr(016, 2, 69)
+ 	print("this is an enemy.\ndestroy it to get scraps", 11, 67)
+ 
+ 	print("threat level indicators", 2, 81)
+ 	spr(006, 2, 90)
+ 	print("low", 11, 92)
+ 	spr(022, 24, 90)
+ 	print("medium", 33, 92)
+ 	spr(038, 58, 90)
+ 	print("high level", 67, 92)
+ 	
+ 	print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
+
+		print("press anything to start", 20, 120)
+ end
 end
 
 function _update()
@@ -183,6 +220,9 @@ function _update()
 	end
 	if current_view == 5 then
 		restart_from_gameover()
+	end
+	if current_view == 6 or current_view == 7 then
+		start()
 	end
 	if current_view != 1 then
 		encounters = {}
@@ -409,6 +449,18 @@ function move()
  if (btn(0) and ship_x > 0) ship_x-=2
  --if (btn(2) and ship_y > 0) ship_y-=2
  --if (btn(3) and ship_y < 120) ship_y+=2
+end
+
+function start()
+	if btnp(4) then
+		sfx(01)
+	 current_view = views[1]
+	end
+	
+	if btnp(5) then
+		sfx(01)
+	 current_view = views[7]
+	end
 end
 -->8
 -- enemies
