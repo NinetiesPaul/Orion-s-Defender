@@ -94,23 +94,23 @@ function _init()
 			["spr_damage"] = 025,
 			["b_health"] = 3,
 			["b_damage"] = 1,
-			["b_shot_speed"] = 2,
+			["b_shot_speed"] = 1.5,
 			["b_speed"] =  0.5
 		},
 		{
 			["spr_ok"] = 010,
 			["spr_damage"] = 026,
-			["b_health"] = 4,
+			["b_health"] = 2,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 2,
-			["b_speed"] =  0.5
+			["b_speed"] =  1
 		},
 		{
 			["spr_ok"] = 011,
 			["spr_damage"] = 027,
 			["b_health"] = 5,
 			["b_damage"] = 1,
-			["b_shot_speed"] = 2,
+			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.5
 		},
 		{
@@ -118,7 +118,7 @@ function _init()
 			["spr_damage"] = 028,
 			["b_health"] = 4,
 			["b_damage"] = 2,
-			["b_shot_speed"] = 4,
+			["b_shot_speed"] = 2,
 			["b_speed"] =  2
 		}
 	}
