@@ -6,8 +6,11 @@ __lua__
 function _init()
 	-- encounters variable
 	encounters = {}
+	-- 3 police
+	-- 3 random civilian
+	-- quests (ransom, kidnap, help raid, avoid raid)
 	types = {
-		1, -- battle
+		1, -- battle pirate
 		2 -- store
 	}
 	encounter_spawn_x = {
@@ -95,7 +98,8 @@ function _init()
 			["b_health"] = 3,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
-			["b_speed"] =  0.5
+			["b_speed"] =  0.5,
+			["b_cdr"] = 90
 		},
 		{
 			["spr_ok"] = 010,
@@ -103,7 +107,8 @@ function _init()
 			["b_health"] = 2,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 2,
-			["b_speed"] =  1
+			["b_speed"] =  1,
+			["b_cdr"] = 60
 		},
 		{
 			["spr_ok"] = 011,
@@ -111,7 +116,8 @@ function _init()
 			["b_health"] = 5,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
-			["b_speed"] =  1.5
+			["b_speed"] =  1.5,
+			["b_cdr"] = 45
 		},
 		{
 			["spr_ok"] = 012,
@@ -119,111 +125,111 @@ function _init()
 			["b_health"] = 4,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 2,
-			["b_speed"] =  2
+			["b_speed"] =  2,
+			["b_cdr"] = 30
 		}
 	}
 	enemies = {}
 	enemy_bullets = {}
-	enemy_bullets_cdr = {60,45,30}
 end
 
 function _draw()
- cls()
- rect(0,0,127,127,7)
+	cls()
+	rect(0,0,127,127,7)
  
- if current_view == 1 then
-  draw_ui()
-  draw_threat()
-  spr(ship_spr,ship_x,ship_y)	
-  foreach(encounters, draw_encounter)
- end
+	if current_view == 1 then -- world
+		draw_ui()
+		draw_threat()
+		spr(ship_spr,ship_x,ship_y)	
+		foreach(encounters, draw_encounter)
+	end
  
- if current_view == 2 then
-  draw_ui()
-  if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
-  create_enemy_bullet()
-  
-  spr(ship_spr,ship_x,ship_y)
-  
-  draw_cooldown()
-  foreach(enemies, draw_enemy)
-  foreach(enemy_bullets, draw_enemy_bullet)
-  foreach(bullets, draw_bullet)
- end
+	if current_view == 2 then -- battle
+		draw_ui()
+		if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
+		create_enemy_bullet()
+
+		spr(ship_spr,ship_x,ship_y)
+
+		draw_cooldown()
+		foreach(enemies, draw_enemy)
+		foreach(enemy_bullets, draw_enemy_bullet)
+		foreach(bullets, draw_bullet)
+	end
  
- if current_view == 3 then
-  destroy()
-  
-  print("you've won!", 40,64)
-  print("added "..r_fuel.." fuel", 40,72)
-  print("added "..r_scraps.." scraps", 40,80)
- 	print("press z or x to continue", 18, 104)
- end
+	if current_view == 3 then -- rewards
+		destroy()
+
+		print("you've won!", 40,64)
+		print("added "..r_fuel.." fuel", 40,72)
+		print("added "..r_scraps.." scraps", 40,80)
+		print("press z or x to continue", 18, 104)
+	end
  
- if current_view == 4 then
- 	draw_ui()
- 	destroy()
- 	
- 	print("buy fuel -- $4", 10, 32)
- 	print("repair hull -- $5", 10, 40)
- 	print("repair armor -- $6", 10, 48)
- 	print("upgrade hull -- $" .. next_health_upgrade_cost, 10, 56)
- 	print("upgrade armor -- $" .. next_armor_upgrade_cost, 10, 64)
- 	print("upgrade gun damage -- $" .. next_gun_upgrade_cost, 10, 72)
- 	print("upgrade gun cooldown -- $" .. next_cooldown_upgrade_cost, 10, 80)
- 	
- 	if (clock % 90 == 0) shop_last_bought = ""
- 	print(shop_last_bought, 10, 22)
- 	
- 	print("up or down - change", 2, 120)
- 	print("z - select", 2,104)
- 	print("x - exit", 2, 112)
- 	
- 	animate_shop_selector()
- end
+	if current_view == 4 then -- store
+		draw_ui()
+		destroy()
+
+		print("buy fuel -- $4", 10, 32)
+		print("repair hull -- $5", 10, 40)
+		print("repair armor -- $6", 10, 48)
+		print("upgrade hull -- $" .. next_health_upgrade_cost, 10, 56)
+		print("upgrade armor -- $" .. next_armor_upgrade_cost, 10, 64)
+		print("upgrade gun damage -- $" .. next_gun_upgrade_cost, 10, 72)
+		print("upgrade gun cooldown -- $" .. next_cooldown_upgrade_cost, 10, 80)
+
+		if (clock % 90 == 0) shop_last_bought = ""
+		print(shop_last_bought, 10, 22)
+
+		print("up or down - change", 2, 120)
+		print("z - select", 2,104)
+		print("x - exit", 2, 112)
+
+		animate_shop_selector()
+	end
  
- if current_view == 5 then
-  destroy()
-  
-  print("game over",44,64)
-  if (health <= 0) print("you were destroyed",24,72)
-  if (fuel <= 0) print("you ran out of fuel",23,72)
- 	print("press z or x to restart", 18, 104)
- end
+	if current_view == 5 then -- gameover
+		destroy()
+
+		print("game over",44,64)
+		if (health <= 0) print("you were destroyed",24,72)
+		if (fuel <= 0) print("you ran out of fuel",23,72)
+		print("press z or x to restart", 18, 104)
+	end
  
- if current_view == 6 then
-  print("orion's defender",44,64)
-  print("press z or x to start", 18, 104)
- end
+	if current_view == 6 then
+		print("orion's defender",44,64)
+		print("press z or x to start", 18, 104)
+	end
  
- if current_view == 7 then
- 	print("help screen", 40, 2)
- 	
- 	spr(017, 2, 12)
- 	print("this is your ship. \nyou can only move sideways", 11, 10)
- 	
- 	spr(001, 1, 26)
- 	print("when in battle, \npress 'z' to shoot", 10, 24)
- 	spr(049, 1, 39)
- 	print("a red shot means critical\ndamage", 10, 37)
- 
- 	spr(000, 1, 53)
- 	print("this is an encounter pickup\nit can be anything", 10, 52)
- 
- 	spr(009, 2, 69)
- 	print("this is an enemy.\ndestroy it to get scraps", 11, 67)
- 
- 	print("threat level indicators", 2, 81)
- 	spr(006, 2, 90)
- 	print("low", 11, 92)
- 	spr(022, 24, 90)
- 	print("medium", 33, 92)
- 	spr(038, 58, 90)
- 	print("high level", 67, 92)
- 	
- 	print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
-	print("press anything to start", 20, 120)
- end
+	if current_view == 7 then
+		print("help screen", 40, 2)
+
+		spr(017, 2, 12)
+		print("this is your ship. \nyou can only move sideways", 11, 10)
+
+		spr(001, 1, 26)
+		print("when in battle, \npress 'z' to shoot", 10, 24)
+		spr(049, 1, 39)
+		print("a red shot means critical\ndamage", 10, 37)
+
+		spr(000, 1, 53)
+		print("this is an encounter pickup\nit can be anything", 10, 52)
+
+		spr(009, 2, 69)
+		print("this is an enemy.\ndestroy it to get scraps", 11, 67)
+
+		print("threat level indicators", 2, 81)
+		spr(006, 2, 90)
+		print("low", 11, 92)
+		spr(022, 24, 90)
+		print("medium", 33, 92)
+		spr(038, 58, 90)
+		print("high level", 67, 92)
+
+		print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
+		print("press anything to start", 20, 120)
+	end
 end
 
 function _update()
@@ -281,8 +287,8 @@ function start_battle()
 		local enemy = {}
 		enemy.spr = enemy_data["spr_ok"]
 		enemy.spr_damage = enemy_data["spr_damage"]
-		enemy.health = enemy_data["b_health"] * difficulty
-		enemy.damage = enemy_data["b_damage"] * difficulty
+		enemy.health = enemy_data["b_health"] + difficulty
+		enemy.damage = enemy_data["b_damage"] + difficulty
 		enemy.shot_v = enemy_data["b_shot_speed"] + difficulty
 		enemy.v = enemy_data["b_speed"]
 		enemy.x = flr(rnd(15))+15
@@ -293,7 +299,7 @@ function start_battle()
 		enemy.ly = enemy.y+rnd(30)+30
 		enemy.move_forward = true
 		enemy.fire = true
-		enemy.cdr = enemy_bullets_cdr[flr(rnd(3)) + 1]
+		enemy.cdr = enemy_data["b_cdr"]
 		enemy.collateral = false
 		add(enemies, enemy)
 		enemy_count -= 1
@@ -370,10 +376,9 @@ end
 
 function create_encounter()
 	local encounter = {}
-	number = flr(rnd(5)) + 1
-	encounter.x = encounter_spawn_x[number]
+	encounter.x = rnd(encounter_spawn_x)
 	encounter.y = 0
-	encounter.type = types[flr(rnd(2)) + 1]
+	encounter.type = rnd(types)
 	if (last_encounter_store == true) encounter.type = 1
 	add(encounters, encounter)
 end
@@ -415,14 +420,14 @@ function draw_cooldown()
 		ship_y+7,
 		ship_x+9,
 		ship_y+(7-i),
-		bar_color)	
+		bar_color)
 	end
 end
 
 function gun_ready()
 	if bullet_cooldown == 0 and warned == false then
-	 sfx(03)
-	 warned = true
+		sfx(03)
+		warned = true
 	end
 end
 -->8
@@ -435,7 +440,7 @@ function fire()
 		bullet.y = ship_y - 8
 		bullet.critical = (rnd() > random_factor) and true or false
 		bullet.collateral = (rnd() > random_factor) and true or false
-		bullet.collateral_type = (bullet.collateral == true) and collateral_type[flr(rnd(3)) + 1] or false
+		bullet.collateral_type = (bullet.collateral == true) and rnd(collateral_type) or false
 		bullet.spr = (bullet.critical == true) and 049 or 001
 
 		bullet_cooldown = bullet_cooldown_rate
@@ -607,7 +612,7 @@ function nav_store()
 				end
 			else
 				sfx(00)
-			 shop_last_bought = "current at max health"
+				shop_last_bought = "current at max health"
 			end
 		end
 		
@@ -624,7 +629,7 @@ function nav_store()
 				end
 			else
 				sfx(00)
-			 shop_last_bought = "current at max armor"
+				shop_last_bought = "current at max armor"
 			end
 		end
 		
@@ -706,25 +711,22 @@ function nav_store()
 		
 	end
  
- if btnp(3) and shop_selector_pos < 7 then
-  sfx(02)
-  shop_selector_y += 8
-  shop_selector_pos += 1
- end
+	if btnp(3) and shop_selector_pos < 7 then
+		sfx(02)
+		shop_selector_y += 8
+		shop_selector_pos += 1
+	end
 	
 	if btnp(2) and shop_selector_pos > 1 then
 		sfx(02)
 		shop_selector_y -= 8
-  shop_selector_pos -= 1
+  	shop_selector_pos -= 1
 	end
 end
 
 function animate_shop_selector()
-	if (clock % 1.5 == 0) then
-		shop_selector_spr_pointer += 1
-		if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
-	end
-	
+	shop_selector_spr_pointer += 1
+	if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
 	spr(shop_selector_spr[shop_selector_spr_pointer], 0, shop_selector_y)
 end
 __gfx__
