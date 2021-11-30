@@ -134,9 +134,7 @@ function _draw()
  if current_view == 1 then
   draw_ui()
   draw_threat()
-  
-		spr(ship_spr,ship_x,ship_y)
-		
+  spr(ship_spr,ship_x,ship_y)	
   foreach(encounters, draw_encounter)
  end
  
@@ -224,124 +222,126 @@ function _draw()
  	print("high level", 67, 92)
  	
  	print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
-
-		print("press anything to start", 20, 120)
+	print("press anything to start", 20, 120)
  end
 end
 
 function _update()
- clock+=1
- move()
- update_threat()
- 
- if current_view == 1 then
-  fuel -= fuel_comsumption
-  if (clock % 30 == 0) create_encounter()
- end
- if current_view == 2 then
- 	if (count(enemies) == 0)	start_battle()
- 	if (bullet_cooldown == 0) fire()
-  if clock % 30 == 0 and bullet_cooldown != 0 then
- 		bullet_cooldown -= 1
- 	end
- 	gun_ready()
- end
- if current_view == 3 then
- 	warned = true
- 	rewards()
+	clock+=1
+	move()
+	update_threat()
+
+	if current_view == 1 then
+		fuel -= fuel_comsumption
+		if (clock % 30 == 0) create_encounter()
 	end
+
+	if current_view == 2 then
+		if (count(enemies) == 0)	start_battle()
+		if (bullet_cooldown == 0) fire()
+		if clock % 30 == 0 and bullet_cooldown != 0 then
+			bullet_cooldown -= 1
+		end
+		gun_ready()
+	end
+
+	if current_view == 3 then
+		warned = true
+		rewards()
+	end
+
 	if current_view == 4 then
 		nav_store()
 	end
+
 	if current_view == 5 then
 		restart_from_gameover()
 	end
+
 	if current_view == 6 or current_view == 7 then
 		start()
 	end
+
 	if current_view != 1 then
 		encounters = {}
 	end
-	
+
 	foreach(enemies, move_enemy)
- foreach(bullets, move_bullet)
- foreach(enemy_bullets, move_enemy_bullet)
- foreach(encounters, move_encounter)
+	foreach(bullets, move_bullet)
+	foreach(enemy_bullets, move_enemy_bullet)
+	foreach(encounters, move_encounter)
 end
 
 function start_battle()
- enemy_count = (flr(rnd(3)) + 1) * difficulty
- 
- while(enemy_count > 0)
- do
- 	enemy_data = enemy_list[flr(rnd(count(enemy_list)))+1]
-  local enemy = {}
-  enemy.spr = enemy_data["spr_ok"]
-  enemy.spr_damage = enemy_data["spr_damage"]
-  enemy.health = enemy_data["b_health"] * difficulty
-  enemy.damage = enemy_data["b_damage"] * difficulty
-  enemy.shot_v = enemy_data["b_shot_speed"] + difficulty
-  enemy.v = enemy_data["b_speed"]
-  enemy.x = flr(rnd(15))+15
-  enemy.y = flr(rnd(15))+15
-  enemy.sx = enemy.x
-  enemy.sy = enemy.y
-  enemy.lx = enemy.x+rnd(30)+30
-  enemy.ly = enemy.y+rnd(30)+30
-  enemy.move_forward = true
-  enemy.fire = true
-  enemy.cdr = enemy_bullets_cdr[flr(rnd(3)) + 1]
-  enemy.collateral = false
-  add(enemies, enemy)
-  enemy_count -= 1
- end
- 
- ship_x = 64
- encounters = {}
+	enemy_count = (flr(rnd(3)) + 1) * difficulty
+
+	while(enemy_count > 0)
+	do
+		enemy_data = enemy_list[flr(rnd(count(enemy_list)))+1]
+		local enemy = {}
+		enemy.spr = enemy_data["spr_ok"]
+		enemy.spr_damage = enemy_data["spr_damage"]
+		enemy.health = enemy_data["b_health"] * difficulty
+		enemy.damage = enemy_data["b_damage"] * difficulty
+		enemy.shot_v = enemy_data["b_shot_speed"] + difficulty
+		enemy.v = enemy_data["b_speed"]
+		enemy.x = flr(rnd(15))+15
+		enemy.y = flr(rnd(15))+15
+		enemy.sx = enemy.x
+		enemy.sy = enemy.y
+		enemy.lx = enemy.x+rnd(30)+30
+		enemy.ly = enemy.y+rnd(30)+30
+		enemy.move_forward = true
+		enemy.fire = true
+		enemy.cdr = enemy_bullets_cdr[flr(rnd(3)) + 1]
+		enemy.collateral = false
+		add(enemies, enemy)
+		enemy_count -= 1
+	end
+
+	ship_x = 64
+	encounters = {}
 end
 
 function rewards()
 	if rewards_given == false then
-	 x = difficulty * (flr(rnd(5)) + 1)
-	 fuel += x
-	 r_fuel = x
-	 scraps_reward = x * 10
-	 scraps += scraps_reward
-	 r_scraps = scraps_reward
-	 rewards_given = true
-	 bullet_cooldown = 0
+		x = difficulty * (flr(rnd(5)) + 1)
+		fuel += x
+		r_fuel = x
+		scraps_reward = x * 10
+		scraps += scraps_reward
+		r_scraps = scraps_reward
+		rewards_given = true
+		bullet_cooldown = 0
 	else 
 		if btnp(4) or btnp(5) then
-	  current_view = views[1]
-	  rewards_given = false
-	 end
- end
+			current_view = views[1]
+			rewards_given = false
+		end
+	end
 end
 
 function destroy()
- enemies = {}
- enemy_bullets = {}
- bullets = {}
- encounters = {}
+	enemies = {}
+	enemy_bullets = {}
+	bullets = {}
+	encounters = {}
 end
 
 function draw_ui()
- print("$" .. scraps,2,2)
- if (current_view != 4) print("★ " .. score,2,8, 7)
- 
- spr(003,76,2)
- print(health,85,4)
- spr(004,93,2)
- print(armor,102,4)
- spr(005,110,2)
- print(fuel,119,4)
- 
+	print("$" .. scraps,2,2)
+	if (current_view != 4) print("★ " .. score,2,8, 7)
+	spr(003,76,2)
+	print(health,85,4)
+	spr(004,93,2)
+	print(armor,102,4)
+	spr(005,110,2)
+	print(fuel,119,4)
 end
 
 function update_threat()
 	if (score > 2000 and score < 4000) difficulty = 2
 	if (score > 4000) difficulty = 3
-	
 	if (difficulty == 2) threat_level = 022
 	if (difficulty == 3) threat_level = 038
 end
@@ -353,62 +353,62 @@ function draw_threat()
 	if (threat_x == 3) update = 2
 	
 	if (clock % update == 0) then
-	 threat_y += 1
-	 if(threat_y > 3) threat_y = 1
+		threat_y += 1
+		if(threat_y > 3) threat_y = 1
 	end
 	
 	spr(threat_level_sprs[threat_x][threat_y],2,118)
 end
 
 function restart_from_gameover()
- if btnp(4) or btnp(5) then
-  _init()
- end
+	if btnp(4) or btnp(5) then
+		_init()
+	end
 end
 -->8
 -- encounters
 
 function create_encounter()
- local encounter = {}
- number = flr(rnd(5)) + 1
- encounter.x = encounter_spawn_x[number]
- encounter.y = 0
- encounter.type = types[flr(rnd(2)) + 1]
- if (last_encounter_store == true) encounter.type = 1
- add(encounters, encounter)
+	local encounter = {}
+	number = flr(rnd(5)) + 1
+	encounter.x = encounter_spawn_x[number]
+	encounter.y = 0
+	encounter.type = types[flr(rnd(2)) + 1]
+	if (last_encounter_store == true) encounter.type = 1
+	add(encounters, encounter)
 end
 
 function draw_encounter(e)
- spr(000,e.x, e.y)
+	spr(000,e.x, e.y)
 end
 
 function move_encounter(e)
- e.y += 3
- 
- if e.x >= ship_x-4 and
-    e.x <= ship_x+6 and
-    e.y >= ship_y-4 and
-    e.y <= ship_y+6 then
-  del(encounters,e)
-  if e.type == 1 then
-   current_view = views[2]
- 		last_encounter_store = false
- 	end
- 	if e.type == 2 then
- 		current_view = views[4]
- 		last_encounter_store = true
- 	end
- end
- 
- if (e.y >= 128) then
- 	del(encounters,e)
- end
+	e.y += 3
+
+	if e.x >= ship_x-4 and
+	e.x <= ship_x+6 and
+	e.y >= ship_y-4 and
+	e.y <= ship_y+6 then
+		del(encounters,e)
+		if e.type == 1 then
+			current_view = views[2]
+			last_encounter_store = false
+		end
+		if e.type == 2 then
+			current_view = views[4]
+			last_encounter_store = true
+		end
+	end
+
+	if (e.y >= 128) then
+		del(encounters,e)
+	end
 end
 
 function draw_cooldown()
 	pos = bullet_cooldown_rate - bullet_cooldown
 	bar_color = (bullet_cooldown > 0) and 10 or 11
-	
+
 	for i = pos, 0, -1 do
 		line(
 		ship_x+9,
@@ -429,148 +429,147 @@ end
 -- player
 
 function fire()
- if btnp(4) then
-  local bullet = {}
-  bullet.x = ship_x
-  bullet.y = ship_y - 8
-  bullet.critical = (rnd() > random_factor) and true or false
-  bullet.collateral = (rnd() > random_factor) and true or false
-  bullet.collateral_type = (bullet.collateral == true) and collateral_type[flr(rnd(3)) + 1] or false
-  bullet.spr = (bullet.critical == true) and 049 or 001
-  
-  bullet_cooldown = bullet_cooldown_rate
-  warned = false
-  sfx(07)
-  add(bullets, bullet)
- end
+	if btnp(4) then
+		local bullet = {}
+		bullet.x = ship_x
+		bullet.y = ship_y - 8
+		bullet.critical = (rnd() > random_factor) and true or false
+		bullet.collateral = (rnd() > random_factor) and true or false
+		bullet.collateral_type = (bullet.collateral == true) and collateral_type[flr(rnd(3)) + 1] or false
+		bullet.spr = (bullet.critical == true) and 049 or 001
+
+		bullet_cooldown = bullet_cooldown_rate
+		warned = false
+		sfx(07)
+		add(bullets, bullet)
+	end
 end
 
 function draw_bullet(b)
- spr(b.spr,b.x,b.y)
+	spr(b.spr,b.x,b.y)
 end
 
 function move_bullet(b)
- b.y -= 4
- 
- for e in all(enemies) do
-  if e.x >= b.x-4 and
-     e.x <= b.x+6 and
-     e.y >= b.y-4 and
-     e.y <= b.y+6 then
-   damage = bullet_damage
-   if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
-   e.health -= damage
-   -- e.spr = 025
-   if b.collateral == true and e.collateral == false then
-   	e.collateral = b.collateral_type
-   end
-   
-   sfx(04)
-  	del(bullets,b)
-   
-   if (e.health <= 0) then
-  	 del(enemies,e)
-   	score += 100
-   	sfx(05)
-  	end
-  	
-  	if (count(enemies) == 0) current_view = views[3]
-  end
- end
+	b.y -= 4
+
+	for e in all(enemies) do
+		if e.x >= b.x-4 and
+		e.x <= b.x+6 and
+		e.y >= b.y-4 and
+		e.y <= b.y+6 then
+			damage = bullet_damage
+			if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
+			e.health -= damage
+			-- e.spr = 025
+			if b.collateral == true and e.collateral == false then
+				e.collateral = b.collateral_type
+			end
+
+			sfx(04)
+			del(bullets,b)
+
+			if (e.health <= 0) then
+				del(enemies,e)
+				score += 100
+				sfx(05)
+			end
+
+			if (count(enemies) == 0) current_view = views[3]
+		end
+	end
 end
 
 function move()
- if (btn(1) and ship_x < 120) ship_x+=2
- if (btn(0) and ship_x > 0) ship_x-=2
- --if (btn(2) and ship_y > 0) ship_y-=2
- --if (btn(3) and ship_y < 120) ship_y+=2
+	if (btn(1) and ship_x < 120) ship_x+=2
+	if (btn(0) and ship_x > 0) ship_x-=2
+	--if (btn(2) and ship_y > 0) ship_y-=2
+	--if (btn(3) and ship_y < 120) ship_y+=2
 end
 
 function start()
 	if btnp(4) then
 		sfx(01)
-	 current_view = views[1]
+		current_view = views[1]
 	end
-	
+
 	if btnp(5) then
 		sfx(01)
-	 current_view = views[7]
+		current_view = views[7]
 	end
 end
 -->8
 -- enemies
 
 function create_enemy_bullet(e)
- for e in all(enemies) do
- 	if e.fire == true and e.collateral != 3 then
- 		e.fire = false
-	  local enemy_bullet = {}
-	  enemy_bullet.x = e.x
-	  enemy_bullet.y = e.y+8
-	  enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
-	  enemy_bullet.damage = e.damage
-	  enemy_bullet.v = e.shot_v
-	  enemy_bullet.aimless = (e.collateral == 2) and true or false
-	  sfx(08)
-	  add(enemy_bullets,enemy_bullet)
-	 else
-	 	if (clock % e.cdr == 0) e.fire = true
-	 end
+	for e in all(enemies) do
+		if e.fire == true and e.collateral != 3 then
+			e.fire = false
+			local enemy_bullet = {}
+			enemy_bullet.x = e.x
+			enemy_bullet.y = e.y+8
+			enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
+			enemy_bullet.damage = e.damage
+			enemy_bullet.v = e.shot_v
+			enemy_bullet.aimless = (e.collateral == 2) and true or false
+			sfx(08)
+			add(enemy_bullets,enemy_bullet)
+		else
+			if (clock % e.cdr == 0) e.fire = true
+		end
 	end
 end
 
 function move_enemy_bullet(eb)
 	eb.x += (eb.aimless == false) and cos(eb.angle) * eb.v or 0
 	eb.y += (eb.aimless == false) and sin(eb.angle) * eb.v or eb.v
-	
- if eb.x >= ship_x-4 and
-    eb.x <= ship_x+6 and
-    eb.y >= ship_y-4 and
-    eb.y <= ship_y+6 then
-  del(enemy_bullets,eb)
-  ship_spr = 033
-  sfx(06)
-  
-  if (armor == 0) health-=eb.damage
-  if (armor > 0) then 
-  	armor-=eb.damage
-  	if (armor < 0) armor = 0
-  end
-  if (health <= 0) current_view = views[5]
- end	
+
+	if eb.x >= ship_x-4 and
+	eb.x <= ship_x+6 and
+	eb.y >= ship_y-4 and
+	eb.y <= ship_y+6 then
+		del(enemy_bullets,eb)
+		ship_spr = 033
+		sfx(06)
+
+		if (armor == 0) health-=eb.damage
+		if (armor > 0) then 
+			armor-=eb.damage
+			if (armor < 0) armor = 0
+		end
+		if (health <= 0) current_view = views[5]
+	end
 end
 
 function move_enemy(e)
 	if e.collateral != 1 then
-	 if e.move_forward == true then
-	  if (e.x<e.lx) e.x+=e.v
-	  if (e.y<e.ly) e.y+=e.v
-	  if e.y>=e.ly and
-	     e.x>=e.lx then
-	   e.move_forward = false
-	  end
-	 end
-	 
-	 if e.move_forward == false then
-	  if (e.x>e.sx) e.x-=e.v
-	  if (e.y>e.sy) e.y-=e.v
-	  if e.y<=e.sy and
-	     e.x<=e.sx then
-	   e.move_forward = true
-	  end
-	 end
+		if e.move_forward == true then
+			if (e.x<e.lx) e.x+=e.v
+			if (e.y<e.ly) e.y+=e.v
+			if e.y>=e.ly and
+			e.x>=e.lx then
+				e.move_forward = false
+			end
+		end
+
+		if e.move_forward == false then
+			if (e.x>e.sx) e.x-=e.v
+			if (e.y>e.sy) e.y-=e.v
+			if e.y<=e.sy and
+			e.x<=e.sx then
+				e.move_forward = true
+			end
+		end
 	end
 end
 
 function draw_enemy(e)
- spr(e.spr,e.x,e.y)
- print(e.health,e.x + 9,e.y, 10)
-
- -- if (clock % 5 == 0 and e.spr == 025) e.spr = 009  
+	spr(e.spr,e.x,e.y)
+	print(e.health,e.x + 9,e.y, 10)
+	-- if (clock % 5 == 0 and e.spr == 025) e.spr = 009  
 end
 
 function draw_enemy_bullet(eb)
- spr(001,eb.x,eb.y)
+	spr(001,eb.x,eb.y)
 end
 -->8
 -- store
@@ -718,13 +717,12 @@ function nav_store()
 		shop_selector_y -= 8
   shop_selector_pos -= 1
 	end
-
 end
 
 function animate_shop_selector()
 	if (clock % 1.5 == 0) then
 		shop_selector_spr_pointer += 1
-	 if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
+		if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
 	end
 	
 	spr(shop_selector_spr[shop_selector_spr_pointer], 0, shop_selector_y)
