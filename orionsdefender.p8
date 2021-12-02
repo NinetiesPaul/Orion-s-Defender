@@ -45,11 +45,7 @@ function _init()
 	r_fuel = 0
 	r_scraps = 0
 	-- player variables
-	cooldown_lvls = {
-		3,
-		2,
-		1,
-	}
+	cooldown_lvls = {3,2,1}
 	scraps = 25
 	ship_spr = 017
 	ship_x = 64
@@ -197,12 +193,12 @@ function _draw()
 		print("press z or x to restart", 18, 104)
 	end
  
-	if current_view == 6 then
+	if current_view == 6 then -- start
 		print("orion's defender",44,64)
 		print("press z or x to start", 18, 104)
 	end
  
-	if current_view == 7 then
+	if current_view == 7 then -- help
 		print("help screen", 40, 2)
 
 		spr(017, 2, 12)
@@ -287,9 +283,9 @@ function start_battle()
 		local enemy = {}
 		enemy.spr = enemy_data["spr_ok"]
 		enemy.spr_damage = enemy_data["spr_damage"]
-		enemy.health = enemy_data["b_health"] + difficulty
-		enemy.damage = enemy_data["b_damage"] + difficulty
-		enemy.shot_v = enemy_data["b_shot_speed"] + difficulty
+		enemy.health = enemy_data["b_health"] + (difficulty - 1)
+		enemy.damage = enemy_data["b_damage"] + (difficulty - 1)
+		enemy.shot_v = enemy_data["b_shot_speed"] + (difficulty - 1)
 		enemy.v = enemy_data["b_speed"]
 		enemy.x = flr(rnd(15))+15
 		enemy.y = flr(rnd(15))+15
