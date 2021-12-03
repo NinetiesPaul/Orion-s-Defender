@@ -67,7 +67,7 @@ function _init()
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
 	warned = true
-	random_factor = 0.97
+	random_factor = 0.90
 	collateral_type =
 	{
 		1, -- motor damage
@@ -96,7 +96,8 @@ function _init()
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  0.5,
 			["b_cdr"] = 90,
-			["n_destroyed"] = 0
+			["n_destroyed"] = 0,
+			["knowledge_level"] = 0
 		},
 		{
 			["spr_ok"] = 010,
@@ -106,7 +107,8 @@ function _init()
 			["b_shot_speed"] = 2,
 			["b_speed"] =  1,
 			["b_cdr"] = 60,
-			["n_destroyed"] = 0
+			["n_destroyed"] = 0,
+			["knowledge_level"] = 0
 		},
 		{
 			["spr_ok"] = 011,
@@ -116,7 +118,8 @@ function _init()
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.5,
 			["b_cdr"] = 45,
-			["n_destroyed"] = 0
+			["n_destroyed"] = 0,
+			["knowledge_level"] = 0
 		},
 		{
 			["spr_ok"] = 012,
@@ -126,7 +129,8 @@ function _init()
 			["b_shot_speed"] = 2,
 			["b_speed"] =  2,
 			["b_cdr"] = 30,
-			["n_destroyed"] = 0
+			["n_destroyed"] = 0,
+			["knowledge_level"] = 0
 		}
 	}
 	enemies = {}
@@ -343,11 +347,12 @@ function draw_ui()
 	print(armor,102,4)
 	spr(005,110,2)
 	print(fuel,119,4)
-
+	
 	--[[
 	linect = 0
 	for e in all(enemy_list) do
-		print(e.n_destroyed .. " " .. e.spr_ok, 112,64+linect*8)
+		spr(e.spr_ok, 100,64+linect*8)
+		print(e.n_destroyed .. " " .. e.knowledge_level, 110,64+linect*8)
 		linect+=1
 	end
 	]]--
@@ -447,9 +452,8 @@ function fire()
 		local bullet = {}
 		bullet.x = ship_x
 		bullet.y = ship_y - 8
-		bullet.critical = (rnd() > random_factor) and true or false
-		bullet.collateral = (rnd() > random_factor) and true or false
-		bullet.collateral_type = (bullet.collateral == true) and rnd(collateral_type) or false
+		--bullet.critical = (rnd() > random_factor) and true or false
+		bullet.critical = false
 		bullet.spr = (bullet.critical == true) and 049 or 001
 
 		bullet_cooldown = bullet_cooldown_rate
@@ -475,8 +479,14 @@ function move_bullet(b)
 			damage = bullet_damage
 			if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
 			e.health -= damage
-			if b.collateral == true and e.collateral == false then
-				e.collateral = b.collateral_type
+
+			if e.collateral == false then
+				for el in all(enemy_list) do
+					if e.spr == el.spr_ok then
+						local_random_factor = random_factor - el.knowledge_level
+						if (rnd() > local_random_factor) e.collateral = rnd(collateral_type)
+					end
+				end
 			end
 
 			sfx(04)
@@ -486,6 +496,12 @@ function move_bullet(b)
 				for el in all(enemy_list) do
 					if e.spr == el.spr_ok then
 						el.n_destroyed += 1
+
+						if el.n_destroyed % 5 == 0 then
+							if (el.knowledge_level == 0) el.knowledge_level = 0.100
+							if (el.knowledge_level == 0.100) el.knowledge_level = 0.200
+							if (el.knowledge_level == 0.200) el.knowledge_level = 0.300
+						end
 					end
 				end
 
