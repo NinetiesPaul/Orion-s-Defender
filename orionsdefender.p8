@@ -42,6 +42,7 @@ function _init()
 	clock = 0
 	current_view = views[6]
 	rewards_given = false
+	battle_rewards = 0
 	r_fuel = 0
 	r_scraps = 0
 	-- player variables
@@ -97,7 +98,9 @@ function _init()
 			["b_speed"] =  0.5,
 			["b_cdr"] = 90,
 			["n_destroyed"] = 0,
-			["knowledge_level"] = 0
+			["knowledge_level"] = 0,
+			["score"] = 100,
+			["reward"] = 8
 		},
 		{
 			["spr_ok"] = 010,
@@ -108,7 +111,9 @@ function _init()
 			["b_speed"] =  1,
 			["b_cdr"] = 60,
 			["n_destroyed"] = 0,
-			["knowledge_level"] = 0
+			["knowledge_level"] = 0,
+			["score"] = 125,
+			["reward"] = 12
 		},
 		{
 			["spr_ok"] = 011,
@@ -119,7 +124,9 @@ function _init()
 			["b_speed"] =  1.5,
 			["b_cdr"] = 45,
 			["n_destroyed"] = 0,
-			["knowledge_level"] = 0
+			["knowledge_level"] = 0,
+			["score"] = 150,
+			["reward"] = 14
 		},
 		{
 			["spr_ok"] = 012,
@@ -130,7 +137,9 @@ function _init()
 			["b_speed"] =  2,
 			["b_cdr"] = 30,
 			["n_destroyed"] = 0,
-			["knowledge_level"] = 0
+			["knowledge_level"] = 0,
+			["score"] = 175,
+			["reward"] = 16
 		}
 	}
 	enemies = {}
@@ -287,7 +296,7 @@ function start_battle()
 
 	while(enemy_count > 0)
 	do
-		enemy_data = enemy_list[flr(rnd(count(enemy_list)))+1]
+		enemy_data = rnd(enemy_list)
 		local enemy = {}
 		enemy.spr = enemy_data["spr_ok"]
 		enemy.spr_damage = enemy_data["spr_damage"]
@@ -299,10 +308,12 @@ function start_battle()
 		enemy.y = flr(rnd(15))+15
 		enemy.sx = enemy.x
 		enemy.sy = enemy.y
-		enemy.lx = enemy.x+rnd(30)+30
-		enemy.ly = enemy.y+rnd(30)+30
+		enemy.lx = enemy.x+rnd(30)+60
+		enemy.ly = enemy.y+rnd(30)+60
 		enemy.move_forward = true
 		enemy.fire = true
+		enemy.score = enemy_data.score
+		enemy.reward = enemy_data.reward
 		enemy.cdr = enemy_data["b_cdr"]
 		enemy.collateral = false
 		add(enemies, enemy)
@@ -318,11 +329,11 @@ function rewards()
 		x = difficulty * (flr(rnd(5)) + 1)
 		fuel += x
 		r_fuel = x
-		scraps_reward = x * 10
-		scraps += scraps_reward
-		r_scraps = scraps_reward
+		scraps += battle_rewards
+		r_scraps = battle_rewards
 		rewards_given = true
 		bullet_cooldown = 0
+		battle_rewards = 0
 	else 
 		if btnp(4) or btnp(5) then
 			current_view = views[1]
@@ -452,8 +463,7 @@ function fire()
 		local bullet = {}
 		bullet.x = ship_x
 		bullet.y = ship_y - 8
-		--bullet.critical = (rnd() > random_factor) and true or false
-		bullet.critical = false
+		bullet.critical = (rnd() > random_factor) and true or false
 		bullet.spr = (bullet.critical == true) and 049 or 001
 
 		bullet_cooldown = bullet_cooldown_rate
@@ -505,8 +515,9 @@ function move_bullet(b)
 					end
 				end
 
+				score += e.score
+				battle_rewards += flr(10 + (e.reward * (difficulty/2)))
 				del(enemies,e)
-				score += 100
 				sfx(05)
 			end
 
