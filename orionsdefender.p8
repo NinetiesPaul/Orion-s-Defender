@@ -95,7 +95,8 @@ function _init()
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  0.5,
-			["b_cdr"] = 90
+			["b_cdr"] = 90,
+			["n_destroyed"] = 0
 		},
 		{
 			["spr_ok"] = 010,
@@ -104,7 +105,8 @@ function _init()
 			["b_damage"] = 2,
 			["b_shot_speed"] = 2,
 			["b_speed"] =  1,
-			["b_cdr"] = 60
+			["b_cdr"] = 60,
+			["n_destroyed"] = 0
 		},
 		{
 			["spr_ok"] = 011,
@@ -113,7 +115,8 @@ function _init()
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.5,
-			["b_cdr"] = 45
+			["b_cdr"] = 45,
+			["n_destroyed"] = 0
 		},
 		{
 			["spr_ok"] = 012,
@@ -122,7 +125,8 @@ function _init()
 			["b_damage"] = 2,
 			["b_shot_speed"] = 2,
 			["b_speed"] =  2,
-			["b_cdr"] = 30
+			["b_cdr"] = 30,
+			["n_destroyed"] = 0
 		}
 	}
 	enemies = {}
@@ -339,6 +343,15 @@ function draw_ui()
 	print(armor,102,4)
 	spr(005,110,2)
 	print(fuel,119,4)
+
+	--[[
+	linect = 0
+	for e in all(enemy_list) do
+		print(e.n_destroyed .. " " .. e.spr_ok, 112,64+linect*8)
+		linect+=1
+	end
+	]]--
+
 end
 
 function update_threat()
@@ -457,11 +470,11 @@ function move_bullet(b)
 		if e.x >= b.x-4 and
 		e.x <= b.x+6 and
 		e.y >= b.y-4 and
-		e.y <= b.y+6 then
+		e.y <= b.y+6
+		then
 			damage = bullet_damage
 			if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
 			e.health -= damage
-			-- e.spr = 025
 			if b.collateral == true and e.collateral == false then
 				e.collateral = b.collateral_type
 			end
@@ -470,6 +483,12 @@ function move_bullet(b)
 			del(bullets,b)
 
 			if (e.health <= 0) then
+				for el in all(enemy_list) do
+					if e.spr == el.spr_ok then
+						el.n_destroyed += 1
+					end
+				end
+
 				del(enemies,e)
 				score += 100
 				sfx(05)
