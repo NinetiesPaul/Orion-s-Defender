@@ -68,7 +68,7 @@ function _init()
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
 	warned = true
-	random_factor = 0.90
+	random_factor = 0.95
 	collateral_type =
 	{
 		1, -- motor damage
@@ -145,6 +145,7 @@ function _init()
 	enemies = {}
 	enemy_bullets = {}
 	explosions = {}
+	warnings = {}
 end
 
 function _draw()
@@ -161,7 +162,7 @@ function _draw()
 	if current_view == 2 then -- battle
 		draw_ui()
 		if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
-		create_enemy_bullet()
+		if (count(warnings) == 0) create_enemy_bullet()
 
 		spr(ship_spr,ship_x,ship_y)
 
@@ -170,6 +171,7 @@ function _draw()
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
 		foreach(explosions, exploding_draw)
+		foreach(warnings, print_warning)
 	end
  
 	if current_view == 3 then -- rewards
@@ -213,8 +215,9 @@ function _draw()
 	end
  
 	if current_view == 6 then -- start
-		print("orion's defender",44,64)
-		print("press z or x to start", 18, 104)
+		print("orion's defender",30,44)
+		print("z to start", 40, 84)
+		print("x to help", 41, 92)
 	end
  
 	if current_view == 7 then -- help
@@ -223,13 +226,12 @@ function _draw()
 		spr(017, 2, 12)
 		print("this is your ship. \nyou can only move sideways", 11, 10)
 
-		spr(001, 1, 26)
-		print("when in battle, \npress 'z' to shoot", 10, 24)
-		spr(049, 1, 39)
-		print("a red shot means critical\ndamage", 10, 37)
+		spr(001, 2, 26)
+		print("when in battle, \npress 'z' to shoot", 11, 23)
+		print("some shots may cause critical\nor collateral damage", 11, 36)
 
-		spr(000, 1, 53)
-		print("this is an encounter pickup\nit can be anything", 10, 52)
+		spr(000, 1, 51)
+		print("this is an encounter pickup\nit can be anything", 11, 49)
 
 		spr(009, 2, 69)
 		print("this is an enemy.\ndestroy it to get scraps", 11, 67)
@@ -249,7 +251,7 @@ end
 
 function _update()
 	clock+=1
-	move()
+	if (count(warnings) == 0) move()
 	update_threat()
 
 	if current_view == 1 then
@@ -260,11 +262,14 @@ function _update()
 
 	if current_view == 2 then
 		if (count(enemies) == 0)	start_battle()
-		fire()
-		foreach(enemies, move_enemy)
-		foreach(bullets, move_bullet)
-		foreach(enemy_bullets, move_enemy_bullet)
-		foreach(explosions, animate_explosion)
+		if (count(warnings) == 0) then
+			fire()
+			foreach(enemies, move_enemy)
+			foreach(bullets, move_bullet)
+			foreach(enemy_bullets, move_enemy_bullet)
+			foreach(explosions, animate_explosion)
+		end
+		foreach(warnings, move_warning)
 	end
 
 	if current_view == 3 then
@@ -287,6 +292,28 @@ function _update()
 	if current_view != 1 then
 		encounters = {}
 	end
+end
+
+function print_warning(w)
+	print(w.msg, w.x, w.y, 7)
+end
+
+function move_warning(w)
+	if clock % 15 == 0 and w.duration > 0 then
+		w.y -= 4
+		w.duration -= 1
+		if (w.duration == 0) del(warnings, w)
+	end
+end
+
+function create_warning(msg, e)
+	local warning = {}
+
+	warning.x = e.x+10
+	warning.y = e.y
+	warning.msg = msg
+	warning.duration = 6
+	add(warnings, warning)
 end
 
 function start_battle()
@@ -419,6 +446,7 @@ function destroy()
 	bullets = {}
 	encounters = {}
 	explosions = {}
+	warnings = {}
 end
 
 function draw_ui()
@@ -532,8 +560,7 @@ function fire()
 			local bullet = {}
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
-			bullet.critical = (rnd() > random_factor) and true or false
-			bullet.spr = (bullet.critical == true) and 049 or 001
+			bullet.spr = 001
 
 			bullet_cooldown = bullet_cooldown_rate
 			warned = false
@@ -561,14 +588,24 @@ function move_bullet(b)
 		e.y <= b.y+6
 		then
 			damage = bullet_damage
-			if (b.critical == true) damage = damage + (flr(rnd(2)) + 1)
+			if (rnd() > random_factor) then
+				damage = damage + (flr(rnd(2)) + 1)
+				create_warning("critical\ndamage!", e)
+			end
 			e.health -= damage
 
 			if e.collateral == false then
 				for el in all(enemy_list) do
 					if e.spr == el.spr_ok then
 						local_random_factor = random_factor - el.knowledge_level
-						if (rnd() > local_random_factor) e.collateral = rnd(collateral_type)
+						if rnd() > local_random_factor then
+							e.collateral = rnd(collateral_type)
+							msg = ''
+							if (e.collateral == 1) msg = "engine\ndamage!" 
+							if (e.collateral == 2) msg = "aiming\ndamage!"
+							if (e.collateral == 3) msg = "firing\ndamage!"
+							create_warning(msg, e)
+						end
 					end
 				end
 			end
@@ -647,7 +684,7 @@ end
 -->8
 -- enemies
 
-function create_enemy_bullet(e)
+function create_enemy_bullet()
 	for e in all(enemies) do
 		if e.fire == true and e.collateral != 3 then
 			e.fire = false
