@@ -75,6 +75,11 @@ function _init()
 		2, -- aiming damage
 		3 -- firing damage
 	}
+	enemy_by_difficulty ={
+		{1,2},
+		{3,4,5},
+		{5,6}
+	}
 	-- store variables
 	shop_selector_spr = {002,018,034}
 	shop_selector_y = 30
@@ -107,7 +112,7 @@ function _init()
 			["spr_damage"] = 026,
 			["b_health"] = 2,
 			["b_damage"] = 2,
-			["b_shot_speed"] = 2,
+			["b_shot_speed"] = 1.7,
 			["b_speed"] =  1,
 			["b_cdr"] = 60,
 			["n_destroyed"] = 0,
@@ -121,7 +126,7 @@ function _init()
 			["b_health"] = 5,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
-			["b_speed"] =  1.5,
+			["b_speed"] =  1.3,
 			["b_cdr"] = 45,
 			["n_destroyed"] = 0,
 			["knowledge_level"] = 0,
@@ -133,8 +138,8 @@ function _init()
 			["spr_damage"] = 028,
 			["b_health"] = 4,
 			["b_damage"] = 2,
-			["b_shot_speed"] = 2,
-			["b_speed"] =  2,
+			["b_shot_speed"] = 1.7,
+			["b_speed"] =  1.7,
 			["b_cdr"] = 30,
 			["n_destroyed"] = 0,
 			["knowledge_level"] = 0,
@@ -317,7 +322,7 @@ function create_warning(msg, e)
 end
 
 function start_battle()
-	enemy_count = (flr(rnd(3)) + 1) * difficulty
+	enemy_count = rnd(enemy_by_difficulty[flr(rnd(1))+difficulty])
 
 	while(enemy_count > 0)
 	do
@@ -424,7 +429,7 @@ end
 
 function rewards()
 	if rewards_given == false then
-		x = difficulty * (flr(rnd(5)) + 1)
+		x = difficulty * (flr(rnd(difficulty)) + 1)
 		fuel += x
 		r_fuel = x
 		scraps += battle_rewards
@@ -470,8 +475,8 @@ function draw_ui()
 end
 
 function update_threat()
-	if (score > 2000 and score < 4000) difficulty = 2
-	if (score > 4000) difficulty = 3
+	if (score > 2000 and score < 5000) difficulty = 2
+	if (score > 5000) difficulty = 3
 	if (difficulty == 2) threat_level = 022
 	if (difficulty == 3) threat_level = 038
 end
