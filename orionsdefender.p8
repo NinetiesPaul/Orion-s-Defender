@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 29
+version 33
 __lua__
 -- general code
 
@@ -144,6 +144,7 @@ function _init()
 	}
 	enemies = {}
 	enemy_bullets = {}
+	explosions = {}
 end
 
 function _draw()
@@ -168,6 +169,7 @@ function _draw()
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
+		foreach(explosions, exploding_draw)
 	end
  
 	if current_view == 3 then -- rewards
@@ -288,6 +290,7 @@ function _update()
 	foreach(enemies, move_enemy)
 	foreach(bullets, move_bullet)
 	foreach(enemy_bullets, move_enemy_bullet)
+	foreach(explosions, animate_explosion)
 	foreach(encounters, move_encounter)
 end
 
@@ -322,6 +325,79 @@ function start_battle()
 
 	ship_x = 64
 	encounters = {}
+end
+
+function animate_explosion(exp)
+	if (clock % 2 == 0) exp.stage += 1
+	
+	if exp.stage == 4 then
+		exp.base_stg4_px1 = flr(rnd(3))+1
+		exp.base_stg4_py1 = flr(rnd(3))+1
+		exp.base_stg4_px2 = flr(rnd(3))+1
+		exp.base_stg4_py2 = flr(rnd(3))+1
+		exp.base_stg4_px3 = flr(rnd(3))+1
+		exp.base_stg4_py3 = flr(rnd(3))+1
+		exp.base_stg4_px4 = flr(rnd(3))+1
+		exp.base_stg4_py4 = flr(rnd(3))+1
+		exp.base_stg4_px5 = flr(rnd(3))+1
+		exp.base_stg4_py5 = flr(rnd(3))+1
+		exp.base_stg4_px6 = flr(rnd(3))+1
+		exp.base_stg4_py6 = flr(rnd(3))+1
+		exp.base_stg4_px7 = flr(rnd(3))+1
+		exp.base_stg4_px8 = flr(rnd(3))+1
+	end
+	
+	if exp.stage == 8 then
+		del(explosions, explosion)
+	end
+end
+
+function exploding_draw(exp)
+	if exp.stage < 4 then
+		if (exp.stage == 2)	exp.spr = 055
+		if (exp.stage == 3)	exp.spr = 056
+		spr(exp.spr,exp.px,exp.py)	
+	elseif exp.stage == 4 then
+		exp.spr = 057
+		spr(exp.spr,exp.px-exp.base_stg4_px1,exp.py-exp.base_stg4_py1)	
+		spr(exp.spr,exp.px-exp.base_stg4_px2,exp.py+exp.base_stg4_py2)	
+		spr(exp.spr,exp.px+exp.base_stg4_px3,exp.py-exp.base_stg4_py3)	
+		spr(exp.spr,exp.px-exp.base_stg4_px4,exp.py+exp.base_stg4_py4)	
+		spr(exp.spr,exp.px+exp.base_stg4_px5,exp.py+exp.base_stg4_py5)	
+		spr(exp.spr,exp.px+exp.base_stg4_px6,exp.py+exp.base_stg4_py6)	
+		spr(exp.spr,exp.px-exp.base_stg4_px7,exp.py)	
+		spr(exp.spr,exp.px+exp.base_stg4_px8,exp.py)
+	elseif exp.stage == 5 then
+		exp.spr = 058
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+2),exp.py-(exp.base_stg4_py1+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+2),exp.py+(exp.base_stg4_py2+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+2),exp.py-(exp.base_stg4_py3+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+2),exp.py+(exp.base_stg4_py4+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+2),exp.py+(exp.base_stg4_py5+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+2),exp.py+(exp.base_stg4_py6+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+2),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+2),exp.py)
+	elseif exp.stage == 6 then
+		exp.spr = 059
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+4),exp.py-(exp.base_stg4_py1+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+4),exp.py+(exp.base_stg4_py2+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+4),exp.py-(exp.base_stg4_py3+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+4),exp.py+(exp.base_stg4_py4+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+4),exp.py+(exp.base_stg4_py5+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+4),exp.py+(exp.base_stg4_py6+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+4),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+4),exp.py)
+	elseif exp.stage == 7 then
+		exp.spr = 060
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+6),exp.py-(exp.base_stg4_py1+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+6),exp.py+(exp.base_stg4_py2+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+6),exp.py-(exp.base_stg4_py3+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+6),exp.py+(exp.base_stg4_py4+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+6),exp.py+(exp.base_stg4_py5+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+6),exp.py+(exp.base_stg4_py6+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+6),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+6),exp.py)
+	end
 end
 
 function rewards()
@@ -518,12 +594,38 @@ function move_bullet(b)
 				score += e.score
 				battle_rewards += flr(10 + (e.reward * (difficulty/2)))
 				del(enemies,e)
+				create_explosion(e.x,e.y)
 				sfx(05)
 			end
 
 			if (count(enemies) == 0) current_view = views[3]
 		end
 	end
+end
+
+function create_explosion(ex,ey)
+	local explosion = {}
+	explosion.spr = 054
+	explosion.px = ex
+	explosion.py = ey
+	explosion.stage = 1
+	explosion.base_stg4_px1 = 0
+	explosion.base_stg4_py1 = 0
+	explosion.base_stg4_px2 = 0
+	explosion.base_stg4_py2 = 0
+	explosion.base_stg4_px3 = 0
+	explosion.base_stg4_py3 = 0
+	explosion.base_stg4_px4 = 0
+	explosion.base_stg4_py4 = 0
+	explosion.base_stg4_px5 = 0
+	explosion.base_stg4_py5 = 0
+	explosion.base_stg4_px6 = 0
+	explosion.base_stg4_py6 = 0
+	explosion.base_stg4_px7 = 0
+	explosion.base_stg4_px8 = 0
+
+	sfx(07)
+	add(explosions, explosion)
 end
 
 function move()
@@ -796,14 +898,14 @@ __gfx__
 00000000808008080000000008eeee8001cccc103b5bb5b32888888228888882288ee88200000000000000000000000000000000000000000000000000000000
 000000008000000800000000008ee800001cc1003bbbbbb302888820028888200288882000000000000000000000000000000000000000000000000000000000
 00000000088888800000000000088000000110000333333000222200002222000022220000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000e80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000e788000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000008888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000008ee800001cc1003bbbbbb300000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000088000000110000333333000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000099990000999900009099000090990000900900000000000000000000000000
+000000000000000000000000000000000000000000000000000000000099990009aaaa900999aa900999aa900999aa9009090090000000000000000000000000
+00000000000e8000000000000000000000000000000000000009900009a99a909aaaaaa999aa99a999a999a999a0990990000909000000000000000000000000
+0000000000e788000000000000000000000000000000000000999900099aa9909aaaaaa999aaaaa9999a99a99900900990000009000000000000000000000000
+00000000008888000000000000000000000000000000000000999900099aa9909aaaaaa999a999a9099999000909900000000000000000000000000000000000
+0000000000088000000000000000000000000000000000000009900009a99a909aaaaaa999aa9aa9900909999009009990000099000000000000000000000000
+000000000000000000000000008ee800001cc1003bbbbbb3000000000099990009aaaa9009999a90099909900990009009000090000000000000000000000000
+00000000000000000000000000088000000110000333333000000000000000000099990000999900000909000009090000090900000000000000000000000000
 __label__
 77777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
 70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007
