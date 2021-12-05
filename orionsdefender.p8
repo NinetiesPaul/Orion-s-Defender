@@ -255,6 +255,7 @@ function _update()
 	if current_view == 1 then
 		fuel -= fuel_comsumption
 		if (clock % 30 == 0) create_encounter()
+		foreach(encounters, move_encounter)
 	end
 
 	if current_view == 2 then
@@ -264,6 +265,10 @@ function _update()
 			bullet_cooldown -= 1
 		end
 		gun_ready()
+		foreach(enemies, move_enemy)
+		foreach(bullets, move_bullet)
+		foreach(enemy_bullets, move_enemy_bullet)
+		foreach(explosions, animate_explosion)
 	end
 
 	if current_view == 3 then
@@ -286,12 +291,6 @@ function _update()
 	if current_view != 1 then
 		encounters = {}
 	end
-
-	foreach(enemies, move_enemy)
-	foreach(bullets, move_bullet)
-	foreach(enemy_bullets, move_enemy_bullet)
-	foreach(explosions, animate_explosion)
-	foreach(encounters, move_encounter)
 end
 
 function start_battle()
@@ -423,6 +422,7 @@ function destroy()
 	enemy_bullets = {}
 	bullets = {}
 	encounters = {}
+	explosions = {}
 end
 
 function draw_ui()
@@ -443,7 +443,6 @@ function draw_ui()
 		linect+=1
 	end
 	]]--
-
 end
 
 function update_threat()
