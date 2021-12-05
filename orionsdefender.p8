@@ -260,11 +260,7 @@ function _update()
 
 	if current_view == 2 then
 		if (count(enemies) == 0)	start_battle()
-		if (bullet_cooldown == 0) fire()
-		if clock % 30 == 0 and bullet_cooldown != 0 then
-			bullet_cooldown -= 1
-		end
-		gun_ready()
+		fire()
 		foreach(enemies, move_enemy)
 		foreach(bullets, move_bullet)
 		foreach(enemy_bullets, move_enemy_bullet)
@@ -523,28 +519,31 @@ function draw_cooldown()
 		bar_color)
 	end
 end
-
-function gun_ready()
-	if bullet_cooldown == 0 and warned == false then
-		sfx(03)
-		warned = true
-	end
-end
 -->8
 -- player
 
 function fire()
-	if btnp(4) then
-		local bullet = {}
-		bullet.x = ship_x
-		bullet.y = ship_y - 8
-		bullet.critical = (rnd() > random_factor) and true or false
-		bullet.spr = (bullet.critical == true) and 049 or 001
+	if bullet_cooldown == 0 then
+		if warned == false then
+			sfx(03)
+			warned = true
+		end
+		if btnp(4) then
+			local bullet = {}
+			bullet.x = ship_x
+			bullet.y = ship_y - 8
+			bullet.critical = (rnd() > random_factor) and true or false
+			bullet.spr = (bullet.critical == true) and 049 or 001
 
-		bullet_cooldown = bullet_cooldown_rate
-		warned = false
-		sfx(07)
-		add(bullets, bullet)
+			bullet_cooldown = bullet_cooldown_rate
+			warned = false
+			sfx(07)
+			add(bullets, bullet)
+		end
+	else
+		if clock % 30 == 0 and bullet_cooldown != 0 then
+			bullet_cooldown -= 1
+		end
 	end
 end
 
