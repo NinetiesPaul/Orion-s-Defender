@@ -322,7 +322,7 @@ function create_warning(msg, e)
 end
 
 function start_battle()
-	enemy_count = rnd(enemy_by_difficulty[flr(rnd(1))+difficulty])
+	enemy_count = rnd(enemy_by_difficulty[difficulty])
 
 	while(enemy_count > 0)
 	do
