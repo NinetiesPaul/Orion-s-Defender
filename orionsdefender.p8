@@ -43,7 +43,6 @@ function _init()
 	current_view = views[6]
 	rewards_given = false
 	battle_rewards = 0
-	r_fuel = 0
 	r_scraps = 0
 	-- player variables
 	cooldown_lvls = {3,2,1}
@@ -51,8 +50,12 @@ function _init()
 	ship_spr = 017
 	ship_x = 64
 	ship_y = 118
-	fuel = 25
-	fuel_comsumption = 0.02
+	fuel = 15
+	health_spr = 003
+	armor_spr =  004
+	fuel_spr = 005
+	max_fuel = 15
+	fuel_comsumption = 0.01
 	stat_multiplier = 5
 	stat_lvl = {1,2,3}
 	current_stat_armor_lvl = 1
@@ -153,12 +156,12 @@ function _init()
 	warnings = {}
 	positions = {
 		{8,15},
-		{21,45},
-		{32,67},
-		{49,55},
+		{31,45},
+		{39,67},
+		{79,55},
 		{80,25},
 		{99,61},
-		{69,76},
+		{21,21},
 		{94,11},
 	}
 end
@@ -193,7 +196,6 @@ function _draw()
 		destroy()
 
 		print("you've won!", 40,64)
-		print("added "..r_fuel.." fuel", 40,72)
 		print("added "..r_scraps.." scraps", 40,80)
 		print("press z or x to continue", 18, 104)
 	end
@@ -268,10 +270,12 @@ function _update()
 	clock+=1
 	if (count(warnings) == 0) move()
 	update_threat()
+	update_icons()
 
 	if current_view == 1 then
 		fuel -= fuel_comsumption
 		if (clock % 30 == 0) create_encounter()
+		if (fuel <= 0) current_view = views[5]
 		foreach(encounters, move_encounter)
 	end
 
@@ -319,6 +323,24 @@ function move_warning(w)
 		w.duration -= 1
 		if (w.duration == 0) del(warnings, w)
 	end
+end
+
+function update_icons()
+	if (health/current_max_health < 0.25) health_spr = 051
+	if (health/current_max_health > 0.25 and health/current_max_health < 0.50) health_spr = 035
+	if (health/current_max_health > 0.50 and health/current_max_health < 1) health_spr = 019
+	if (health/current_max_health == 1) health_spr = 003
+
+	if (fuel/max_fuel < 0.25) fuel_spr = 053
+	if (fuel/max_fuel > 0.25 and fuel/max_fuel < 0.50) fuel_spr = 037
+	if (fuel/max_fuel > 0.50 and fuel/max_fuel < 1) fuel_spr = 021
+	if (fuel/max_fuel == 1) fuel_spr = 005
+
+	if (armor/current_max_armor == 1) armor_spr = 004
+	if (armor/current_max_armor > 0.50 and armor/current_max_armor < 1) armor_spr = 020
+	if (armor/current_max_armor > 0.25 and armor/current_max_armor < 0.50) armor_spr = 036
+	if (armor/current_max_armor < 0.25) armor_spr = 052
+	if (armor/current_max_armor <= 0) armor_spr = 016
 end
 
 function create_warning(msg, e)
@@ -442,8 +464,6 @@ end
 function rewards()
 	if rewards_given == false then
 		x = difficulty * (flr(rnd(difficulty)) + 1)
-		fuel += x
-		r_fuel = x
 		scraps += battle_rewards
 		r_scraps = battle_rewards
 		rewards_given = true
@@ -469,12 +489,9 @@ end
 function draw_ui()
 	print("$" .. scraps,2,2)
 	if (current_view != 4) print("★ " .. score,2,8, 7)
-	spr(003,76,2)
-	print(health,85,4)
-	spr(004,93,2)
-	print(armor,102,4)
-	spr(005,110,2)
-	print(fuel,119,4)
+	spr(armor_spr,98,2)
+	spr(health_spr,108,2)
+	spr(fuel_spr,118,2)
 	
 	--[[
 	linect = 0
@@ -788,14 +805,21 @@ function nav_store()
 	
 	if btnp(4) then
 		if shop_selector_pos == 1 then
-			if scraps >= 4 then
-				sfx(01)
-				fuel += 1
-				scraps -= 4
-				shop_last_bought = "bought 1 fuel"
+			if fuel < max_fuel then
+				if scraps >= 4 then
+						sfx(01)
+						fuel = flr(fuel)
+						fuel += 1
+						scraps -= 4
+						shop_last_bought = "bought 1 fuel"
+						if (fuel > max_fuel) fuel = max_fuel
+					else
+						sfx(00)
+						shop_last_bought = "not enough scrap"
+					end
 			else 
 				sfx(00)
-				shop_last_bought = "not enough scrap"
+				shop_last_bought = "fuel at max capacity"
 			end
 		end
 		
@@ -1112,7 +1136,7 @@ __gff__
 0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-000100000000000000040000100000000230000000016000160003000029000060003007008000050002b070090000a0001100015000000001b0001e0002200031000280002a0002d00032000370003d00017000
+000100000000000000040000100000000230000000016000160003000029000060003007008000050002c070090000a0001100015000000001b0001e0002200031000280002a0002d00032000370003d00017000
 000100000000000000000000000000000000000000000000000000000000000000002a070000002e0003007000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100003f07000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00010000350003a000120501405016050190501b0501e050200502305026070280702b0702f0502c0002f00000000320003700037000000000000000000000000000000000000000000000000000000000000000
