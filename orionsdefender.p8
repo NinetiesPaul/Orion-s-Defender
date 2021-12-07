@@ -151,6 +151,16 @@ function _init()
 	enemy_bullets = {}
 	explosions = {}
 	warnings = {}
+	positions = {
+		{8,15},
+		{21,45},
+		{32,67},
+		{49,55},
+		{80,25},
+		{99,61},
+		{69,76},
+		{94,11},
+	}
 end
 
 function _draw()
@@ -334,17 +344,19 @@ function start_battle()
 		enemy.damage = enemy_data["b_damage"] + (difficulty - 1)
 		enemy.shot_v = enemy_data["b_shot_speed"] + (difficulty - 1)
 		enemy.v = enemy_data["b_speed"]
-		enemy.x = flr(rnd(15))+15
-		enemy.y = flr(rnd(15))+15
-		enemy.sx = enemy.x
-		enemy.sy = enemy.y
-		enemy.lx = enemy.x+rnd(30)+60
-		enemy.ly = enemy.y+rnd(30)+60
-		enemy.move_forward = true
-		enemy.fire = true
 		enemy.score = enemy_data.score
 		enemy.reward = enemy_data.reward
 		enemy.cdr = enemy_data["b_cdr"]
+
+		enemy.x = flr(rnd(48))+48
+		enemy.y = 18
+		enemy.angle = 0
+		enemy.from_x = 0
+		enemy.to_x = 0
+		enemy.to_y = 0
+		enemy.moving = false
+
+		enemy.fire = true
 		enemy.collateral = false
 		add(enemies, enemy)
 		enemy_count -= 1
@@ -520,10 +532,10 @@ end
 function move_encounter(e)
 	e.y += 3
 
-	if e.x >= ship_x-4 and
-	e.x <= ship_x+6 and
-	e.y >= ship_y-4 and
-	e.y <= ship_y+6 then
+	if e.x >= ship_x-8 and
+	e.x <= ship_x+10 and
+	e.y >= ship_y-8 and
+	e.y <= ship_y+10 then
 		del(encounters,e)
 		if e.type == 1 then
 			current_view = views[2]
@@ -732,21 +744,25 @@ end
 
 function move_enemy(e)
 	if e.collateral != 1 then
-		if e.move_forward == true then
-			if (e.x<e.lx) e.x+=e.v
-			if (e.y<e.ly) e.y+=e.v
-			if e.y>=e.ly and
-			e.x>=e.lx then
-				e.move_forward = false
+		if e.moving == false then
+			e.moving = true
+			rnd_pos = rnd(positions)
+			e.from_x = e.x
+			e.to_x = rnd_pos[1]
+			e.to_y = rnd_pos[2]
+			e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
+		else
+			e.x += cos(e.angle) * e.v
+			e.y += sin(e.angle) * e.v
+			if e.from_x < e.x then
+				if e.x > e.to_x then
+					e.moving = false
+				end
 			end
-		end
-
-		if e.move_forward == false then
-			if (e.x>e.sx) e.x-=e.v
-			if (e.y>e.sy) e.y-=e.v
-			if e.y<=e.sy and
-			e.x<=e.sx then
-				e.move_forward = true
+			if e.from_x > e.x then
+				if e.x < e.to_x then
+					e.moving = false
+				end
 			end
 		end
 	end
@@ -755,7 +771,6 @@ end
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
 	print(e.health,e.x + 9,e.y, 10)
-	-- if (clock % 5 == 0 and e.spr == 025) e.spr = 009  
 end
 
 function draw_enemy_bullet(eb)
