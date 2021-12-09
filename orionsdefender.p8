@@ -6,9 +6,6 @@ __lua__
 function _init()
 	-- encounters variable
 	encounters = {}
-	-- 3 police
-	-- 3 random civilian
-	-- quests (ransom, kidnap, help raid, avoid raid)
 	types = {
 		1, -- battle pirate
 		2 -- store
@@ -70,6 +67,13 @@ function _init()
 	bullet_cooldown = 0
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
+	missile_mode = false
+	current_enemy_locked_on = null
+	missile_available = true
+	missile_damage = 3
+	missile_cooldown = 0
+	missile_n = 2
+	missile_max_capacity = 5
 	warned = true
 	random_factor = 0.95
 	collateral_type =
@@ -152,6 +156,7 @@ function _init()
 	}
 	enemies = {}
 	enemy_bullets = {}
+	missiles = {}
 	explosions = {}
 	warnings = {}
 	positions = {
@@ -173,22 +178,21 @@ function _draw()
 	if current_view == 1 then -- world
 		draw_ui()
 		draw_threat()
-		spr(ship_spr,ship_x,ship_y)	
+		spr(ship_spr,ship_x,ship_y)
 		foreach(encounters, draw_encounter)
 	end
  
 	if current_view == 2 then -- battle
 		draw_ui()
-		if (clock % 5 == 0 and ship_spr == 033) ship_spr = 017
-		if (count(warnings) == 0) create_enemy_bullet()
+		draw_cooldown()
+		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
 
 		spr(ship_spr,ship_x,ship_y)
-
-		draw_cooldown()
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
-		foreach(explosions, exploding_draw)
+		foreach(missiles, draw_missile)
+		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
 	end
  
@@ -211,6 +215,7 @@ function _draw()
 		print("upgrade armor -- $" .. next_armor_upgrade_cost, 10, 64)
 		print("upgrade gun damage -- $" .. next_gun_upgrade_cost, 10, 72)
 		print("upgrade gun cooldown -- $" .. next_cooldown_upgrade_cost, 10, 80)
+		print("buy missile -- $7", 10, 88)
 
 		if (clock % 90 == 0) shop_last_bought = ""
 		print(shop_last_bought, 10, 22)
@@ -281,7 +286,7 @@ function _update()
 
 	if current_view == 2 then
 		if (count(enemies) == 0)	start_battle()
-		if (count(warnings) == 0) then
+		if count(warnings) == 0 then
 			fire()
 			foreach(enemies, move_enemy)
 			foreach(bullets, move_bullet)
@@ -289,10 +294,19 @@ function _update()
 			foreach(explosions, animate_explosion)
 		end
 		foreach(warnings, move_warning)
+
+		if (missile_mode) missile_ui()
+		foreach(missiles, move_missile)
+		if missile_available == false then
+			missile_cooldown += 1
+			if missile_cooldown % 90 == 0 then
+				missile_available = true
+				missile_cooldown = 0
+			end
+		end
 	end
 
 	if current_view == 3 then
-		warned = true
 		rewards()
 	end
 
@@ -310,6 +324,33 @@ function _update()
 
 	if current_view != 1 then
 		encounters = {}
+	end
+end
+
+function draw_missile(m)
+	spr(016,m.x,m.y)
+end
+
+function move_missile(m)
+	target_x = enemies[current_enemy_locked_on].x
+	target_y = enemies[current_enemy_locked_on].y
+
+	angle = atan2(target_x - m.x, target_y - m.y)
+	m.x += cos(angle) * m.v
+	m.y += sin(angle) * m.v
+
+	if m.x >= target_x and
+	m.x <= target_x+8 and
+	m.y >= target_y-2 and
+	m.y <= target_y+6 then
+		sfx(04)
+		e = enemies[current_enemy_locked_on]
+		e.health -= m.damage
+		del(missiles, m)
+		if e.health <= 0 then
+			current_enemy_locked_on = 1
+			destroy_enemy(e)
+		end
 	end
 end
 
@@ -340,7 +381,7 @@ function update_icons()
 	if (armor/current_max_armor > 0.50 and armor/current_max_armor < 1) armor_spr = 020
 	if (armor/current_max_armor > 0.25 and armor/current_max_armor < 0.50) armor_spr = 036
 	if (armor/current_max_armor < 0.25) armor_spr = 052
-	if (armor/current_max_armor <= 0) armor_spr = 016
+	if (armor/current_max_armor <= 0) armor_spr = 049
 end
 
 function create_warning(msg, e)
@@ -377,6 +418,7 @@ function start_battle()
 		enemy.to_x = 0
 		enemy.to_y = 0
 		enemy.moving = false
+		enemy.locked_on = false
 
 		enemy.fire = true
 		enemy.collateral = false
@@ -413,7 +455,7 @@ function animate_explosion(exp)
 	end
 end
 
-function exploding_draw(exp)
+function draw_explosion(exp)
 	if exp.stage < 4 then
 		if (exp.stage == 2)	exp.spr = 055
 		if (exp.stage == 3)	exp.spr = 056
@@ -484,6 +526,11 @@ function destroy()
 	encounters = {}
 	explosions = {}
 	warnings = {}
+	missiles = {}
+	missile_available = true
+	missile_cooldown = 0
+	missile_mode = false
+	warned = true
 end
 
 function draw_ui()
@@ -516,9 +563,9 @@ function draw_threat()
 	if (threat_x == 2) update = 3
 	if (threat_x == 3) update = 2
 	
-	if (clock % update == 0) then
+	if clock % update == 0 then
 		threat_y += 1
-		if(threat_y > 3) threat_y = 1
+		if (threat_y > 3) threat_y = 1
 	end
 	
 	spr(threat_level_sprs[threat_x][threat_y],2,118)
@@ -564,7 +611,7 @@ function move_encounter(e)
 		end
 	end
 
-	if (e.y >= 128) then
+	if e.y >= 128 then
 		del(encounters,e)
 	end
 end
@@ -586,12 +633,12 @@ end
 -- player
 
 function fire()
-	if bullet_cooldown == 0 then
-		if warned == false then
-			sfx(03)
-			warned = true
-		end
-		if btnp(4) then
+	if warned == false then
+		sfx(03)
+		warned = true
+	end
+	if btnp(4) then
+		if missile_mode == false and bullet_cooldown == 0 then
 			local bullet = {}
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
@@ -601,16 +648,55 @@ function fire()
 			warned = false
 			sfx(07)
 			add(bullets, bullet)
+		else
+			if missile_available == true and missile_n > 0 then
+				local missile = {}
+				missile.x = ship_x
+				missile.y =ship_y - 8
+				missile.v = 4
+				missile.damage = missile_damage
+				add(missiles, missile)
+				missile_available = false
+				missile_n -= 1
+			end
 		end
-	else
-		if clock % 30 == 0 and bullet_cooldown != 0 then
-			bullet_cooldown -= 1
+	end
+	if btnp(5) then
+		if missile_mode == false then
+			missile_mode = true
+		else
+			for e in all (enemies) do
+				e.locked_on = false
+			end
+			missile_mode = false
 		end
+	end
+	if clock % 30 == 0 and bullet_cooldown != 0 then
+		bullet_cooldown -= 1
 	end
 end
 
 function draw_bullet(b)
 	spr(b.spr,b.x,b.y)
+end
+
+function missile_ui()
+	if (current_enemy_locked_on == null) current_enemy_locked_on = 1
+	last_enemy = count(enemies)
+
+	if btnp(2) then
+		enemies[current_enemy_locked_on].locked_on = false
+		current_enemy_locked_on += 1
+		if (current_enemy_locked_on > last_enemy) current_enemy_locked_on = 1
+	end
+
+	if btnp(3) then
+		enemies[current_enemy_locked_on].locked_on = false
+		current_enemy_locked_on -= 1
+		if (current_enemy_locked_on <= 0) current_enemy_locked_on = last_enemy
+	end
+
+	enemies[current_enemy_locked_on].locked_on = true
 end
 
 function move_bullet(b)
@@ -623,7 +709,7 @@ function move_bullet(b)
 		e.y <= b.y+6
 		then
 			damage = bullet_damage
-			if (rnd() > random_factor) then
+			if rnd() > random_factor then
 				damage = damage + (flr(rnd(2)) + 1)
 				create_warning("critical\ndamage!", e)
 			end
@@ -648,29 +734,30 @@ function move_bullet(b)
 			sfx(04)
 			del(bullets,b)
 
-			if (e.health <= 0) then
-				for el in all(enemy_list) do
-					if e.spr == el.spr_ok then
-						el.n_destroyed += 1
-
-						if el.n_destroyed % 5 == 0 then
-							if (el.knowledge_level == 0) el.knowledge_level = 0.100
-							if (el.knowledge_level == 0.100) el.knowledge_level = 0.200
-							if (el.knowledge_level == 0.200) el.knowledge_level = 0.300
-						end
-					end
-				end
-
-				score += e.score
-				battle_rewards += flr(10 + (e.reward * (difficulty/2)))
-				del(enemies,e)
-				create_explosion(e.x,e.y)
-				sfx(05)
-			end
-
-			if (count(enemies) == 0) current_view = views[3]
+			if (e.health <= 0) destroy_enemy(e)
 		end
 	end
+end
+
+function destroy_enemy(e)
+	for el in all(enemy_list) do
+		if e.spr == el.spr_ok then
+			el.n_destroyed += 1
+
+			if el.n_destroyed % 5 == 0 then
+				if (el.knowledge_level == 0) el.knowledge_level = 0.100
+				if (el.knowledge_level == 0.100) el.knowledge_level = 0.200
+				if (el.knowledge_level == 0.200) el.knowledge_level = 0.300
+			end
+		end
+	end
+
+	score += e.score
+	battle_rewards += flr(10 + (e.reward * (difficulty/2)))
+	del(enemies,e)
+	create_explosion(e.x,e.y)
+	sfx(05)
+	if (count(enemies) == 0) current_view = views[3]
 end
 
 function create_explosion(ex,ey)
@@ -701,8 +788,6 @@ end
 function move()
 	if (btn(1) and ship_x < 120) ship_x+=2
 	if (btn(0) and ship_x > 0) ship_x-=2
-	--if (btn(2) and ship_y > 0) ship_y-=2
-	--if (btn(3) and ship_y < 120) ship_y+=2
 end
 
 function start()
@@ -719,22 +804,20 @@ end
 -->8
 -- enemies
 
-function create_enemy_bullet()
-	for e in all(enemies) do
-		if e.fire == true and e.collateral != 3 then
-			e.fire = false
-			local enemy_bullet = {}
-			enemy_bullet.x = e.x
-			enemy_bullet.y = e.y+8
-			enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
-			enemy_bullet.damage = e.damage
-			enemy_bullet.v = e.shot_v
-			enemy_bullet.aimless = (e.collateral == 2) and true or false
-			sfx(08)
-			add(enemy_bullets,enemy_bullet)
-		else
-			if (clock % e.cdr == 0) e.fire = true
-		end
+function create_enemy_bullet(e)
+	if e.fire == true and e.collateral != 3 then
+		e.fire = false
+		local enemy_bullet = {}
+		enemy_bullet.x = e.x
+		enemy_bullet.y = e.y+8
+		enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
+		enemy_bullet.damage = e.damage
+		enemy_bullet.v = e.shot_v
+		enemy_bullet.aimless = (e.collateral == 2) and true or false
+		sfx(08)
+		add(enemy_bullets,enemy_bullet)
+	else
+		if (clock % e.cdr == 0) e.fire = true
 	end
 end
 
@@ -747,11 +830,10 @@ function move_enemy_bullet(eb)
 	eb.y >= ship_y-4 and
 	eb.y <= ship_y+6 then
 		del(enemy_bullets,eb)
-		ship_spr = 033
 		sfx(06)
 
 		if (armor == 0) health-=eb.damage
-		if (armor > 0) then 
+		if armor > 0 then 
 			armor-=eb.damage
 			if (armor < 0) armor = 0
 		end
@@ -788,6 +870,7 @@ end
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
 	print(e.health,e.x + 9,e.y, 10)
+	if (e.locked_on) rect(e.x-2,e.y-2,e.x+9,e.y+9,8)
 end
 
 function draw_enemy_bullet(eb)
@@ -932,10 +1015,27 @@ function nav_store()
 				shop_last_bought = "gun cooldown maxed out"
 			end
 		end
+
+		if shop_selector_pos == 8 then
+			if missile_n < missile_max_capacity then
+				if scraps >= 7 then
+					sfx(01)
+					scraps -= 7
+					missile_n += 1
+					shop_last_bought = "missile bought"
+				else
+					sfx(00)
+					shop_last_bought = "not enough scrap"
+				end
+			else
+				sfx(00)
+				shop_last_bought = "missiles maxed out"
+			end
+		end
 		
 	end
  
-	if btnp(3) and shop_selector_pos < 7 then
+	if btnp(3) and shop_selector_pos < 8 then
 		sfx(02)
 		shop_selector_y += 8
 		shop_selector_pos += 1
@@ -964,26 +1064,26 @@ __gfx__
 00000000000000000000000000088000000110000333333000333300003333000033330007000070007007000700007000077000000000000000000000000000
 00000000000000000000000000000000000000000000000000999900009999000099990000888800000880000888888088888888000000000000000000000000
 0000000077000077000000000000000000000000000000000a7aaa900a7aaa900a7aaa9008000080088008808000000880000008000000000000000000000000
-0000000070700707999999908eeeeee81cccccc1b7bbbbb397aaaaa997aaaaa997a77aa980888808808008088088880880888808000000000000000000000000
-000000007007700709aaaaa98eeeeee81cccccc13b5bb5b39aaaaaa99aa77aa99a7aa7a980000008800880088080080808000080000000000000000000000000
-000000007007700709aaaaa98eeeeee801cccc103bb55bb39aaaaaa99aa77aa99a7aa7a980800808800000088008800808088080000000000000000000000000
-00000000707007079999999008eeee8001cccc103b5bb5b39aaaaaa99aaaaaa99aa77aa908088080080000808008800800800800000000000000000000000000
+000e800070700707999999908eeeeee81cccccc1b7bbbbb397aaaaa997aaaaa997a77aa980888808808008088088880880888808000000000000000000000000
+00e788007007700709aaaaa98eeeeee81cccccc13b5bb5b39aaaaaa99aa77aa99a7aa7a980000008800880088080080808000080000000000000000000000000
+008888007007700709aaaaa98eeeeee801cccc103bb55bb39aaaaaa99aa77aa99a7aa7a980800808800000088008800808088080000000000000000000000000
+00088000707007079999999008eeee8001cccc103b5bb5b39aaaaaa99aaaaaa99aa77aa908088080080000808008800800800800000000000000000000000000
 000000007000000700000000008ee800001cc1003bbbbbb309aaaa9009aaaa9009aaaa9080800808080880800880088000800800000000000000000000000000
 00000000077777700000000000088000000110000333333000999900009999000099990008000080008008000800008000088000000000000000000000000000
 00000000000000000000000000000000000000000000000000222200002222000022220000000000000000000000000000000000000000000000000000000000
 00000000880000880000000000000000000000000000000008e8882008e8882008e8882000000000000000000000000000000000000000000000000000000000
-0000000080800808000000000000000000000000000000002e8888822e8888822e8ee88200000000000000000000000000000000000000000000000000000000
-00000000800880080999999900000000000000000000000028888882288ee88228e88e8200000000000000000000000000000000000000000000000000000000
-0000000080088008099999998eeeeee801cccc103bb55bb328888882288ee88228e88e8200000000000000000000000000000000000000000000000000000000
-00000000808008080000000008eeee8001cccc103b5bb5b32888888228888882288ee88200000000000000000000000000000000000000000000000000000000
+000d500080800808000000000000000000000000000000002e8888822e8888822e8ee88200000000000000000000000000000000000000000000000000000000
+00d75500800880080999999900000000000000000000000028888882288ee88228e88e8200000000000000000000000000000000000000000000000000000000
+0055550080088008099999998eeeeee801cccc103bb55bb328888882288ee88228e88e8200000000000000000000000000000000000000000000000000000000
+00055000808008080000000008eeee8001cccc103b5bb5b32888888228888882288ee88200000000000000000000000000000000000000000000000000000000
 000000008000000800000000008ee800001cc1003bbbbbb302888820028888200288882000000000000000000000000000000000000000000000000000000000
 00000000088888800000000000088000000110000333333000222200002222000022220000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000099990000999900009099000090990000900900000000000000000000000000
 000000000000000000000000000000000000000000000000000000000099990009aaaa900999aa900999aa900999aa9009090090000000000000000000000000
-00000000000e8000000000000000000000000000000000000009900009a99a909aaaaaa999aa99a999a999a999a0990990000909000000000000000000000000
-0000000000e788000000000000000000000000000000000000999900099aa9909aaaaaa999aaaaa9999a99a99900900990000009000000000000000000000000
-00000000008888000000000000000000000000000000000000999900099aa9909aaaaaa999a999a9099999000909900000000000000000000000000000000000
-0000000000088000000000000000000000000000000000000009900009a99a909aaaaaa999aa9aa9900909999009009990000099000000000000000000000000
+000c100000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa99a999a999a999a0990990000909000000000000000000000000
+00c71100000000000000000000000000000000000000000000999900099aa9909aaaaaa999aaaaa9999a99a99900900990000009000000000000000000000000
+00111100000000000000000000000000000000000000000000999900099aa9909aaaaaa999a999a9099999000909900000000000000000000000000000000000
+0001100000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa9aa9900909999009009990000099000000000000000000000000
 000000000000000000000000008ee800001cc1003bbbbbb3000000000099990009aaaa9009999a90099909900990009009000090000000000000000000000000
 00000000000000000000000000088000000110000333333000000000000000000099990000999900000909000009090000090900000000000000000000000000
 00000000000000000000077777700000000000000000000000000033b00000000000000000000000000000000000000000000000000000000000000000000000
