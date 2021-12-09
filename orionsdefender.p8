@@ -531,6 +531,7 @@ function destroy()
 	missile_cooldown = 0
 	missile_mode = false
 	warned = true
+	current_enemy_locked_on = null
 end
 
 function draw_ui()
@@ -539,6 +540,11 @@ function draw_ui()
 	spr(armor_spr,98,2)
 	spr(health_spr,108,2)
 	spr(fuel_spr,118,2)
+
+	for i=1, missile_n do
+		spr(016, 91, -2 + i * 2)
+		i += 1
+	end
 	
 	--[[
 	linect = 0
