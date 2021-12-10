@@ -89,15 +89,16 @@ function _init()
 	}
 	-- store variables
 	shop_selector_spr = {002,018,034}
-	shop_selector_y = 30
-	shop_selector_pos = 1
+	shop_selector_y = 16
+	shop_selector = 1
+	current_shop_iten = null
 	shop_selector_spr_pointer = 1
 	shop_last_bought = ""
 	next_armor_upgrade_cost = 75 * current_stat_armor_lvl
 	next_health_upgrade_cost = 50 * current_stat_health_lvl
 	next_gun_upgrade_cost = 100 * current_stat_gun_lvl
 	next_cooldown_upgrade_cost = 100 * current_stat_cooldown_lvl
-	last_encounter_store = true
+	last_encounter_store = false
 	-- enemy variables
 	enemy_list = 
 	{
@@ -154,6 +155,58 @@ function _init()
 			["reward"] = 16
 		}
 	}
+
+	shop_itens = {
+		{
+			["name"] = "fuel",
+			["formatted_name"] = "fuel",
+			["price"] = 3,
+			["available"] = true
+		},
+		{
+			["name"] = "health",
+			["price"] = 4,
+			["formatted_name"] = "health",
+			["available"] = true
+		},
+		{
+			["name"] = "armor",
+			["price"] = 4,
+			["formatted_name"] = "armor",
+			["available"] = true
+		},
+		{
+			["name"] = "missile",
+			["price"] = 7,
+			["formatted_name"] = "missile",
+			["available"] = true
+		},
+		{
+			["name"] = "health_upgrade",
+			["price"] = 50 * current_stat_health_lvl,
+			["formatted_name"] = "health upgrade",
+			["available"] = true
+		},
+		{
+			["name"] = "armor_upgrade",
+			["price"] = 75 * current_stat_armor_lvl,
+			["formatted_name"] = "armor upgrade",
+			["available"] = true
+		},
+		{
+			["name"] = "gun_damage_upgrade",
+			["price"] = 100 * current_stat_gun_lvl,
+			["formatted_name"] = "gun damage upgrade",
+			["available"] = true
+		},
+		{
+			["name"] = "gun_cooldown_upgrade",
+			["price"] = 100 * current_stat_gun_lvl,
+			["formatted_name"] = "gun cooldown upgrade",
+			["available"] = true
+		},
+	}
+
 	enemies = {}
 	enemy_bullets = {}
 	missiles = {}
@@ -208,17 +261,26 @@ function _draw()
 		draw_ui()
 		destroy()
 
-		print("buy fuel -- $4", 10, 32)
+		current_shop_iten = shop_itens[shop_selector]
+
+		i = 0
+		for iten in all (shop_itens) do
+			print(iten.formatted_name, 14, 16 + i * 8)
+			print("$" .. iten.price, 100, 16 + i * 8)
+			i += 1
+		end
+
+		--[[ print("buy fuel -- $4", 10, 32)
 		print("repair hull -- $5", 10, 40)
 		print("repair armor -- $6", 10, 48)
 		print("upgrade hull -- $" .. next_health_upgrade_cost, 10, 56)
 		print("upgrade armor -- $" .. next_armor_upgrade_cost, 10, 64)
 		print("upgrade gun damage -- $" .. next_gun_upgrade_cost, 10, 72)
 		print("upgrade gun cooldown -- $" .. next_cooldown_upgrade_cost, 10, 80)
-		print("buy missile -- $7", 10, 88)
+		print("buy missile -- $7", 10, 88) ]]--
 
 		if (clock % 90 == 0) shop_last_bought = ""
-		print(shop_last_bought, 10, 22)
+		print(shop_last_bought, 24, 84)
 
 		print("up or down - change", 2, 120)
 		print("z - select", 2,104)
@@ -888,176 +950,122 @@ end
 function nav_store()
 	if btnp(5) then
 		sfx(00)
-	 current_view = views[1]
+		current_view = views[1]
 		shop_last_bought = ""
 	end
-	
+
 	if btnp(4) then
-		if shop_selector_pos == 1 then
-			if fuel < max_fuel then
-				if scraps >= 4 then
-						sfx(01)
+		if current_shop_iten.available then
+			if scraps >= current_shop_iten.price then
+				if current_shop_iten.name == "fuel" then
+					if fuel < max_fuel then
 						fuel = flr(fuel)
 						fuel += 1
-						scraps -= 4
 						shop_last_bought = "bought 1 fuel"
+						scraps -= current_shop_iten.price
 						if (fuel > max_fuel) fuel = max_fuel
 					else
-						sfx(00)
-						shop_last_bought = "not enough scrap"
+						shop_last_bought = "fuel at max capacity"
 					end
-			else 
-				sfx(00)
-				shop_last_bought = "fuel at max capacity"
-			end
-		end
-		
-		if shop_selector_pos == 2 then
-			if health < current_max_health then
-				if scraps >= 5 then
-					sfx(01)
-					health += 1
-					scraps -= 5
-					shop_last_bought = "repaired 1 hull point"
-				else
-					sfx(00)
-					shop_last_bought = "not enough scrap"
+				end
+				if current_shop_iten.name == "health" then
+					if health < current_max_health then
+						health += 1
+						shop_last_bought = "bought 1 health"
+						scraps -= current_shop_iten.price
+					else
+						shop_last_bought = "current at max health"
+					end
+				end
+				if current_shop_iten.name == "armor" then
+					if armor < current_max_armor then
+						armor += 1
+						shop_last_bought = "bought 1 armor"
+						scraps -= current_shop_iten.price
+					else
+						shop_last_bought = "current at max armor"
+					end
+				end
+				if current_shop_iten.name == "missile" then
+					if missile_n < missile_max_capacity then
+						missile_n += 1
+						shop_last_bought = "bought 1 fuel"
+						scraps -= current_shop_iten.price
+					else
+						shop_last_bought = "missiles maxed out"
+					end
+				end
+				if current_shop_iten.name == "health_upgrade" then
+					if current_stat_health_lvl < 3 then
+						scraps -= current_shop_iten.price
+						current_stat_health_lvl += 1
+						current_shop_iten.price = current_shop_iten.price * current_stat_health_lvl
+						current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
+						health = current_max_health
+						shop_last_bought = "hull upgraded"
+					else
+						shop_last_bought = "hull upgrade maxed out"
+					end
+				end
+				if current_shop_iten.name == "armor_upgrade" then
+					if current_stat_armor_lvl < 3 then
+						scraps -= current_shop_iten.price
+						current_stat_armor_lvl += 1
+						current_shop_iten.price = current_shop_iten.price * current_stat_armor_lvl
+						current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+						armor = current_max_armor
+						shop_last_bought = "armor upgraded"
+					else
+						shop_last_bought = "armor upgrade maxed out"
+					end
+				end
+				if current_shop_iten.name == "gun_damage_upgrade" then
+					if current_stat_gun_lvl < 3 then
+						scraps -= current_shop_iten.price
+						current_stat_gun_lvl += 1
+						bullet_damage = current_stat_gun_lvl
+						current_shop_iten.price = current_shop_iten.price * current_stat_gun_lvl
+						shop_last_bought = "gun damage upgraded"
+					else
+						shop_last_bought = "armor upgrade maxed out"
+					end
+				end
+				if current_shop_iten.name == "gun_cooldown_upgrade" then
+					if current_stat_cooldown_lvl < 3 then
+						scraps -= current_shop_iten.price
+						current_stat_cooldown_lvl += 1
+						bullet_cooldown_rate = current_stat_cooldown_lvl
+						current_shop_iten.price = current_shop_iten.price * current_stat_cooldown_lvl
+						shop_last_bought = "gun damage upgraded"
+					else
+						shop_last_bought = "gun cooldown upgrade maxed out"
+					end
 				end
 			else
-				sfx(00)
-				shop_last_bought = "current at max health"
+				shop_last_bought = "too expensive"
 			end
+		else
+			shop_last_bought = "unavailable"
 		end
-		
-		if shop_selector_pos == 3 then
-			if armor < current_max_armor then
-				if scraps >= 6 then
-					sfx(01)
-					armor += 1
-					scraps -= 6
-					shop_last_bought = "repaired 1 armor point"
-				else
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "current at max armor"
-			end
-		end
-		
-		if shop_selector_pos == 4 then
-			if current_stat_health_lvl < 3 then
-				if scraps >= next_health_upgrade_cost then
-					sfx(01)
-					scraps -= next_health_upgrade_cost
-					current_stat_health_lvl += 1
-					next_health_upgrade_cost = 50 * current_stat_health_lvl
-					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
-					shop_last_bought = "hull upgraded"
-				else 
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "hull maxed out"
-			end
-		end
-
-		if shop_selector_pos == 5 then
-			if current_stat_armor_lvl < 3 then
-				if scraps >= next_armor_upgrade_cost then
-					sfx(01)
-					scraps -= next_armor_upgrade_cost
-					current_stat_armor_lvl += 1
-					next_armor_upgrade_cost = 75 * current_stat_armor_lvl
-					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
-					shop_last_bought = "armor upgraded"
-				else 
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "armor maxed out"
-			end
-		end
-
-		if shop_selector_pos == 6 then
-			if current_stat_gun_lvl < 3 then
-				if scraps >= next_gun_upgrade_cost then
-					sfx(01)
-					scraps -= next_gun_upgrade_cost
-					current_stat_gun_lvl += 1
-					bullet_damage = current_stat_gun_lvl 
-					next_gun_upgrade_cost = 100 * current_stat_gun_lvl
-					shop_last_bought = "gun damage upgraded"
-				else
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "gun damage maxed out"
-			end
-		end
-
-		if shop_selector_pos == 7 then
-			if current_stat_cooldown_lvl < 3 then
-				if scraps >= next_cooldown_upgrade_cost then
-					sfx(01)
-					scraps -= next_cooldown_upgrade_cost
-					current_stat_cooldown_lvl += 1
-					bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl] 
-					next_cooldown_upgrade_cost = 100 * current_stat_cooldown_lvl
-					shop_last_bought = "gun cooldown upgraded"
-				else
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "gun cooldown maxed out"
-			end
-		end
-
-		if shop_selector_pos == 8 then
-			if missile_n < missile_max_capacity then
-				if scraps >= 7 then
-					sfx(01)
-					scraps -= 7
-					missile_n += 1
-					shop_last_bought = "missile bought"
-				else
-					sfx(00)
-					shop_last_bought = "not enough scrap"
-				end
-			else
-				sfx(00)
-				shop_last_bought = "missiles maxed out"
-			end
-		end
-		
 	end
  
-	if btnp(3) and shop_selector_pos < 8 then
+	if btnp(3) then
 		sfx(02)
-		shop_selector_y += 8
-		shop_selector_pos += 1
+		shop_selector += 1
+		if (shop_selector > count(shop_itens)) shop_selector = 1
 	end
 	
-	if btnp(2) and shop_selector_pos > 1 then
+	if btnp(2) then
 		sfx(02)
-		shop_selector_y -= 8
-  	shop_selector_pos -= 1
+		shop_selector -= 1
+		if (shop_selector == 0) shop_selector = count(shop_itens)
 	end
 end
 
 function animate_shop_selector()
-	shop_selector_spr_pointer += 1
+	if (clock % 5 == 0) shop_selector_spr_pointer += 1
 	if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
-	spr(shop_selector_spr[shop_selector_spr_pointer], 0, shop_selector_y)
+	spr(shop_selector_spr[shop_selector_spr_pointer], 4, (shop_selector_y - 9) + shop_selector * 8)
 end
 __gfx__
 0000000000000000000000000e800880011111d000b3333000333300003333000033330000777700000770000777777077777777000000000000000000000000
