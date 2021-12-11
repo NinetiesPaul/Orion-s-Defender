@@ -43,6 +43,8 @@ function _init()
 	rewards_given = false
 	battle_rewards = 0
 	r_scraps = 0
+	show_stats = false
+	scraps_accrued = 0
 
 	-- player variables
 	cooldown_lvls = {3,2,1}
@@ -243,6 +245,28 @@ function _draw()
 		draw_threat()
 		spr(ship_spr,ship_x,ship_y)
 		foreach(encounters, draw_encounter)
+
+		if show_stats then
+			rect(24,24,104,104, 1)
+			rectfill(25,25,103,103, 0)
+
+			linect = 0
+			total = 0
+			for e in all(enemy_list) do
+				knowledge_level = 0
+				if (e.knowledge_level == 0.100) knowledge_level = 1
+				if (e.knowledge_level == 0.200) knowledge_level = 2
+				if (e.knowledge_level == 0.300) knowledge_level = 3
+				total += e.n_destroyed
+
+				spr(e.spr_ok, 30, 32 + linect * 9)
+				print(e.n_destroyed, 40, 35 + linect * 8, 7)
+				print(knowledge_level .. "/3", 88, 35 + linect * 8, 7)
+
+				linect+=1
+			end
+			print(total, 40, 35 + linect * 8, 7)
+		end
 	end
  
 	if current_view == 2 then -- battle
@@ -342,10 +366,20 @@ function _update()
 	update_icons()
 
 	if current_view == 1 then
-		fuel -= fuel_comsumption
-		if (clock % 30 == 0) create_encounter()
-		if (fuel <= 0) current_view = views[5]
-		foreach(encounters, move_encounter)
+		if show_stats == false then
+			fuel -= fuel_comsumption
+			if (clock % 30 == 0) create_encounter()
+			if (fuel <= 0) current_view = views[5]
+			foreach(encounters, move_encounter)
+		end
+
+		if btnp(4) then
+			if show_stats then
+				show_stats = false
+			else
+				show_stats = true
+			end
+		end
 	end
 
 	if current_view == 2 then
@@ -426,6 +460,7 @@ function draw_missile(m)
 end
 
 function move_missile(m)
+	if (current_enemy_locked_on == null) current_enemy_locked_on = 1
 	target_x = enemies[current_enemy_locked_on].x
 	target_y = enemies[current_enemy_locked_on].y
 
@@ -697,7 +732,7 @@ function create_encounter()
 end
 
 function draw_encounter(e)
-	sprite = (e.type == 1) and 064 or 070
+	sprite = (e.type == 1) and 064 or 068
 	spr(sprite,e.x, e.y, 2, 2)
 end
 
