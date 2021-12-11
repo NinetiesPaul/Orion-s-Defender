@@ -781,27 +781,26 @@ function fire()
 		warned = true
 	end
 	if btnp(4) then
-		if missile_mode == false and bullet_cooldown == 0 then
-			local bullet = {}
-			bullet.x = ship_x
-			bullet.y = ship_y - 8
-			bullet.spr = 001
-
-			bullet_cooldown = bullet_cooldown_rate
-			warned = false
-			sfx(07)
-			add(bullets, bullet)
-		else
-			if missile_available == true and missile_n > 0 then
-				local missile = {}
-				missile.x = ship_x
-				missile.y =ship_y - 8
-				missile.v = 4
-				missile.damage = missile_damage
-				add(missiles, missile)
-				missile_available = false
-				missile_n -= 1
+		if missile_mode == false then
+			if bullet_cooldown == 0 then
+				local bullet = {}
+				bullet.x = ship_x
+				bullet.y = ship_y - 8
+				bullet.spr = 001
+				bullet_cooldown = bullet_cooldown_rate
+				warned = false
+				sfx(07)
+				add(bullets, bullet)
 			end
+		elseif missile_available == true and missile_n > 0 then
+			local missile = {}
+			missile.x = ship_x
+			missile.y =ship_y - 8
+			missile.v = 3
+			missile.damage = missile_damage
+			add(missiles, missile)
+			missile_available = false
+			missile_n -= 1
 		end
 	end
 	if btnp(5) then
@@ -902,6 +901,8 @@ function destroy_enemy(e)
 	create_explosion(e.x,e.y)
 	sfx(05)
 	del(enemies,e)
+	if (current_enemy_locked_on != null) current_enemy_locked_on = null
+
 	if count(enemies) == 0 then
 		missile_available = false
 		missile_mode = false
