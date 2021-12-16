@@ -218,14 +218,14 @@ function _init()
 	explosions = {}
 	warnings = {}
 	positions = {
-		{8,15},
-		{31,45},
-		{39,67},
-		{79,55},
-		{80,25},
-		{99,61},
-		{21,21},
-		{94,11},
+		{8,11},
+		{21,51},
+		{39,25},
+		{51,61},
+		{77,55},
+		{89,35},
+		{102,11},
+		{112,61},
 	}
 	battle_started = false
 
@@ -1011,6 +1011,10 @@ function move_enemy(e)
 				if e.x < e.to_x then
 					e.moving = false
 				end
+			end
+			if e.y <= 0 or e.y >= 100 or
+			 e.x <= 0 or e.x >= 128 then
+				e.moving = false
 			end
 		end
 	end
