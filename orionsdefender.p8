@@ -234,6 +234,8 @@ function _init()
 	music_view_1_playing = false
 	music_batttle_player = false
 	music_battle_end_playing = false
+
+	stars = {}
 end
 
 function _draw()
@@ -325,8 +327,6 @@ function _draw()
 	end
  
 	if current_view == 6 then -- start
-		star_spr = (clock % 1.5 == 0)  and 43 or 44
-		spr(star_spr,64,64)
 		print("orion's\n       defender",31,45, 1)
 		print("orion's\n       defender",30,44, 6)
 		print("z to start", 40, 84,7)
@@ -359,6 +359,10 @@ function _draw()
 
 		print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
 		print("press anything to start", 20, 120)
+	end
+
+	if current_view == 1 or current_view == 2 or current_view == 6 then
+		foreach(stars, draw_star)
 	end
 end
 
@@ -455,6 +459,37 @@ function _update()
 		end
 	else
 		music_battle_end_playing = false
+	end
+
+	-- star effect
+
+	if current_view == 1 or current_view == 2 or current_view == 6 then
+		if (clock % 15 == 0) create_stars()
+		foreach(stars, move_star)
+	end
+end
+
+function create_stars()
+	local star = {}
+	star.x = rnd({ 24, 48, 72, 96, 120})
+	star.y = 0
+	star.type = rnd({ "far", "near"})
+	add(stars, star)
+end
+
+function draw_star(s)
+	star_spr = (s.type == "far") and 044 or 042
+	if (clock % 1.5 == 0) then
+		star_spr = (s.type == "far") and 043 or 041
+	end
+	spr(star_spr, s.x, s.y)
+end
+
+function move_star(s)
+	s.y += (s.type == "far") and 1.5 or 3
+
+	if s.y >= 128 then
+		del(stars,s)
 	end
 end
 
