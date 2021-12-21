@@ -241,7 +241,7 @@ end
 function _draw()
 	cls()
 	rect(0,0,127,127,7)
- 
+
 	if current_view == 1 then -- world
 		draw_ui()
 		draw_threat()
@@ -255,22 +255,17 @@ function _draw()
 			linect = 0
 			total = 0
 			for e in all(enemy_list) do
-				knowledge_level = 0
-				if (e.knowledge_level == 0.100) knowledge_level = 1
-				if (e.knowledge_level == 0.200) knowledge_level = 2
-				if (e.knowledge_level == 0.300) knowledge_level = 3
-				total += e.n_destroyed
-
 				spr(e.spr_ok, 30, 32 + linect * 9)
 				print(e.n_destroyed, 40, 35 + linect * 8, 7)
-				print(knowledge_level .. "/3", 88, 35 + linect * 8, 7)
+				print(e.knowledge_level .. "/3", 88, 35 + linect * 8, 7)
+				total += e.n_destroyed
 
 				linect+=1
 			end
 			print(total, 40, 35 + linect * 8, 7)
 		end
 	end
- 
+
 	if current_view == 2 then -- battle
 		draw_ui()
 		draw_cooldown()
@@ -284,7 +279,7 @@ function _draw()
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
 	end
- 
+
 	if current_view == 3 then -- rewards
 		destroy()
 
@@ -292,7 +287,7 @@ function _draw()
 		print("added "..r_scraps.." scraps", 40,80)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104)
 	end
- 
+
 	if current_view == 4 then -- store
 		draw_ui()
 		destroy()
@@ -316,7 +311,7 @@ function _draw()
 
 		animate_shop_selector()
 	end
- 
+
 	if current_view == 5 then -- gameover
 		destroy()
 
@@ -325,13 +320,13 @@ function _draw()
 		if (fuel <= 0) print("you ran out of fuel",23,72)
 		print("press z or x to restart", 18, 104)
 	end
- 
+
 	if current_view == 6 then -- start
 		spr(128,24,44,9,3)
 		print("z to start", 40, 84,7)
 		print("x to help", 42, 92,7)
 	end
- 
+
 	if current_view == 7 then -- help
 		print("help screen", 40, 2)
 
@@ -598,7 +593,7 @@ end
 
 function animate_explosion(exp)
 	if (clock % 2 == 0) exp.stage += 1
-	
+
 	if exp.stage == 4 then
 		exp.base_stg4_px1 = flr(rnd(3))+1
 		exp.base_stg4_py1 = flr(rnd(3))+1
@@ -615,7 +610,7 @@ function animate_explosion(exp)
 		exp.base_stg4_px7 = flr(rnd(3))+1
 		exp.base_stg4_px8 = flr(rnd(3))+1
 	end
-	
+
 	if exp.stage == 8 then
 		del(explosions, exp)
 	end
@@ -897,7 +892,11 @@ function move_bullet(b)
 			if e.collateral == false then
 				for el in all(enemy_list) do
 					if e.spr == el.spr_ok then
-						local_random_factor = random_factor - el.knowledge_level
+						enemy_kl_factor = 0
+						if (el.knowledge_level == 1) enemy_kl_factor = 0.100
+						if (el.knowledge_level == 2) enemy_kl_factor = 0.200
+						if (el.knowledge_level == 3) enemy_kl_factor = 0.300
+						local_random_factor = random_factor - enemy_kl_factor
 						if rnd() > local_random_factor then
 							e.collateral = rnd(collateral_type)
 							msg = ''
@@ -923,10 +922,8 @@ function destroy_enemy(e)
 		if e.spr == el.spr_ok then
 			el.n_destroyed += 1
 
-			if el.n_destroyed % 5 == 0 then
-				if (el.knowledge_level == 0) el.knowledge_level = 0.100
-				if (el.knowledge_level == 0.100) el.knowledge_level = 0.200
-				if (el.knowledge_level == 0.200) el.knowledge_level = 0.300
+			if el.n_destroyed % 5 == 0 and el.knowledge_level < 3 then
+				el.knowledge_level += 1
 			end
 		end
 	end
