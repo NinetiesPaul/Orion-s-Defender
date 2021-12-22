@@ -89,7 +89,7 @@ function _init()
 	}
 	enemy_by_difficulty ={
 		{1,2},
-		{3,4,5},
+		{3,4},
 		{5,6}
 	}
 
@@ -732,8 +732,6 @@ end
 function update_threat()
 	if (score > 2000 and score < 5000) difficulty = 2
 	if (score > 5000) difficulty = 3
-	if (difficulty == 2) threat_level = 022
-	if (difficulty == 3) threat_level = 038
 end
 
 function draw_threat()
