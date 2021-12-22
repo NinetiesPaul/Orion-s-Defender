@@ -571,6 +571,7 @@ function start_battle()
 		enemy.score = enemy_data.score
 		enemy.reward = enemy_data.reward
 		enemy.cdr = enemy_data["b_cdr"]
+		enemy.clock = 0
 
 		enemy.x = flr(rnd(48))+48
 		enemy.y = 18
@@ -1018,7 +1019,7 @@ function create_enemy_bullet(e)
 		sfx(08)
 		add(enemy_bullets,enemy_bullet)
 	else
-		if (clock % e.cdr == 0) e.fire = true
+		if (e.clock % e.cdr == 0) e.fire = true
 	end
 end
 
@@ -1043,6 +1044,7 @@ function move_enemy_bullet(eb)
 end
 
 function move_enemy(e)
+	e.clock += 1
 	if e.collateral != 1 then
 		if e.moving == false then
 			e.moving = true
