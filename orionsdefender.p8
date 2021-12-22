@@ -241,9 +241,9 @@ end
 function _draw()
 	cls()
 	rect(0,0,127,127,7)
+	if (current_view == 1 or current_view == 2 or current_view == 4) draw_ui()
 
 	if current_view == 1 then -- world
-		draw_ui()
 		draw_threat()
 		spr(ship_spr,ship_x,ship_y)
 		foreach(encounters, draw_encounter)
@@ -267,7 +267,6 @@ function _draw()
 	end
 
 	if current_view == 2 then -- battle
-		draw_ui()
 		draw_cooldown()
 		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
 
@@ -289,7 +288,6 @@ function _draw()
 	end
 
 	if current_view == 4 then -- store
-		draw_ui()
 		destroy()
 
 		current_shop_item = shop_items[shop_selector]
@@ -480,7 +478,8 @@ function draw_star(s)
 end
 
 function move_star(s)
-	s.y += (s.type == "far") and 1.5 or 3
+	divider = (current_view == 2) and 0.5 or 1 
+	s.y += (s.type == "far") and 1.5 * divider or 3 * divider
 
 	if s.y >= 128 then
 		del(stars,s)
@@ -703,17 +702,17 @@ function destroy()
 end
 
 function draw_ui()
-	map(0,0,94,0,4,2)
-	print("$" .. scraps,2,2)
-	if (current_view != 4) print("★ " .. score,2,8, 7)
-
 	if current_view == 2 then
-		rectfill(2,65, 9, 74, 5)
-		rectfill(1,64, 8, 73, 7)
-		current_weapon = (missile_mode) and 016 or 001
-		spr(current_weapon, 1, 64)
+		current_weapon = (missile_mode) and "missile" or "main gun"
+		print("weapon: " .. current_weapon, 2, 2)
 	end
 
+	if current_view != 2 then
+		print("$" .. scraps,2,2)
+		if (current_view != 4) print("★ " .. score,2,8, 7)
+	end
+
+	map(0,0,94,0,4,2)
 	if (armor > 0) spr(armor_spr,103,2)
 	spr(health_spr,111,2)
 	spr(fuel_spr,119,2)
