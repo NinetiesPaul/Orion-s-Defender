@@ -57,7 +57,7 @@ function _init()
 	armor_spr =  004
 	fuel_spr = 005
 	max_fuel = 15
-	fuel_comsumption = 0.01
+	fuel_comsumption = 0.0075
 	stat_multiplier = 5
 	stat_lvl = {1,2,3}
 	current_stat_armor_lvl = 1
@@ -366,7 +366,7 @@ function _update()
 	if current_view == 1 then
 		if show_stats == false then
 			fuel -= fuel_comsumption
-			if (clock % 45 == 0) create_encounter()
+			if (clock % 60 == 0) create_encounter()
 			if (fuel <= 0) current_view = views[5]
 			foreach(encounters, move_encounter)
 		end
