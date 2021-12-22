@@ -455,17 +455,20 @@ function _update()
 	-- star effect
 
 	if current_view == 1 or current_view == 2 or current_view == 6 then
-		if (clock % 20 == 0) create_stars()
+		create_stars()
 		foreach(stars, move_star)
 	end
 end
 
 function create_stars()
-	local star = {}
-	star.x = rnd({ 24, 48, 72, 96, 120})
-	star.y = 0
-	star.type = rnd({ "far", "near"})
-	add(stars, star)
+	interval = rnd({15, 5})
+	if clock % interval == 0 then 
+		local star = {}
+		star.x = rnd({ 12, 24, 48, 56, 72, 82, 96})
+		star.y = 0
+		star.type = rnd({ "far", "near"})
+		add(stars, star)
+	end
 end
 
 function draw_star(s)
