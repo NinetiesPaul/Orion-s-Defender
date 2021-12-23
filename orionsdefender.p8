@@ -364,19 +364,6 @@ end
 function _update()
 	clock+=1
 
-	pirate_refresh_rate = (difficulty == 1) and 5 or (difficulty == 2) and 2 or 1
-	if (clock % pirate_refresh_rate == 0) then
-		if move_pirate_sprite == "up" then
-			pirate_sprite_y -= 1
-			if (pirate_sprite_y == 0) move_pirate_sprite = "down"
-		end
-
-		if move_pirate_sprite == "down" then
-			pirate_sprite_y += 1
-			if (pirate_sprite_y == 4) move_pirate_sprite = "up"
-		end
-	end
-
 	if (count(warnings) == 0) move()
 	update_threat()
 	update_icons()
@@ -743,6 +730,19 @@ end
 function update_threat()
 	if (score > 2000 and score < 5000) difficulty = 2
 	if (score > 5000) difficulty = 3
+
+	pirate_refresh_rate = (difficulty == 1) and 5 or (difficulty == 2) and 2 or 1
+	if (clock % pirate_refresh_rate == 0) then
+		if move_pirate_sprite == "up" then
+			pirate_sprite_y -= 1
+			if (pirate_sprite_y == 0) move_pirate_sprite = "down"
+		end
+
+		if move_pirate_sprite == "down" then
+			pirate_sprite_y += 1
+			if (pirate_sprite_y == 4) move_pirate_sprite = "up"
+		end
+	end
 end
 
 function draw_threat()
