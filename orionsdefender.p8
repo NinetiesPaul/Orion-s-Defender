@@ -7,8 +7,9 @@ function _init()
 	-- encounters variable
 	encounters = {}
 	types = {
-		1, -- battle pirate
-		2 -- store
+		1,	-- battle pirate
+		2,	-- store
+		3 	-- pirate store
 	}
 	encounter_spawn_x = {
 		12,
@@ -20,13 +21,13 @@ function _init()
 
 	-- general purpose variables
 	views = {
-		1, -- 1 world
-		2, -- 2 battle
-		3, -- 3 rewards
-		4, -- 4 store
-		5, -- 5 game over
-		6, -- 6 start screen
-		7 -- 7 tutorial
+		1,	-- 1 world
+		2,	-- 2 battle
+		3,	-- 3 rewards
+		4,	-- 4 store
+		5,	-- 5 game over
+		6,	-- 6 start screen
+		7 	-- 7 tutorial
 	}
 	score = 0
 	difficulty = 1
@@ -75,9 +76,9 @@ function _init()
 	random_factor = 0.95
 	collateral_type =
 	{
-		1, -- motor damage
-		2, -- aiming damage
-		3 -- firing damage
+		1,	-- motor damage
+		2,	-- aiming damage
+		3 	-- firing damage
 	}
 	enemy_by_difficulty ={
 		{1,2},
@@ -86,6 +87,7 @@ function _init()
 	}
 
 	-- store variables
+	pirate_store = false
 	shop_selector_spr = {002,018,034}
 	shop_selector_y = 16
 	shop_selector = 1
@@ -101,49 +103,57 @@ function _init()
 			["name"] = "fuel",
 			["formatted_name"] = "fuel",
 			["price"] = 3,
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = true
 		},
 		{
 			["name"] = "health",
 			["price"] = 4,
 			["formatted_name"] = "health",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = true
 		},
 		{
 			["name"] = "armor",
 			["price"] = 4,
 			["formatted_name"] = "armor",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = true
 		},
 		{
 			["name"] = "missile",
 			["price"] = 7,
 			["formatted_name"] = "missile",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = true
 		},
 		{
 			["name"] = "health_upgrade",
 			["price"] = 50 * current_stat_health_lvl,
 			["formatted_name"] = "health upgrade",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = false
 		},
 		{
 			["name"] = "armor_upgrade",
 			["price"] = 75 * current_stat_armor_lvl,
 			["formatted_name"] = "armor upgrade",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = false
 		},
 		{
 			["name"] = "gun_damage_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun damage upgrade",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = false
 		},
 		{
 			["name"] = "gun_cooldown_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun cooldown upgrade",
-			["available"] = true
+			["available"] = true,
+			["pirate_store"] = false
 		},
 	}
 
@@ -301,10 +311,14 @@ function _draw()
 
 		i = 0
 		for item in all (shop_items) do
-			print(item.formatted_name, 14, 16 + i * 8, 7)
-			print("$", 100, 16 + i * 8, 3)
-			print(item.price, 104, 16 + i * 8, 7)
-			i += 1
+			if pirate_store == false or pirate_store and item.pirate_store == pirate_store then
+				price = (pirate_store == false) and item.price or ceil(item.price/2)
+
+				print(item.formatted_name, 14, 16 + i * 8, 7)
+				print("$", 100, 16 + i * 8, 3)
+				print(price, 104, 16 + i * 8, 7)
+				i += 1
+			end
 		end
 
 		if (clock % 90 == 0) shop_last_bought = ""
@@ -776,17 +790,32 @@ function create_encounter()
 	encounter.type = type
 	encounter.animate = false
 	encounter.sprite = (type == 1) and 064 or 072
+	encounter.skull_y = (type == 3) and encounter.y + 4 or false
+	encounter.skull_x = (type == 3) and encounter.x - 4 or false
+	encounter.move_left = true
 	encounter.clock = 0
 	add(encounters, encounter)
 end
 
 function draw_encounter(e)
 	spr(e.sprite,e.x, e.y, 2, 2)
+	if (e.type == 3) spr(045, e.skull_x, e.skull_y)
 end
 
 function move_encounter(e)
 	e.clock += 1
 	e.y += 1
+
+	if e.type == 3 then
+		e.skull_y += 1
+		if e.move_left then
+			e.skull_x += 1
+			if (e.skull_x >= e.x + 8) e.move_left = false
+		else
+			e.skull_x -= 1
+			if (e.skull_x <= e.x - 4) e.move_left = true
+		end
+	end
 
 	if e.x >= ship_x-8 and
 	e.x <= ship_x+10 and
@@ -796,8 +825,9 @@ function move_encounter(e)
 		if e.type == 1 then
 			current_view = views[2]
 		end
-		if e.type == 2 then
+		if e.type == 2 or e.type == 3 then
 			current_view = views[4]
+			if (e.type == 3) pirate_store = true
 		end
 	end
 
@@ -1113,17 +1143,20 @@ function nav_store()
 		sfx(00)
 		current_view = views[1]
 		shop_last_bought = ""
+		pirate_store = false
+		shop_selector = 1
 	end
 
 	if btnp(4) then
 		if current_shop_item.available then
-			if scraps >= current_shop_item.price then
+			price = (pirate_store == false) and current_shop_item.price or ceil(current_shop_item.price/2)
+			if scraps >= price then
 				if current_shop_item.name == "fuel" then
 					if fuel < max_fuel then
 						fuel = flr(fuel)
 						fuel += 1
 						shop_last_bought = "bought 1 fuel"
-						scraps -= current_shop_item.price
+						scraps -= price
 						if (fuel > max_fuel) fuel = max_fuel
 					else
 						shop_last_bought = "fuel at max capacity"
@@ -1133,7 +1166,7 @@ function nav_store()
 					if health < current_max_health then
 						health += 1
 						shop_last_bought = "bought 1 health"
-						scraps -= current_shop_item.price
+						scraps -= price
 					else
 						shop_last_bought = "current at max health"
 					end
@@ -1142,7 +1175,7 @@ function nav_store()
 					if armor < current_max_armor then
 						armor += 1
 						shop_last_bought = "bought 1 armor"
-						scraps -= current_shop_item.price
+						scraps -= price
 					else
 						shop_last_bought = "current at max armor"
 					end
@@ -1151,16 +1184,16 @@ function nav_store()
 					if missile_n < missile_max_capacity then
 						missile_n += 1
 						shop_last_bought = "bought 1 missile"
-						scraps -= current_shop_item.price
+						scraps -= price
 					else
 						shop_last_bought = "missiles at max capacity"
 					end
 				end
 				if current_shop_item.name == "health_upgrade" then
 					if current_stat_health_lvl < 3 then
-						scraps -= current_shop_item.price
+						scraps -= price
 						current_stat_health_lvl += 1
-						current_shop_item.price = current_shop_item.price * current_stat_health_lvl
+						current_shop_item.price = price * current_stat_health_lvl
 						current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
 						health = current_max_health
 						shop_last_bought = "hull upgraded"
@@ -1170,9 +1203,9 @@ function nav_store()
 				end
 				if current_shop_item.name == "armor_upgrade" then
 					if current_stat_armor_lvl < 3 then
-						scraps -= current_shop_item.price
+						scraps -= price
 						current_stat_armor_lvl += 1
-						current_shop_item.price = current_shop_item.price * current_stat_armor_lvl
+						current_shop_item.price = price * current_stat_armor_lvl
 						current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
 						armor = current_max_armor
 						shop_last_bought = "armor upgraded"
@@ -1182,10 +1215,10 @@ function nav_store()
 				end
 				if current_shop_item.name == "gun_damage_upgrade" then
 					if current_stat_gun_lvl < 3 then
-						scraps -= current_shop_item.price
+						scraps -= price
 						current_stat_gun_lvl += 1
 						bullet_damage = current_stat_gun_lvl
-						current_shop_item.price = current_shop_item.price * current_stat_gun_lvl
+						current_shop_item.price = price * current_stat_gun_lvl
 						shop_last_bought = "gun damage upgraded"
 					else
 						shop_last_bought = "gun damage upgrade maxed out"
@@ -1193,10 +1226,10 @@ function nav_store()
 				end
 				if current_shop_item.name == "gun_cooldown_upgrade" then
 					if current_stat_cooldown_lvl < 3 then
-						scraps -= current_shop_item.price
+						scraps -= price
 						current_stat_cooldown_lvl += 1
 						bullet_cooldown_rate = current_stat_cooldown_lvl
-						current_shop_item.price = current_shop_item.price * current_stat_cooldown_lvl
+						current_shop_item.price = price * current_stat_cooldown_lvl
 						shop_last_bought = "gun damage upgraded"
 					else
 						shop_last_bought = "gun cooldown upgrade maxed out"
@@ -1213,7 +1246,8 @@ function nav_store()
 	if btnp(3) then
 		sfx(02)
 		shop_selector += 1
-		if (shop_selector > count(shop_items)) shop_selector = 1
+		n_shop_items = (pirate_store) and 4 or count(shop_items)
+		if (shop_selector > n_shop_items) shop_selector = 1
 	end
 	
 	if btnp(2) then
@@ -1245,13 +1279,13 @@ __gfx__
 002882007577775799999990058e8500051c15003b5b5b309aaaaaa99aaaaaa99aa77aa90808808008000080800880080080080080800808066666008e7e8880
 00022000776666770000000000585000005150005333335009aaaa9009aaaa9009aaaa90808008080808808008800880008008000080080006d6d6006ddddd50
 00000000077777700000000000050000000500000555550000999900009999000099990008000080008008000800008000088000000880000000000055555550
-00000000000000000000000000000000000000000000000000222200002222000022220000050000000d00000000000000000000000000000666660000888000
-00000000880000880000000000000000000000000000000008e8882008e8882008e88820000d00000006000000050000000d0000000000006666666008888800
-000dd00080800808000000000000000000000000000000002e8888822e8888822e8ee8820006000000070000000d000000060000000000006866686088888880
-00d7dd00800880080999999900000000000000000000000028888882288ee88228e88e825d666d50d67776d005d6d5000d676d00000000006886886088888880
-00dddd00800880080999999908eee80001ccc1003bb5bb3028888882288ee88228e88e820006000000070000000d000000060000000000006660666088888880
-005dd5008080080800000000058e8500051c15003b5b5b302888888228888882288ee882000d00000006000000050000000d0000000000000666660088888880
-00055000800000080000000000585000005150005333335002888820028888200288882000050000000d000000000000000000000000000006d6d6006ddddd50
+00000000000000000000000000000000000000000000000000222200002222000022220000050000000d00000000000000000000066666000666660000888000
+00000000880000880000000000000000000000000000000008e8882008e8882008e88820000d00000006000000050000000d0000666666606666666008888800
+000dd00080800808000000000000000000000000000000002e8888822e8888822e8ee8820006000000070000000d000000060000676667606866686088888880
+00d7dd00800880080999999900000000000000000000000028888882288ee88228e88e825d666d50d67776d005d6d5000d676d00678687606886886088888880
+00dddd00800880080999999908eee80001ccc1003bb5bb3028888882288ee88228e88e820006000000070000000d000000060000666766606660666088888880
+005dd5008080080800000000058e8500051c15003b5b5b302888888228888882288ee882000d00000006000000050000000d0000066666000666660088888880
+00055000800000080000000000585000005150005333335002888820028888200288882000050000000d0000000000000000000006d6d60006d6d6006ddddd50
 00000000088888800000000000050000000500000555550000222200002222000022220000000000000000000000000000000000000000000000000055555550
 00000000000000000000000000000000000000000000000000000000000000000099990000999900009099000090990000900900000000000000000000000000
 000000000000000000000000000000000000000000000000000000000099990009aaaa900999aa900999aa900999aa9009090090000000000000000000000000
