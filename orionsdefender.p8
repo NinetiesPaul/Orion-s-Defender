@@ -34,7 +34,6 @@ function _init()
 	current_view = views[6]
 	rewards_given = false
 	battle_rewards = 0
-	r_scraps = 0
 	show_stats = false
 	scraps_accrued = 0
 
@@ -286,7 +285,7 @@ function _draw()
 		destroy()
 
 		print("you've won!", 40,64)
-		print("added "..r_scraps.." scraps", 40,80)
+		print("added " .. battle_rewards .. " scraps", 40,80)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104)
 	end
 
@@ -677,17 +676,15 @@ end
 
 function rewards()
 	if rewards_given == false then
-		x = difficulty * (flr(rnd(difficulty)) + 1)
 		scraps += battle_rewards
-		r_scraps = battle_rewards
 		rewards_given = true
 		bullet_cooldown = 0
-		battle_rewards = 0
 	else
 		if stat(54) == 0 then
 			if btnp(4) or btnp(5) then
-				current_view = views[1]
 				rewards_given = false
+				battle_rewards = 0
+				current_view = views[1]
 			end
 		end
 	end
