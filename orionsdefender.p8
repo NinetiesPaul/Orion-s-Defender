@@ -30,7 +30,7 @@ function _init()
 		7 	-- 7 tutorial
 	}
 	score = 0
-	difficulty = 1
+	pirate_rep = 1
 	clock = 0
 	current_view = views[6]
 	rewards_given = false
@@ -85,6 +85,7 @@ function _init()
 		{3,4},
 		{5,6}
 	}
+	total_enemies_destroyed = 0
 
 	-- store variables
 	pirate_store = false
@@ -182,7 +183,7 @@ function _init()
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.0,
 			["b_speed"] =  1,
-			["b_cdr"] = 60,
+			["b_cdr"] = 75,
 			["n_destroyed"] = 0,
 			["knowledge_level"] = 0,
 			["score"] = 125,
@@ -196,7 +197,7 @@ function _init()
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.7,
-			["b_cdr"] = 45,
+			["b_cdr"] = 60,
 			["n_destroyed"] = 0,
 			["knowledge_level"] = 0,
 			["score"] = 150,
@@ -210,7 +211,7 @@ function _init()
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.3,
 			["b_speed"] =  1.5,
-			["b_cdr"] = 30,
+			["b_cdr"] = 45,
 			["n_destroyed"] = 0,
 			["knowledge_level"] = 0,
 			["score"] = 175,
@@ -268,7 +269,6 @@ function _draw()
 			rectfill(25,25,103,103, 0)
 
 			linect = 0
-			total = 0
 			for e in all(enemy_list) do
 				spr(e.spr_ok, 30, 32 + linect * 14)
 				print(e.name, 40, 32 + linect * 14, 7)
@@ -276,10 +276,9 @@ function _draw()
 				print(e.n_destroyed, 40, 38 + linect * 14, 7)
 				print(e.knowledge_level .. "/3", 88, 32 + linect * 14, 7)
 
-				total += e.n_destroyed
 				linect+=1
 			end
-			print("total: " .. total, 38, 96, 7)
+			print("total: " .. total_enemies_destroyed, 38, 96, 7)
 		end
 	end
 
@@ -582,7 +581,7 @@ function create_warning(msg, e)
 end
 
 function start_battle()
-	enemy_count = rnd(enemy_by_difficulty[difficulty])
+	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
 	while(enemy_count > 0)
 	do
@@ -590,9 +589,10 @@ function start_battle()
 		local enemy = {}
 		enemy.spr = enemy_data["spr_ok"]
 		enemy.spr_damage = enemy_data["spr_damage"]
-		enemy.health = enemy_data["b_health"] + (difficulty - 1)
-		enemy.damage = enemy_data["b_damage"] + (difficulty - 1)
-		enemy.shot_v = enemy_data["b_shot_speed"] + (difficulty - 1)
+		enemy.health = enemy_data["b_health"] + (pirate_rep - 1)
+		enemy.max_health = enemy_data["b_health"] + (pirate_rep - 1)
+		enemy.damage = enemy_data["b_damage"] + (pirate_rep - 1)
+		enemy.shot_v = enemy_data["b_shot_speed"] + (pirate_rep - 1)
 		enemy.v = enemy_data["b_speed"]
 		enemy.score = enemy_data.score
 		enemy.reward = enemy_data.reward
@@ -747,10 +747,10 @@ function draw_ui()
 end
 
 function update_threat()
-	if (score > 2000 and score < 5000) difficulty = 2
-	if (score > 5000) difficulty = 3
+	-- if (score > 2000 and score < 5000) pirate_rep = 2
+	-- if (score > 5000) pirate_rep = 3
 
-	pirate_refresh_rate = (difficulty == 1) and 5 or (difficulty == 2) and 2 or 1
+	pirate_refresh_rate = (pirate_rep == 1) and 5 or (pirate_rep == 2) and 2 or 1
 	if (clock % pirate_refresh_rate == 0) then
 		if move_pirate_sprite == "up" then
 			pirate_sprite_y -= 1
@@ -766,7 +766,7 @@ end
 
 function draw_threat()
 	rectfill(62,1,72,11, 0)
-	pirate_sprite = (difficulty == 1) and 014 or (difficulty == 2) and 030 or 046
+	pirate_sprite = (pirate_rep == 1) and 014 or (pirate_rep == 2) and 030 or 046
 	pirate_mouth = 062
 
 	spr(pirate_sprite, 64, pirate_sprite_y)
@@ -999,8 +999,11 @@ function destroy_enemy(e)
 		end
 	end
 
+	total_enemies_destroyed += 1
+	if (pirate_rep < 3 and total_enemies_destroyed % 15 == 0) pirate_rep += 1
+
 	score += e.score
-	battle_rewards += flr(10 + (e.reward * (difficulty/2)))
+	battle_rewards += flr(10 + (e.reward * (pirate_rep/2)))
 	create_explosion(e.x,e.y)
 	sfx(05)
 	del(enemies,e)
@@ -1128,8 +1131,15 @@ end
 
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
-	print(e.health,e.x + 9,e.y, 10)
-	if (e.locked_on) rect(e.x-2,e.y-2,e.x+9,e.y+9,8)
+	-- print(e.health,e.x + 9,e.y, 10)
+
+	rectfill(e.x, e.y - 4, e.x + 7, e.y - 2, 7)
+	line(e.x + 1, e.y - 3, e.x + 6, e.y - 3, 0)
+	percentage = e.health/e.max_health
+	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.3) and 10 or 8
+	length = (percentage == 1) and 6 or (percentage < 1 and percentage >= 0.3) and 4 or 2
+	line(e.x + 1, e.y - 3, e.x + length, e.y - 3, color)
+	if (e.locked_on) rect(e.x - 2, e.y - 2, e.x + 9, e.y + 9,8)
 end
 
 function draw_enemy_bullet(eb)
