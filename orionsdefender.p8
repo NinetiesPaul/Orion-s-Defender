@@ -254,6 +254,8 @@ function _draw()
 
 	if (current_view == 1 or current_view == 2 or current_view == 4) draw_ui()
 
+	if (current_view == 1 or current_view == 2 or current_view == 6) foreach(stars, draw_star)
+
 	if current_view == 1 then -- world
 		draw_threat()
 		spr(ship_spr,ship_x,ship_y)
@@ -261,7 +263,7 @@ function _draw()
 
 		if show_stats then
 			rect(24,24,104,104, 1)
-			rectfill(25,25,103,103, 0)
+			rectfill(25,25,103,103, 5)
 
 			linect = 0
 			for e in all(enemy_list) do
@@ -279,15 +281,15 @@ function _draw()
 
 	if current_view == 2 then -- battle
 		draw_cooldown()
-		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
-
 		spr(ship_spr,ship_x,ship_y)
+
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
 		foreach(missiles, draw_missile)
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
+		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
 	end
 
 	if current_view == 3 then -- rewards
@@ -366,10 +368,6 @@ function _draw()
 
 		print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
 		print("press anything to start", 20, 120)
-	end
-
-	if current_view == 1 or current_view == 2 or current_view == 6 then
-		foreach(stars, draw_star)
 	end
 end
 
@@ -775,7 +773,7 @@ function create_encounter()
 	-- store
 	-- pirate store
 	local random_factor = rnd()
-	type = (random_factor <= 0.6) and 1 or (random_factor <= 0.75) and 2 or 3
+	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd(encounter_spawn_x)
