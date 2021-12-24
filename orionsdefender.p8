@@ -6,11 +6,6 @@ __lua__
 function _init()
 	-- encounters variable
 	encounters = {}
-	types = {
-		1,	-- battle pirate
-		2,	-- store
-		3 	-- pirate store
-	}
 	encounter_spawn_x = {
 		12,
 		36,
@@ -776,7 +771,11 @@ end
 -- encounters
 
 function create_encounter()
-	type = rnd(types)
+	-- battle pirate
+	-- store
+	-- pirate store
+	local random_factor = rnd()
+	type = (random_factor <= 0.6) and 1 or (random_factor <= 0.75) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd(encounter_spawn_x)
