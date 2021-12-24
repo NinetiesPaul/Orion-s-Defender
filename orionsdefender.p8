@@ -84,64 +84,66 @@ function _init()
 
 	-- store variables
 	pirate_store = false
-	shop_selector_spr = {002,018,034}
+	shop_selector_spr = 002
 	shop_selector_y = 16
 	shop_selector = 1
 	current_shop_item = null
-	shop_selector_spr_pointer = 1
 	shop_last_bought = ""
-	next_armor_upgrade_cost = 75 * current_stat_armor_lvl
-	next_health_upgrade_cost = 50 * current_stat_health_lvl
-	next_gun_upgrade_cost = 100 * current_stat_gun_lvl
-	next_cooldown_upgrade_cost = 100 * current_stat_cooldown_lvl
-	shop_items = {
+	shop_items = {}
+	all_shop_items = {
 		{
 			["name"] = "fuel",
 			["formatted_name"] = "fuel",
 			["price"] = 3,
-			["all_shops"] = true
+			["shops"] = "both"
 		},
 		{
 			["name"] = "health",
 			["price"] = 4,
 			["formatted_name"] = "health",
-			["all_shops"] = true
+			["shops"] = "both"
 		},
 		{
 			["name"] = "armor",
 			["price"] = 4,
 			["formatted_name"] = "armor",
-			["all_shops"] = true
+			["shops"] = "both"
 		},
 		{
 			["name"] = "missile",
 			["price"] = 7,
 			["formatted_name"] = "missile",
-			["all_shops"] = true
+			["shops"] = "both"
 		},
 		{
 			["name"] = "health_upgrade",
 			["price"] = 50 * current_stat_health_lvl,
 			["formatted_name"] = "health upgrade",
-			["all_shops"] = false
+			["shops"] = "civ"
 		},
 		{
 			["name"] = "armor_upgrade",
 			["price"] = 75 * current_stat_armor_lvl,
 			["formatted_name"] = "armor upgrade",
-			["all_shops"] = false
+			["shops"] = "civ"
 		},
 		{
 			["name"] = "gun_damage_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun damage upgrade",
-			["all_shops"] = false
+			["shops"] = "civ"
 		},
 		{
 			["name"] = "gun_cooldown_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun cooldown upgrade",
-			["all_shops"] = false
+			["shops"] = "civ"
+		},
+		{
+			["name"] = "pirate_bribe",
+			["price"] = 50 * pirate_rep,
+			["formatted_name"] = "pirate bribe faction",
+			["shops"] = "pirate"
 		},
 	}
 
@@ -298,20 +300,16 @@ function _draw()
 		current_shop_item = shop_items[shop_selector]
 
 		i = 0
-		for item in all (shop_items) do
-			if pirate_store == false or pirate_store and item.all_shops then
-				price = (pirate_store == false) and item.price or ceil(item.price/2)
-
-				print(item.formatted_name, 14, 16 + i * 8, 7)
-				print("$", 100, 16 + i * 8, 3)
-				print(price, 104, 16 + i * 8, 7)
-				i += 1
-			end
+		for item in all (shop_items) do 
+			price = (pirate_store == false) and item.price or (item.name == "pirate_bribe") and item.price or ceil(item.price/2)
+			print(item.formatted_name, 14, 16 + i * 8, 7)
+			print("$", 100, 16 + i * 8, 3)
+			print(price, 104, 16 + i * 8, 7)
+			i += 1
 		end
 
 		if (clock % 90 == 0) shop_last_bought = ""
 		print(shop_last_bought, 24, 84)
-
 		print("up or down - select", 2, 104)
 		print("z - buy", 2,112)
 		print("x - leave", 2, 120)
@@ -1130,8 +1128,23 @@ end
 -- store
 
 function nav_store()
+	if count(shop_items) == 0 then
+		for item in all (all_shop_items) do
+			if pirate_store == false then
+				if (item.shops == "pirate") goto skip_to_next
+			else
+				if (item.shops == "civ") goto skip_to_next
+			end
+
+			add(shop_items, item)
+
+			::skip_to_next::
+		end
+	end
+
 	if btnp(5) then
 		sfx(00)
+		shop_items = {}
 		current_view = views[1]
 		shop_last_bought = ""
 		pirate_store = false
@@ -1139,7 +1152,7 @@ function nav_store()
 	end
 
 	if btnp(4) then
-		price = (pirate_store == false) and current_shop_item.price or ceil(current_shop_item.price/2)
+		price = (pirate_store == false) and current_shop_item.price or (current_shop_item.name == "pirate_bribe") and current_shop_item.price or ceil(current_shop_item.price/2)
 		if scraps >= price then
 			if current_shop_item.name == "fuel" then
 				if fuel < max_fuel then
@@ -1225,6 +1238,16 @@ function nav_store()
 					shop_last_bought = "gun cooldown upgrade maxed out"
 				end
 			end
+			if current_shop_item.name == "pirate_bribe" then
+				if pirate_rep > 1 then
+					scraps -= price
+					pirate_rep -= 1
+					current_shop_item.price = pirate_rep * 50
+					shop_last_bought = "pirate reputation diminished"
+				else
+					shop_last_bought = "already at minimum pirate rep level"
+				end
+			end
 		else
 			shop_last_bought = "too expensive"
 		end
@@ -1232,22 +1255,20 @@ function nav_store()
  
 	if btnp(3) then
 		sfx(02)
-		shop_selector += 1
-		n_shop_items = (pirate_store) and 4 or count(shop_items)
-		if (shop_selector > n_shop_items) shop_selector = 1
+		n_shop_items = (pirate_store) and 5 or 8
+		if (shop_selector < n_shop_items) shop_selector += 1
 	end
 	
 	if btnp(2) then
 		sfx(02)
-		shop_selector -= 1
-		if (shop_selector == 0) shop_selector = count(shop_items)
+		if (shop_selector > 1) shop_selector -= 1
 	end
 end
 
 function animate_shop_selector()
-	if (clock % 5 == 0) shop_selector_spr_pointer += 1
-	if (shop_selector_spr_pointer > 3) shop_selector_spr_pointer = 1
-	spr(shop_selector_spr[shop_selector_spr_pointer], 4, (shop_selector_y - 9) + shop_selector * 8)
+	if (clock % 5 == 0) shop_selector_spr += 16
+	if (shop_selector_spr > 034) shop_selector_spr = 002
+	spr(shop_selector_spr, 4, (shop_selector_y - 9) + shop_selector * 8)
 end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
