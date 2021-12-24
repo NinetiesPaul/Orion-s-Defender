@@ -6,13 +6,8 @@ __lua__
 function _init()
 	-- encounters variable
 	encounters = {}
-	encounter_spawn_x = {
-		12,
-		36,
-		64,
-		96,
-		108
-	}
+	move_pirate_sprite = "up"
+	pirate_sprite_y = 2
 
 	-- general purpose variables
 	views = {
@@ -24,14 +19,12 @@ function _init()
 		6,	-- 6 start screen
 		7 	-- 7 tutorial
 	}
-	score = 0
 	pirate_rep = 1
 	clock = 0
 	current_view = views[6]
 	rewards_given = false
 	battle_rewards = 0
 	show_stats = false
-	scraps_accrued = 0
 
 	-- player variables
 	cooldown_lvls = {3,2,1}
@@ -60,13 +53,12 @@ function _init()
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
 	missile_mode = false
-	zap_mode = false
-	current_enemy_locked_on = null
 	missile_available = true
 	missile_damage = 3
 	missile_cooldown = 0
 	missile_n = 2
 	missile_max_capacity = 5
+	current_enemy_locked_on = null
 	warned = true
 	random_factor = 0.95
 	collateral_type =
@@ -75,12 +67,10 @@ function _init()
 		2,	-- aiming damage
 		3 	-- firing damage
 	}
-	enemy_by_difficulty ={
-		{1,2},
-		{3,4},
-		{5,6}
-	}
+	score = 0
 	total_enemies_destroyed = 0
+	zap_mode = false
+	missiles = {}
 
 	-- store variables
 	pirate_store = false
@@ -209,7 +199,6 @@ function _init()
 	}
 	enemies = {}
 	enemy_bullets = {}
-	missiles = {}
 	explosions = {}
 	warnings = {}
 	positions = {
@@ -223,6 +212,11 @@ function _init()
 		{112,61},
 	}
 	battle_started = false
+	enemy_by_difficulty ={
+		{1,2},
+		{3,4},
+		{5,6}
+	}
 
 	-- music variables
 	can_leave_screen = false
@@ -232,9 +226,6 @@ function _init()
 
 	stars = {}
 
-	mouth_cdr = 5
-	move_pirate_sprite = "up"
-	pirate_sprite_y = 2
 
 	siren_spr = 015
 end
@@ -766,7 +757,7 @@ function create_encounter()
 	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
-	encounter.x = rnd(encounter_spawn_x)
+	encounter.x = rnd({ 12, 36, 64, 96, 108})
 	encounter.y = 12
 	encounter.type = type
 	encounter.animate = false
