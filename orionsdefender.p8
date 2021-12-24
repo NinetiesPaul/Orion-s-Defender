@@ -554,20 +554,17 @@ function move_warning(w)
 end
 
 function update_icons()
-	if (health/current_max_health < 0.25) health_spr = 051
-	if (health/current_max_health > 0.25 and health/current_max_health < 0.50) health_spr = 035
-	if (health/current_max_health > 0.50 and health/current_max_health < 1) health_spr = 019
-	if (health/current_max_health == 1) health_spr = 003
+	health_spr = (health/current_max_health == 1) and 003 or
+	(health/current_max_health > 0.50 and health/current_max_health < 1) and 019 or 
+	(health/current_max_health > 0.25 and health/current_max_health < 0.50) and 035 or 051
 
-	if (fuel/max_fuel < 0.25) fuel_spr = 053
-	if (fuel/max_fuel > 0.25 and fuel/max_fuel < 0.50) fuel_spr = 037
-	if (fuel/max_fuel > 0.50 and fuel/max_fuel < 1) fuel_spr = 021
-	if (fuel/max_fuel == 1) fuel_spr = 005
+	fuel_spr = (fuel/max_fuel == 1) and 005 or 
+	(fuel/max_fuel > 0.50 and fuel/max_fuel < 1) and 021 or 
+	(fuel/max_fuel > 0.25 and fuel/max_fuel < 0.50) and 037 or 053
 
-	if (armor/current_max_armor == 1) armor_spr = 004
-	if (armor/current_max_armor > 0.50 and armor/current_max_armor < 1) armor_spr = 020
-	if (armor/current_max_armor > 0.25 and armor/current_max_armor < 0.50) armor_spr = 036
-	if (armor/current_max_armor < 0.25) armor_spr = 052
+	armor_spr = (armor/current_max_armor == 1) and 004 or 
+	(armor/current_max_armor > 0.50 and armor/current_max_armor < 1) and 020 or
+	(armor/current_max_armor > 0.25 and armor/current_max_armor < 0.50) and 036 or 052
 end
 
 function create_warning(msg, e)
@@ -747,9 +744,6 @@ function draw_ui()
 end
 
 function update_threat()
-	-- if (score > 2000 and score < 5000) pirate_rep = 2
-	-- if (score > 5000) pirate_rep = 3
-
 	pirate_refresh_rate = (pirate_rep == 1) and 5 or (pirate_rep == 2) and 2 or 1
 	if (clock % pirate_refresh_rate == 0) then
 		if move_pirate_sprite == "up" then
@@ -1131,8 +1125,6 @@ end
 
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
-	-- print(e.health,e.x + 9,e.y, 10)
-
 	rectfill(e.x, e.y - 4, e.x + 7, e.y - 2, 7)
 	line(e.x + 1, e.y - 3, e.x + 6, e.y - 3, 0)
 	percentage = e.health/e.max_health
