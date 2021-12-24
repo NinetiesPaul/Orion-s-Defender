@@ -99,57 +99,49 @@ function _init()
 			["name"] = "fuel",
 			["formatted_name"] = "fuel",
 			["price"] = 3,
-			["available"] = true,
-			["pirate_store"] = true
+			["all_shops"] = true
 		},
 		{
 			["name"] = "health",
 			["price"] = 4,
 			["formatted_name"] = "health",
-			["available"] = true,
-			["pirate_store"] = true
+			["all_shops"] = true
 		},
 		{
 			["name"] = "armor",
 			["price"] = 4,
 			["formatted_name"] = "armor",
-			["available"] = true,
-			["pirate_store"] = true
+			["all_shops"] = true
 		},
 		{
 			["name"] = "missile",
 			["price"] = 7,
 			["formatted_name"] = "missile",
-			["available"] = true,
-			["pirate_store"] = true
+			["all_shops"] = true
 		},
 		{
 			["name"] = "health_upgrade",
 			["price"] = 50 * current_stat_health_lvl,
 			["formatted_name"] = "health upgrade",
-			["available"] = true,
-			["pirate_store"] = false
+			["all_shops"] = false
 		},
 		{
 			["name"] = "armor_upgrade",
 			["price"] = 75 * current_stat_armor_lvl,
 			["formatted_name"] = "armor upgrade",
-			["available"] = true,
-			["pirate_store"] = false
+			["all_shops"] = false
 		},
 		{
 			["name"] = "gun_damage_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun damage upgrade",
-			["available"] = true,
-			["pirate_store"] = false
+			["all_shops"] = false
 		},
 		{
 			["name"] = "gun_cooldown_upgrade",
 			["price"] = 100 * current_stat_gun_lvl,
 			["formatted_name"] = "gun cooldown upgrade",
-			["available"] = true,
-			["pirate_store"] = false
+			["all_shops"] = false
 		},
 	}
 
@@ -307,7 +299,7 @@ function _draw()
 
 		i = 0
 		for item in all (shop_items) do
-			if pirate_store == false or pirate_store and item.pirate_store == pirate_store then
+			if pirate_store == false or pirate_store and item.all_shops then
 				price = (pirate_store == false) and item.price or ceil(item.price/2)
 
 				print(item.formatted_name, 14, 16 + i * 8, 7)
@@ -1147,98 +1139,94 @@ function nav_store()
 	end
 
 	if btnp(4) then
-		if current_shop_item.available then
-			price = (pirate_store == false) and current_shop_item.price or ceil(current_shop_item.price/2)
-			if scraps >= price then
-				if current_shop_item.name == "fuel" then
-					if fuel < max_fuel then
-						fuel = flr(fuel)
-						fuel += 1
-						shop_last_bought = "bought 1 fuel"
-						scraps -= price
-						if (fuel > max_fuel) fuel = max_fuel
-					else
-						shop_last_bought = "fuel at max capacity"
-					end
+		price = (pirate_store == false) and current_shop_item.price or ceil(current_shop_item.price/2)
+		if scraps >= price then
+			if current_shop_item.name == "fuel" then
+				if fuel < max_fuel then
+					fuel = flr(fuel)
+					fuel += 1
+					shop_last_bought = "bought 1 fuel"
+					scraps -= price
+					if (fuel > max_fuel) fuel = max_fuel
+				else
+					shop_last_bought = "fuel at max capacity"
 				end
-				if current_shop_item.name == "health" then
-					if health < current_max_health then
-						health += 1
-						shop_last_bought = "bought 1 health"
-						scraps -= price
-					else
-						shop_last_bought = "current at max health"
-					end
+			end
+			if current_shop_item.name == "health" then
+				if health < current_max_health then
+					health += 1
+					shop_last_bought = "bought 1 health"
+					scraps -= price
+				else
+					shop_last_bought = "current at max health"
 				end
-				if current_shop_item.name == "armor" then
-					if armor < current_max_armor then
-						armor += 1
-						shop_last_bought = "bought 1 armor"
-						scraps -= price
-					else
-						shop_last_bought = "current at max armor"
-					end
+			end
+			if current_shop_item.name == "armor" then
+				if armor < current_max_armor then
+					armor += 1
+					shop_last_bought = "bought 1 armor"
+					scraps -= price
+				else
+					shop_last_bought = "current at max armor"
 				end
-				if current_shop_item.name == "missile" then
-					if missile_n < missile_max_capacity then
-						missile_n += 1
-						shop_last_bought = "bought 1 missile"
-						scraps -= price
-					else
-						shop_last_bought = "missiles at max capacity"
-					end
+			end
+			if current_shop_item.name == "missile" then
+				if missile_n < missile_max_capacity then
+					missile_n += 1
+					shop_last_bought = "bought 1 missile"
+					scraps -= price
+				else
+					shop_last_bought = "missiles at max capacity"
 				end
-				if current_shop_item.name == "health_upgrade" then
-					if current_stat_health_lvl < 3 then
-						scraps -= price
-						current_stat_health_lvl += 1
-						current_shop_item.price = price * current_stat_health_lvl
-						current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
-						health = current_max_health
-						shop_last_bought = "hull upgraded"
-					else
-						shop_last_bought = "hull upgrade maxed out"
-					end
+			end
+			if current_shop_item.name == "health_upgrade" then
+				if current_stat_health_lvl < 3 then
+					scraps -= price
+					current_stat_health_lvl += 1
+					current_shop_item.price = price * current_stat_health_lvl
+					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
+					health = current_max_health
+					shop_last_bought = "hull upgraded"
+				else
+					shop_last_bought = "hull upgrade maxed out"
 				end
-				if current_shop_item.name == "armor_upgrade" then
-					if current_stat_armor_lvl < 3 then
-						scraps -= price
-						current_stat_armor_lvl += 1
-						current_shop_item.price = price * current_stat_armor_lvl
-						current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
-						armor = current_max_armor
-						shop_last_bought = "armor upgraded"
-					else
-						shop_last_bought = "armor upgrade maxed out"
-					end
+			end
+			if current_shop_item.name == "armor_upgrade" then
+				if current_stat_armor_lvl < 3 then
+					scraps -= price
+					current_stat_armor_lvl += 1
+					current_shop_item.price = price * current_stat_armor_lvl
+					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+					armor = current_max_armor
+					shop_last_bought = "armor upgraded"
+				else
+					shop_last_bought = "armor upgrade maxed out"
 				end
-				if current_shop_item.name == "gun_damage_upgrade" then
-					if current_stat_gun_lvl < 3 then
-						scraps -= price
-						current_stat_gun_lvl += 1
-						bullet_damage = current_stat_gun_lvl
-						current_shop_item.price = price * current_stat_gun_lvl
-						shop_last_bought = "gun damage upgraded"
-					else
-						shop_last_bought = "gun damage upgrade maxed out"
-					end
+			end
+			if current_shop_item.name == "gun_damage_upgrade" then
+				if current_stat_gun_lvl < 3 then
+					scraps -= price
+					current_stat_gun_lvl += 1
+					bullet_damage = current_stat_gun_lvl
+					current_shop_item.price = price * current_stat_gun_lvl
+					shop_last_bought = "gun damage upgraded"
+				else
+					shop_last_bought = "gun damage upgrade maxed out"
 				end
-				if current_shop_item.name == "gun_cooldown_upgrade" then
-					if current_stat_cooldown_lvl < 3 then
-						scraps -= price
-						current_stat_cooldown_lvl += 1
-						bullet_cooldown_rate = current_stat_cooldown_lvl
-						current_shop_item.price = price * current_stat_cooldown_lvl
-						shop_last_bought = "gun damage upgraded"
-					else
-						shop_last_bought = "gun cooldown upgrade maxed out"
-					end
+			end
+			if current_shop_item.name == "gun_cooldown_upgrade" then
+				if current_stat_cooldown_lvl < 3 then
+					scraps -= price
+					current_stat_cooldown_lvl += 1
+					bullet_cooldown_rate = current_stat_cooldown_lvl
+					current_shop_item.price = price * current_stat_cooldown_lvl
+					shop_last_bought = "gun damage upgraded"
+				else
+					shop_last_bought = "gun cooldown upgrade maxed out"
 				end
-			else
-				shop_last_bought = "too expensive"
 			end
 		else
-			shop_last_bought = "unavailable"
+			shop_last_bought = "too expensive"
 		end
 	end
  
