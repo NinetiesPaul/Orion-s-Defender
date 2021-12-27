@@ -25,6 +25,7 @@ function _init()
 	rewards_given = false
 	battle_rewards = 0
 	show_stats = false
+	help_text_y = 0
 
 	-- player variables
 	cooldown_lvls = {3,2,1}
@@ -232,8 +233,6 @@ end
 
 function _draw()
 	cls()
-	rectfill(0,0,127,12,7)
-	rect(0,12,127,127, 7)
 
 	-- spr(siren_spr,64,72)
 
@@ -324,32 +323,36 @@ function _draw()
 	end
 
 	if current_view == 7 then -- help
-		print("help screen", 40, 2)
+		spr(017, 2, 14 + help_text_y)
+		print("this is your ship. \nyou can only move sideways", 11, 14 + help_text_y, 7)
 
-		spr(017, 2, 12)
-		print("this is your ship. \nyou can only move sideways", 11, 10)
+		spr(001, 2, 35 + help_text_y)
+		spr(016, 2, 55 + help_text_y)
+		print("when in battle, \npress 'x' to switch between\nmain gun and missile\npress 'z' to shoot", 11, 28 + help_text_y, 7)
+		print("when in missile mode,\npress up or down to\ncycle between targets", 11, 52 + help_text_y, 7)
 
-		spr(001, 2, 26)
-		print("when in battle, \npress 'z' to shoot", 11, 23)
-		print("some shots may cause critical\nor collateral damage", 11, 36)
+		spr(009, 2, 80 + help_text_y)
+		spr(030, 2, 96 + help_text_y)
+		spr(062, 2, 96 + help_text_y)
+		print("this is a pirate ship.\ndestroy them to get scraps\nand loot, be aware that the\nmore you destroy, the more\nyou create a bad rep with\nthem. your currently rep\nlevel is depicted by the\nskull icon", 11, 72 + help_text_y, 7)
 
-		spr(000, 1, 51)
-		print("this is an encounter pickup\nit can be anything", 11, 49)
+		spr(064, 2, 120 + help_text_y, 2, 2)
+		print("this is a battle encounter!\nload up!", 17, 123 + help_text_y)
 
-		spr(009, 2, 69)
-		print("this is an enemy.\ndestroy it to get scraps", 11, 67)
+		spr(072, 2, 136 + help_text_y, 2, 2)
+		print("this is a store encounter.\nrefuel, rearm and upgrade", 17, 138 + help_text_y)
 
-		print("threat level indicators", 2, 81)
-		spr(006, 2, 90)
-		print("low", 11, 92)
-		spr(022, 24, 90)
-		print("medium", 33, 92)
-		spr(038, 58, 90)
-		print("high level", 67, 92)
+		spr(072, 2, 154 + help_text_y, 2, 2)
+		spr(046, 10, 164 + help_text_y)
+		spr(062, 10, 164 + help_text_y)
+		print("this is a pirate owned shop,\nit's cheaper due to the\niffy origin of the ware,\nbut has no upgrades. you\ncan also pay off the\npirates to lower your bad\nrep with them", 17, 153 + help_text_y)
 
-		print("use scraps to fix your ship,\nbuy fuel and upgrades. survive", 2, 106)
-		print("press anything to start", 20, 120)
+		rectfill(1,1,126,12, 7)
+		print("help screen", 40, 4, 0)
+		line(40, 10, 82, 10, 0)
 	end
+
+	rect(0,0,127,127, 7)
 end
 
 function _update()
@@ -415,6 +418,11 @@ function _update()
 
 	if current_view == 6 or current_view == 7 then
 		start()
+
+		if (btn(2)) help_text_y += 3
+		if (btn(3)) help_text_y -= 3
+		if (help_text_y > 0) help_text_y = 0
+		if (help_text_y < -69) help_text_y = -69
 	end
 
 	if current_view != 1 then
@@ -700,6 +708,7 @@ function destroy()
 end
 
 function draw_ui()
+	rectfill(0,0,127,12, 7)
 	if current_view == 2 then
 		current_weapon = (missile_mode) and "missile" or "main gun"
 		print("weapon: " .. current_weapon, 1, 1, 0)
