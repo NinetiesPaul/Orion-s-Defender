@@ -57,7 +57,7 @@ function _init()
 	missile_available = true
 	missile_damage = 3
 	missile_cooldown = 0
-	missile_n = 2
+	missile_n = 10
 	missile_max_capacity = 5
 	current_enemy_locked_on = null
 	warned = true
@@ -212,7 +212,12 @@ function _init()
 		{102,14},
 		{112,61},
 	}
+
 	battle_started = false
+	battle_animation = false
+	left_side = 0
+	right_side = 127
+	animation_direction = "in"
 	enemy_by_difficulty ={
 		{1,2},
 		{3,4},
@@ -235,9 +240,8 @@ function _draw()
 	cls()
 
 	-- spr(siren_spr,64,72)
-
+	-- rect(0,0,127,127, 7)
 	if (current_view == 1 or current_view == 2 or current_view == 4) draw_ui()
-
 	if (current_view == 1 or current_view == 2 or current_view == 6) foreach(stars, draw_star)
 
 	if current_view == 1 then -- world
@@ -264,7 +268,6 @@ function _draw()
 	end
 
 	if current_view == 2 then -- battle
-		-- draw_cooldown()
 		spr(ship_spr,ship_x,ship_y)
 
 		foreach(enemies, draw_enemy)
@@ -274,19 +277,17 @@ function _draw()
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
 		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
+		if (battle_animation) draw_battle_animation()
 	end
 
 	if current_view == 3 then -- rewards
-		destroy()
-
-		print("you've won!", 40,64)
-		print("added " .. battle_rewards .. " scraps", 40,80)
-		if (stat(54) == 0) print("press z or x to continue", 18, 104)
+		draw_battle_animation()
+		print("victory!", 48,64, 7)
+		print("found " .. battle_rewards .. " scraps", 35,72, 7)
+		if (stat(54) == 0) print("press z or x to continue", 18, 104, 0)
 	end
 
 	if current_view == 4 then -- store
-		destroy()
-
 		current_shop_item = shop_items[shop_selector]
 
 		i = 0
@@ -308,8 +309,6 @@ function _draw()
 	end
 
 	if current_view == 5 then -- gameover
-		destroy()
-
 		print("game over",44,64)
 		if (health <= 0) print("you were destroyed",24,72)
 		if (fuel <= 0) print("you ran out of fuel",23,72)
@@ -351,8 +350,6 @@ function _draw()
 		print("help screen", 40, 4, 0)
 		line(40, 10, 82, 10, 0)
 	end
-
-	rect(0,0,127,127, 7)
 end
 
 function _update()
@@ -383,7 +380,7 @@ function _update()
 	end
 
 	if current_view == 2 then
-		if (battle_started == false)	start_battle()
+		if (not battle_started and not battle_animation) start_battle()
 		if count(warnings) == 0 then
 			fire()
 			foreach(enemies, move_enemy)
@@ -402,6 +399,8 @@ function _update()
 				missile_cooldown = 0
 			end
 		end
+
+		if (battle_started and count(explosions) == 0 and count(enemies) == 0) battle_animation = true
 	end
 
 	if current_view == 3 then
@@ -453,7 +452,6 @@ function _update()
 		if music_battle_end_playing == false then
 			music_battle_end_playing = true
 			music(11)
-			--music(-1)
 		end
 	else
 		music_battle_end_playing = false
@@ -465,6 +463,8 @@ function _update()
 		create_stars()
 		foreach(stars, move_star)
 	end
+
+	if (current_view == 2 or current_view == 3) update_battle_animation()
 end
 
 function create_stars()
@@ -493,6 +493,45 @@ function move_star(s)
 	if s.y >= 128 then
 		del(stars,s)
 	end
+end
+
+function draw_battle_animation()
+	rectfill(0, 0, left_side, 128, 1)
+	rectfill(127, 0, right_side, 128, 1)
+end
+
+function update_battle_animation()
+	if battle_animation then
+		if animation_direction == "in" then
+			right_side -= 5
+			left_side += 5
+
+			if right_side < 64 and left_side > 64 then
+				if battle_started and count(explosions) == 0 and count(enemies) == 0 then
+					battle_animation = false -- reset_battle_animation()
+					current_view = views[3]
+				else
+					animation_direction = "out"
+				end
+			end
+		else
+			right_side += 5
+			left_side -= 5
+
+			if right_side > 127 and left_side < 0 then
+				reset_battle_animation()
+				battle_animation = false
+
+				if (current_view == 3) destroy() current_view = 1
+			end
+		end
+	end
+end
+
+function reset_battle_animation()
+	left_side = 0
+	right_side = 127
+	animation_direction = "in"
 end
 
 function draw_missile(m)
@@ -621,10 +660,6 @@ function animate_explosion(exp)
 	if exp.stage == 8 then
 		del(explosions, exp)
 	end
-
-	if count(explosions) == 0 and count(enemies) == 0 then
-		current_view = views[3]
-	end
 end
 
 function draw_explosion(exp)
@@ -683,9 +718,8 @@ function rewards()
 	else
 		if stat(54) == 0 then
 			if btnp(4) or btnp(5) then
-				rewards_given = false
-				battle_rewards = 0
-				current_view = views[1]
+				animation_direction = "out"
+				battle_animation = true
 			end
 		end
 	end
@@ -705,6 +739,8 @@ function destroy()
 	warned = true
 	current_enemy_locked_on = null
 	battle_started = false
+	battle_rewards = 0
+	rewards_given = false
 end
 
 function draw_ui()
@@ -765,9 +801,6 @@ end
 -- encounters
 
 function create_encounter()
-	-- battle pirate
-	-- store
-	-- pirate store
 	local random_factor = rnd()
 	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
@@ -810,6 +843,7 @@ function move_encounter(e)
 	e.y <= ship_y+10 then
 		del(encounters,e)
 		if e.type == 1 then
+			battle_animation = true
 			current_view = views[2]
 		end
 		if e.type == 2 or e.type == 3 then
@@ -840,19 +874,6 @@ function move_encounter(e)
 	if (e.y >= 128) del(encounters,e)
 end
 
---[[ function draw_cooldown()
-	pos = bullet_cooldown_rate - bullet_cooldown
-	bar_color = (bullet_cooldown > 0) and 10 or 11
-
-	for i = pos, 0, -1 do
-		line(
-		ship_x+9,
-		ship_y+7,
-		ship_x+9,
-		ship_y+(7-i),
-		bar_color)
-	end
-end ]]--
 -->8
 -- player
 
