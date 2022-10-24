@@ -22,10 +22,9 @@ function _init()
 	pirate_rep = 1
 	clock = 0
 	current_view = views[6]
-	rewards_given = false
-	battle_rewards = 0
 	show_stats = false
 	help_text_y = 0
+	stars = {}
 
 	-- player variables
 	cooldown_lvls = {3,2,1}
@@ -57,8 +56,8 @@ function _init()
 	missile_available = true
 	missile_damage = 3
 	missile_cooldown = 0
-	missile_n = 10
-	missile_max_capacity = 5
+	missile_n = 2
+	missile_max_capacity = 6
 	current_enemy_locked_on = null
 	warned = true
 	random_factor = 0.95
@@ -73,7 +72,7 @@ function _init()
 	zap_mode = false
 	missiles = {}
 
-	-- store variables
+	-- shop
 	pirate_store = false
 	shop_selector_spr = 002
 	shop_selector_y = 16
@@ -138,7 +137,7 @@ function _init()
 		},
 	}
 
-	-- enemy variables
+	-- enemy and battle
 	enemy_list = 
 	{
 		{
@@ -212,12 +211,16 @@ function _init()
 		{102,14},
 		{112,61},
 	}
-
+	rewards_given = false
+	battle_rewards = 0
 	battle_started = false
-	battle_animation = false
+
+	
+	transition_animation = false
 	left_side = 0
 	right_side = 127
 	animation_direction = "in"
+
 	enemy_by_difficulty ={
 		{1,2},
 		{3,4},
@@ -230,9 +233,7 @@ function _init()
 	music_batttle_player = false
 	music_battle_end_playing = false
 
-	stars = {}
-
-
+	
 	siren_spr = 015
 end
 
@@ -277,17 +278,17 @@ function _draw()
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
 		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
-		if (battle_animation) draw_battle_animation()
+		if (transition_animation) draw_transition_animation()
 	end
 
 	if current_view == 3 then -- rewards
-		draw_battle_animation()
+		draw_transition_animation()
 		print("victory!", 48,64, 7)
 		print("found " .. battle_rewards .. " scraps", 35,72, 7)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104, 0)
 	end
 
-	if current_view == 4 then -- store
+	if current_view == 4 then -- shop
 		current_shop_item = shop_items[shop_selector]
 
 		i = 0
@@ -301,9 +302,9 @@ function _draw()
 
 		if (clock % 90 == 0) shop_last_bought = ""
 		print(shop_last_bought, 24, 84)
-		print("up or down - select", 2, 104)
-		print("z - buy", 2,112)
-		print("x - leave", 2, 120)
+		print("⬆️⬇️ [select]", 2, 104)
+		print("z/🅾️ [buy]", 2,112)
+		print("x/❎ [leave]", 2, 120)
 
 		animate_shop_selector()
 	end
@@ -312,43 +313,45 @@ function _draw()
 		print("game over",44,64)
 		if (health <= 0) print("you were destroyed",24,72)
 		if (fuel <= 0) print("you ran out of fuel",23,72)
-		print("press z or x to restart", 18, 104)
+		print("press any key", 18, 104)
 	end
 
 	if current_view == 6 then -- start
 		spr(128,24,44,9,3)
-		print("z to start", 40, 84,7)
-		print("x to help", 42, 92,7)
+		print("z/🅾️ to start", 40, 84,7)
+		print("x/❎ to help", 42, 92,7)
 	end
 
 	if current_view == 7 then -- help
-		spr(017, 2, 14 + help_text_y)
-		print("this is your ship. \nyou can only move sideways", 11, 14 + help_text_y, 7)
+		spr(017, 2, 16 + help_text_y)
+		print("this is you! move sideways to\navoid getting shot", 11, 14 + help_text_y, 7)
 
-		spr(001, 2, 35 + help_text_y)
-		spr(016, 2, 55 + help_text_y)
-		print("when in battle, \npress 'x' to switch between\nmain gun and missile\npress 'z' to shoot", 11, 28 + help_text_y, 7)
-		print("when in missile mode,\npress up or down to\ncycle between targets", 11, 52 + help_text_y, 7)
+		spr(001, 2, 32 + help_text_y)
+		spr(016, 2, 49 + help_text_y)
+		print("when in battle, press x/❎ to\nswitch between main gun and\nsecondary gun. z/🅾️ to shoot", 11, 28 + help_text_y, 7)
+		print("in missile mode, press ⬆️ or\n⬇️ to switch targets", 11, 48 + help_text_y, 7)
 
-		spr(009, 2, 80 + help_text_y)
-		spr(030, 2, 96 + help_text_y)
-		spr(062, 2, 96 + help_text_y)
-		print("this is a pirate ship.\ndestroy them to get scraps\nand loot, be aware that the\nmore you destroy, the more\nyou create a bad rep with\nthem. your currently rep\nlevel is depicted by the\nskull icon", 11, 72 + help_text_y, 7)
+		spr(009, 2, 64 + help_text_y)
+		print("this is a pirate! fight them\nfor rewards", 11, 62 + help_text_y, 7)
 
-		spr(064, 2, 120 + help_text_y, 2, 2)
-		print("this is a battle encounter!\nload up!", 17, 123 + help_text_y)
+		spr(030, 2, 83 + help_text_y)
+		spr(062, 2, 83 + help_text_y)
+		print("as you fight and destroy\npirates, your wanted level\nincreases. the skull icon\nindicates this. ", 11, 76 + help_text_y, 7)
 
-		spr(072, 2, 136 + help_text_y, 2, 2)
-		print("this is a store encounter.\nrefuel, rearm and upgrade", 17, 138 + help_text_y)
+		spr(064, 2, 100 + help_text_y, 2, 2)
+		print("this is a battle encounter!\nload up!", 17, 103 + help_text_y)
 
-		spr(072, 2, 154 + help_text_y, 2, 2)
-		spr(046, 10, 164 + help_text_y)
-		spr(062, 10, 164 + help_text_y)
-		print("this is a pirate owned shop,\nit's cheaper due to the\niffy origin of the ware,\nbut has no upgrades. you\ncan also pay off the\npirates to lower your bad\nrep with them", 17, 153 + help_text_y)
+		spr(072, 2, 117 + help_text_y, 2, 2)
+		print("this is a shop encounter.\nrefuel, rearm and upgrade", 17, 120 + help_text_y)
 
-		rectfill(1,1,126,12, 7)
-		print("help screen", 40, 4, 0)
-		line(40, 10, 82, 10, 0)
+		spr(072, 2, 140 + help_text_y, 2, 2)
+		spr(046, 9, 148 + help_text_y)
+		spr(062, 9, 148 + help_text_y)
+		print("a pirate owned shop,\nit's cheaper due to the\nmysterious source of the\ngoods, but sell no\nupgrade.", 17, 136 + help_text_y)
+
+		rectfill(0,0, 126,12, 7)
+		print("help screen", 40, 3, 0)
+		line(40, 9, 82, 9, 0)
 	end
 end
 
@@ -380,7 +383,7 @@ function _update()
 	end
 
 	if current_view == 2 then
-		if (not battle_started and not battle_animation) start_battle()
+		if (not battle_started and not transition_animation) start_battle()
 		if count(warnings) == 0 then
 			fire()
 			foreach(enemies, move_enemy)
@@ -390,7 +393,7 @@ function _update()
 		end
 		foreach(warnings, move_warning)
 
-		missile_ui()
+		if (battle_started) missile_ui()
 		foreach(missiles, move_missile)
 		if missile_available == false then
 			missile_cooldown += 1
@@ -400,7 +403,7 @@ function _update()
 			end
 		end
 
-		if (battle_started and count(explosions) == 0 and count(enemies) == 0) battle_animation = true
+		if (battle_started and count(explosions) == 0 and count(enemies) == 0) transition_animation = true
 	end
 
 	if current_view == 3 then
@@ -464,7 +467,7 @@ function _update()
 		foreach(stars, move_star)
 	end
 
-	if (current_view == 2 or current_view == 3) update_battle_animation()
+	if (current_view == 2 or current_view == 3) update_transition_animation()
 end
 
 function create_stars()
@@ -495,20 +498,20 @@ function move_star(s)
 	end
 end
 
-function draw_battle_animation()
+function draw_transition_animation()
 	rectfill(0, 0, left_side, 128, 1)
 	rectfill(127, 0, right_side, 128, 1)
 end
 
-function update_battle_animation()
-	if battle_animation then
+function update_transition_animation()
+	if transition_animation then
 		if animation_direction == "in" then
 			right_side -= 5
 			left_side += 5
 
 			if right_side < 64 and left_side > 64 then
 				if battle_started and count(explosions) == 0 and count(enemies) == 0 then
-					battle_animation = false -- reset_battle_animation()
+					transition_animation = false -- reset_transition_animation()
 					current_view = views[3]
 				else
 					animation_direction = "out"
@@ -519,8 +522,8 @@ function update_battle_animation()
 			left_side -= 5
 
 			if right_side > 127 and left_side < 0 then
-				reset_battle_animation()
-				battle_animation = false
+				reset_transition_animation()
+				transition_animation = false
 
 				if (current_view == 3) destroy() current_view = 1
 			end
@@ -528,7 +531,7 @@ function update_battle_animation()
 	end
 end
 
-function reset_battle_animation()
+function reset_transition_animation()
 	left_side = 0
 	right_side = 127
 	animation_direction = "in"
@@ -719,7 +722,7 @@ function rewards()
 		if stat(54) == 0 then
 			if btnp(4) or btnp(5) then
 				animation_direction = "out"
-				battle_animation = true
+				transition_animation = true
 			end
 		end
 	end
@@ -843,7 +846,7 @@ function move_encounter(e)
 	e.y <= ship_y+10 then
 		del(encounters,e)
 		if e.type == 1 then
-			battle_animation = true
+			transition_animation = true
 			current_view = views[2]
 		end
 		if e.type == 2 or e.type == 3 then
@@ -1152,7 +1155,7 @@ function draw_enemy_bullet(eb)
 	spr(001,eb.x,eb.y)
 end
 -->8
--- store
+-- shop
 
 function nav_store()
 	if count(shop_items) == 0 then
