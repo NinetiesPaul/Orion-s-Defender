@@ -195,6 +195,20 @@ function _init()
 			["knowledge_level"] = 0,
 			["score"] = 175,
 			["reward"] = 16
+		},
+		{
+			["name"] = "sentinel",
+			["spr_ok"] = 013,
+			["spr_damage"] = 029,
+			["b_health"] = 5,
+			["b_damage"] = 3,
+			["b_shot_speed"] = 1.5,
+			["b_speed"] =  1.7,
+			["b_cdr"] = 45,
+			["n_destroyed"] = 0,
+			["knowledge_level"] = 0,
+			["score"] = 250,
+			["reward"] = 20
 		}
 	}
 	enemies = {}
@@ -251,20 +265,22 @@ function _draw()
 		foreach(encounters, draw_encounter)
 
 		if show_stats then
-			rect(24,24,104,104, 1)
-			rectfill(25,25,103,103, 5)
+			rect(24,24,104,104, 7)
+			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
+			-- add page like system for proficiency and kills [wíp]
+			print("proficiency", 43, 26, 7)
 
 			linect = 0
 			for e in all(enemy_list) do
-				spr(e.spr_ok, 30, 32 + linect * 14)
-				print(e.name, 40, 32 + linect * 14, 7)
-
-				print(e.n_destroyed, 40, 38 + linect * 14, 7)
-				print(e.knowledge_level .. "/3", 88, 32 + linect * 14, 7)
+				spr(e.spr_ok, 28, 38 + linect * 10)
+				print(e.name, 40, 40 + linect * 10, 7)
+				print(e.n_destroyed.." ["..e.knowledge_level .. "/3]", 74, 40 + linect * 10, 7)
 
 				linect+=1
 			end
-			print("total: " .. total_enemies_destroyed, 38, 96, 7)
+
+			print("total: ", 28, 96, 7)
+			print(total_enemies_destroyed, 98, 96, 7)
 		end
 	end
 
@@ -347,7 +363,7 @@ function _draw()
 		spr(072, 2, 140 + help_text_y, 2, 2)
 		spr(046, 9, 148 + help_text_y)
 		spr(062, 9, 148 + help_text_y)
-		print("a pirate owned shop,\nit's cheaper due to the\nmysterious source of the\ngoods, but sell no\nupgrade.", 17, 136 + help_text_y)
+		print("a pirate owned shop.\nit's cheaper due to the\nmysterious source of the\ngoods, but sell no\nupgrade.", 17, 136 + help_text_y)
 
 		rectfill(0,0, 126,12, 7)
 		print("help screen", 40, 3, 0)
@@ -918,6 +934,7 @@ function fire()
 			missile_mode = false
 		end
 	end
+	-- change cooldown feature to 15 / 45 / 75 [wip]
 	if clock % 30 == 0 and bullet_cooldown != 0 then
 		bullet_cooldown -= 1
 	end
@@ -970,6 +987,7 @@ function move_bullet(b)
 				create_warning("critical\ndamage!", e)
 			end
 			e.health -= damage
+			if (e.health <= 0) destroy_enemy(e)
 
 			if e.collateral == false then
 				for el in all(enemy_list) do
@@ -993,8 +1011,6 @@ function move_bullet(b)
 
 			sfx(04)
 			del(bullets,b)
-
-			if (e.health <= 0) destroy_enemy(e)
 		end
 	end
 end
@@ -1302,12 +1318,12 @@ function animate_shop_selector()
 end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
-000000000000000099999900efe8ee801cccc6d0003bbb300b7bbb300b7bbb300b7bbb300722227007722770722222277888888777711777666666600e7e8800
-000a0000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb3787777877872278772777727787777877c7117c76066606087e88880
-00a7a00000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b3788888877887788772711727072222707c7117c7600600608e888e80
-009a900000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b37878878776888867728778270727727077c77c77666066608888e780
-00090000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb307577570076886707887788700788700707cc70706666600888e7e80
-00000000000990009999990000585000005150005333335003bbbb3003bbbb3003bbbb3075700757076776700770077000788700007cc70006d6d6006ddddd50
+000000000000000099999900efe8ee801cccc6d0003bbb300b7bbb300b7bbb300b7bbb300722227007722770722222277888888777722777666666600e7e8800
+000a0000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb378777787787227877277772778777787787227876066606087e88880
+00a7a00000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b37888888778877887727117270722227078722787600600608e888e80
+009a900000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b37878878776888867728778270727727077877877666066608888e780
+00090000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb3075775700768867078877887007887007078870706666600888e7e80
+00000000000990009999990000585000005150005333335003bbbb3003bbbb3003bbbb30757007570767767007700770007887000078870006d6d6006ddddd50
 00000000000000000000000000050000000500000555550000333300003333000033330007000070007007000700007000077000000770000000000055555550
 00000000007007000000000000000000000000000000000000999900009999000099990000888800000880000888888088888888800880080666660000888000
 0000000077000077000000000000000000000000000000000a7aaa900a7aaa900a7aaa90080000800880088080000008800000088880088866666660088e7e00
