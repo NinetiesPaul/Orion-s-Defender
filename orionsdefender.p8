@@ -27,7 +27,7 @@ function _init()
 	stars = {}
 
 	-- player variables
-	cooldown_lvls = {3,2,1}
+	cooldown_lvls = {75, 45, 15}
 	scraps = 25
 	ship_spr = 017
 	ship_x = 64
@@ -43,13 +43,14 @@ function _init()
 	current_stat_armor_lvl = 1
 	current_stat_health_lvl = 1
 	current_stat_gun_lvl = 1
-	current_stat_cooldown_lvl = 1
+	current_stat_cooldown_lvl = 2
 	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
 	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
 	health = current_max_health
 	armor = current_max_armor
 	bullet_damage = current_stat_gun_lvl
-	bullet_cooldown = 0
+	bullet_cooldown = false
+	bullet_cooldown_counter = 0
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
 	missile_mode = false
@@ -733,7 +734,6 @@ function rewards()
 	if rewards_given == false then
 		scraps += battle_rewards
 		rewards_given = true
-		bullet_cooldown = 0
 	else
 		if stat(54) == 0 then
 			if btnp(4) or btnp(5) then
@@ -760,6 +760,7 @@ function destroy()
 	battle_started = false
 	battle_rewards = 0
 	rewards_given = false
+	bullet_cooldown = false
 end
 
 function draw_ui()
@@ -769,7 +770,7 @@ function draw_ui()
 		print("weapon: " .. current_weapon, 1, 1, 0)
 		palt(3, true)
 		palt(0, false)
-		if (bullet_cooldown > 0 and missile_mode == false) spr(176, 1, 5, 5, 1)
+		if (bullet_cooldown and missile_mode == false) spr(176, 1, 5, 5, 1)
 		if (missile_mode and missile_available == false) spr(176, 1, 5, 5, 1)
 		palt(3, false)
 		palt(0, true)
@@ -903,12 +904,12 @@ function fire()
 	end
 	if btnp(4) then
 		if missile_mode == false then
-			if bullet_cooldown == 0 then
+			if not bullet_cooldown then
 				local bullet = {}
 				bullet.x = ship_x
 				bullet.y = ship_y - 8
 				bullet.spr = 001
-				bullet_cooldown = bullet_cooldown_rate
+				bullet_cooldown = true
 				warned = false
 				sfx(07)
 				add(bullets, bullet)
@@ -934,9 +935,10 @@ function fire()
 			missile_mode = false
 		end
 	end
-	-- change cooldown feature to 15 / 45 / 75 [wip]
-	if clock % 30 == 0 and bullet_cooldown != 0 then
-		bullet_cooldown -= 1
+
+	if bullet_cooldown then
+		bullet_cooldown_counter += 1
+		if (bullet_cooldown_counter % bullet_cooldown_rate == 0) bullet_cooldown_counter = 0 bullet_cooldown = false
 	end
 end
 
@@ -973,7 +975,7 @@ function missile_ui()
 end
 
 function move_bullet(b)
-	b.y -= 4
+	b.y -= 5
 
 	for e in all(enemies) do
 		if e.x >= b.x-4 and
