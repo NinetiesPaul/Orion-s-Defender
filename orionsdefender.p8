@@ -49,18 +49,25 @@ function _init()
 	health = current_max_health
 	armor = current_max_armor
 	bullet_damage = current_stat_gun_lvl
-	bullet_cooldown = false
+	bullet_cooldown = false -- [wip] rename bullet_cooldown to laser_cooldown
 	bullet_cooldown_counter = 0
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
-	missile_mode = false
-	missile_available = true
+	current_ammo_mode = 1
+	ammo_mode = {
+		"laser", -- laser
+		"missile", -- missile
+		"cluster", -- cluster
+		"stun" -- stun
+	}
 	missile_damage = 3
-	missile_cooldown = 0
+	missile_cooldown = false
+	missile_cooldown_counter = 0
 	missile_n = 2
-	missile_max_capacity = 6
+	missile_max_capacity = 6 -- [wip] base missile capacity 4, make it an upgradable system
 	current_enemy_locked_on = null
-	warned = true
+	stun_cooldown = false
+	stun_cooldown_counter = 0
 	random_factor = 0.95
 	collateral_type =
 	{
@@ -70,7 +77,6 @@ function _init()
 	}
 	score = 0
 	total_enemies_destroyed = 0
-	zap_mode = false
 	missiles = {}
 
 	-- shop
@@ -145,7 +151,8 @@ function _init()
 			["name"] = "ant",
 			["spr_ok"] = 009,
 			["spr_damage"] = 025,
-			["b_health"] = 3,
+			["b_health"] = 2,
+			["b_energy"] = 4,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  0.75,
@@ -159,7 +166,8 @@ function _init()
 			["name"] = "ghost",
 			["spr_ok"] = 010,
 			["spr_damage"] = 026,
-			["b_health"] = 2,
+			["b_health"] = 3,
+			["b_energy"] = 4,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.0,
 			["b_speed"] =  1,
@@ -174,6 +182,7 @@ function _init()
 			["spr_ok"] = 011,
 			["spr_damage"] = 027,
 			["b_health"] = 5,
+			["b_energy"] = 4,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.7,
@@ -188,6 +197,7 @@ function _init()
 			["spr_ok"] = 012,
 			["spr_damage"] = 028,
 			["b_health"] = 4,
+			["b_energy"] = 6,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.3,
 			["b_speed"] =  1.5,
@@ -202,6 +212,7 @@ function _init()
 			["spr_ok"] = 013,
 			["spr_damage"] = 029,
 			["b_health"] = 5,
+			["b_energy"] = 7,
 			["b_damage"] = 3,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  1.7,
@@ -410,16 +421,8 @@ function _update()
 		end
 		foreach(warnings, move_warning)
 
-		if (battle_started) missile_ui()
+		if (battle_started and count(enemies) > 0) missile_ui()
 		foreach(missiles, move_missile)
-		if missile_available == false then
-			missile_cooldown += 1
-			if missile_cooldown % 90 == 0 and count(enemies) > 0 then
-				missile_available = true
-				missile_cooldown = 0
-			end
-		end
-
 		if (battle_started and count(explosions) == 0 and count(enemies) == 0) transition_animation = true
 	end
 
@@ -542,7 +545,7 @@ function update_transition_animation()
 				reset_transition_animation()
 				transition_animation = false
 
-				if (current_view == 3) destroy() current_view = 1
+				if (current_view == 3) reset() current_view = 1
 			end
 		end
 	end
@@ -629,6 +632,8 @@ function start_battle()
 		enemy.spr_damage = enemy_data["spr_damage"]
 		enemy.health = enemy_data["b_health"] + (pirate_rep - 1)
 		enemy.max_health = enemy_data["b_health"] + (pirate_rep - 1)
+		enemy.energy = enemy_data["b_energy"] + (pirate_rep - 1)
+		enemy.max_energy = enemy_data["b_energy"] + (pirate_rep - 1)
 		enemy.damage = enemy_data["b_damage"] + (pirate_rep - 1)
 		enemy.shot_v = enemy_data["b_shot_speed"] + (pirate_rep - 1)
 		enemy.v = enemy_data["b_speed"]
@@ -645,6 +650,7 @@ function start_battle()
 		enemy.to_y = 0
 		enemy.moving = false
 		enemy.locked_on = false
+		enemy.stunned = false
 
 		enemy.fire = true
 		enemy.collateral = false
@@ -744,7 +750,7 @@ function rewards()
 	end
 end
 
-function destroy()
+function reset()
 	enemies = {}
 	enemy_bullets = {}
 	bullets = {}
@@ -752,26 +758,24 @@ function destroy()
 	explosions = {}
 	warnings = {}
 	missiles = {}
-	missile_available = true
-	missile_cooldown = 0
-	missile_mode = false
-	warned = true
+	missile_cooldown = false
+	missile_cooldown_counter = 0
 	current_enemy_locked_on = null
 	battle_started = false
 	battle_rewards = 0
 	rewards_given = false
 	bullet_cooldown = false
+	bullet_cooldown_counter = 0
+	current_ammo_mode = 1
 end
 
 function draw_ui()
 	rectfill(0,0,127,12, 7)
 	if current_view == 2 then
-		current_weapon = (missile_mode) and "missile" or "main gun"
-		print("weapon: " .. current_weapon, 1, 1, 0)
+		current_weapon = ammo_mode[current_ammo_mode]
+		print("weapon: " .. current_ammo_mode, 1, 1, 0)
 		palt(3, true)
 		palt(0, false)
-		if (bullet_cooldown and missile_mode == false) spr(176, 1, 5, 5, 1)
-		if (missile_mode and missile_available == false) spr(176, 1, 5, 5, 1)
 		palt(3, false)
 		palt(0, true)
 	end
@@ -898,41 +902,44 @@ end
 -- player
 
 function fire()
-	if warned == false then
-		sfx(03)
-		warned = true
-	end
 	if btnp(4) then
-		if missile_mode == false then
-			if not bullet_cooldown then
-				local bullet = {}
-				bullet.x = ship_x
-				bullet.y = ship_y - 8
-				bullet.spr = 001
-				bullet_cooldown = true
-				warned = false
-				sfx(07)
-				add(bullets, bullet)
-			end
-		elseif missile_available == true and missile_n > 0 then
+		if current_ammo_mode == 1 and not bullet_cooldown then
+			local bullet = {}
+			bullet.mode = "laser"
+			bullet.x = ship_x
+			bullet.y = ship_y - 8
+			bullet.spr = 001
+			bullet.damage = bullet_damage
+			add(bullets, bullet)
+			bullet_cooldown = true
+		elseif current_ammo_mode == 2 and missile_n > 0 and not missile_cooldown then
 			local missile = {}
 			missile.x = ship_x
 			missile.y =ship_y - 8
 			missile.v = 3
 			missile.damage = missile_damage
 			add(missiles, missile)
-			missile_available = false
+			missile_cooldown = true
 			missile_n -= 1
+		elseif current_ammo_mode == 4 and not stun_cooldown then
+			local bullet = {}
+			bullet.mode = "stun"
+			bullet.x = ship_x
+			bullet.y = ship_y - 8
+			bullet.spr = 048
+			bullet.damage = 1
+			add(bullets, bullet)
+			stun_cooldown = true
 		end
 	end
 	if btnp(5) then
-		if missile_mode == false then
-			missile_mode = true
-		else
+		current_ammo_mode += 1
+		if (current_ammo_mode > 4) current_ammo_mode = 1
+
+		if current_ammo_mode != 2 then
 			for e in all (enemies) do
 				e.locked_on = false
 			end
-			missile_mode = false
 		end
 	end
 
@@ -940,21 +947,33 @@ function fire()
 		bullet_cooldown_counter += 1
 		if (bullet_cooldown_counter % bullet_cooldown_rate == 0) bullet_cooldown_counter = 0 bullet_cooldown = false
 	end
+
+	if missile_cooldown then
+		missile_cooldown_counter += 1
+		if (missile_cooldown_counter % 90 == 0 and count(enemies) > 0) missile_cooldown_counter = 0 missile_cooldown = false
+	end
+
+	if stun_cooldown then
+		stun_cooldown_counter += 1
+		if (stun_cooldown_counter % 90 == 0) stun_cooldown_counter = 0 stun_cooldown = false
+	end
 end
 
 function draw_bullet(b)
 	spr(b.spr,b.x,b.y)
-	for e in all(enemies) do
-		if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-			if zap_mode then
-				line(b.x+4, b.y+4, e.x+4, e.y+4, 12)
+
+	if b.mode == "stun" then
+		for e in all(enemies) do
+			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
+				line_color = (clock % 2 == 0) and 12 or 7
+				line(b.x+4, b.y+4, e.x+4, e.y+4, line_color)
 			end
 		end
 	end
 end
 
 function missile_ui()
-	if missile_mode and missile_available then
+	if current_ammo_mode == 2 then
 		if (current_enemy_locked_on == null) current_enemy_locked_on = 1
 		last_enemy = count(enemies)
 
@@ -971,24 +990,32 @@ function missile_ui()
 		end
 
 		enemies[current_enemy_locked_on].locked_on = true
+	else
+		for e in all(enemies) do
+			e.locked_on = false
+		end
 	end
 end
 
 function move_bullet(b)
-	b.y -= 5
+	b.y -= (b.mode == "laser") and 4 or 2
 
 	for e in all(enemies) do
-		if e.x >= b.x-4 and
-		e.x <= b.x+6 and
-		e.y >= b.y-4 and
-		e.y <= b.y+6
-		then
-			damage = bullet_damage
-			if rnd() > random_factor then
+		if b.mode == "stun" then
+			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
+				e.energy -= 0.005
+			end
+		end
+
+		if e.x >= b.x-4 and e.x <= b.x+6 and e.y >= b.y-4 and e.y <= b.y+6 then
+			damage = b.damage
+			if rnd() > random_factor and b.mode == "laser" then
 				damage = damage + (flr(rnd(2)) + 1)
 				create_warning("critical\ndamage!", e)
 			end
-			e.health -= damage
+			if (b.mode == "laser") e.health -= damage
+			if (b.mode == "stun") e.energy -= damage
+
 			if (e.health <= 0) destroy_enemy(e)
 
 			if e.collateral == false then
@@ -1036,12 +1063,14 @@ function destroy_enemy(e)
 	create_explosion(e.x,e.y)
 	sfx(05)
 	del(enemies,e)
-	if (current_enemy_locked_on != null) current_enemy_locked_on = null
 
+
+	-- [wip] what does it do? / remove it after done
+	--[[
 	if count(enemies) == 0 then
 		missile_available = false
 		missile_mode = false
-	end
+	end]]--
 end
 
 function create_explosion(ex,ey)
@@ -1129,6 +1158,8 @@ end
 
 function move_enemy(e)
 	e.clock += 1
+	-- [wip] if stunned halve speed else normal speed
+
 	if e.collateral != 1 then
 		if e.moving == false then
 			e.moving = true
@@ -1160,12 +1191,17 @@ end
 
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
-	rectfill(e.x, e.y - 4, e.x + 7, e.y - 2, 7)
-	line(e.x + 1, e.y - 3, e.x + 6, e.y - 3, 0)
+	print(e.energy, e.x + 8, 7)
+	print(e.v, e.x - 16, 7)
+
 	percentage = e.health/e.max_health
-	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.3) and 10 or 8
-	length = (percentage == 1) and 6 or (percentage < 1 and percentage >= 0.3) and 4 or 2
+	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
+	length = (percentage == 1) and 6 or (percentage < 1 and percentage >= 0.5) and 4 or 2
 	line(e.x + 1, e.y - 3, e.x + length, e.y - 3, color)
+
+	energy_percentage = e.energy/e.max_energy
+	length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or 2
+	line(e.x + 1, e.y - 5, e.x + length, e.y - 5, 12)
 	if (e.locked_on) rect(e.x - 2, e.y - 2, e.x + 9, e.y + 9,8)
 end
 
