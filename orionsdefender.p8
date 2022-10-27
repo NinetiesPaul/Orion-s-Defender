@@ -10,7 +10,7 @@ function _init()
 	pirate_sprite_y = 2
 
 	-- general purpose variables
-	views = {
+	--[[
 		1,	-- 1 world
 		2,	-- 2 battle
 		3,	-- 3 rewards
@@ -18,10 +18,10 @@ function _init()
 		5,	-- 5 game over
 		6,	-- 6 start screen
 		7 	-- 7 tutorial
-	}
+	]]--
 	pirate_rep = 1
 	clock = 0
-	current_view = views[6]
+	current_view = 6
 	show_stats = false
 	stats_page = 1
 	help_text_y = 0
@@ -29,7 +29,7 @@ function _init()
 
 	-- player variables
 	cooldown_lvls = {75, 45, 15}
-	scraps = 25
+	scraps = 30
 	ship_spr = 017
 	ship_x = 64
 	ship_y = 118
@@ -47,6 +47,7 @@ function _init()
 	current_stat_cooldown_lvl = 2
 	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
 	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+	current_weapon_system_level = 1 -- [wip] shopify ammo system upgrade
 	health = current_max_health
 	armor = current_max_armor
 	bullet_damage = current_stat_gun_lvl
@@ -69,6 +70,8 @@ function _init()
 	current_enemy_locked_on = null
 	stun_cooldown = false
 	stun_cooldown_counter = 0
+	stun_n = 6
+	stun_max_capacity = 6
 	random_factor = 0.95
 	collateral_type =
 	{
@@ -111,6 +114,12 @@ function _init()
 			["name"] = "missile",
 			["price"] = 7,
 			["formatted_name"] = "missile",
+			["shops"] = "both"
+		},
+		{
+			["name"] = "stun_ammo",
+			["price"] = 4,
+			["formatted_name"] = "stun ammo",
 			["shops"] = "both"
 		},
 		{
@@ -409,7 +418,7 @@ function _update()
 		if show_stats == false then
 			fuel -= fuel_comsumption
 			if (clock % 60 == 0) create_encounter()
-			if (fuel <= 0) current_view = views[5]
+			if (fuel <= 0) current_view = 5
 			foreach(encounters, move_encounter)
 		end
 
@@ -558,7 +567,7 @@ function update_transition_animation()
 			if right_side < 64 and left_side > 64 then
 				if battle_started and count(explosions) == 0 and count(enemies) == 0 then
 					transition_animation = false -- reset_transition_animation()
-					current_view = views[3]
+					current_view = 3
 				else
 					animation_direction = "out"
 				end
@@ -588,7 +597,7 @@ function draw_missile(m)
 end
 
 function move_missile(m)
-	if (current_enemy_locked_on == null) current_enemy_locked_on = 1
+	if (current_enemy_locked_on == null) current_enemy_locked_on = 1 -- [wip] get enemy coordinates on missile launch, not during missile movement
 	target_x = enemies[current_enemy_locked_on].x
 	target_y = enemies[current_enemy_locked_on].y
 
@@ -790,13 +799,24 @@ function draw_ui()
 	rectfill(0,0,127,12, 7)
 	if current_view == 2 then
 		print("weapon: " .. ammo_mode[current_ammo_mode], 1, 1, 0)
-		if
-			current_ammo_mode == 1 and bullet_cooldown or
-			current_ammo_mode == 2 and missile_cooldown or
-			current_ammo_mode == 4 and stun_cooldown
-			then
-			print("rELOADING", 1, 7, 0)
+		reloading = false
+		out_of_ammo = false
+		ammo_left = ""
+		if current_ammo_mode == 1 then
+			if (bullet_cooldown) reloading = true
+		elseif current_ammo_mode == 2 then
+			if (missile_cooldown) reloading = true
+			ammo_left = missile_n
+			if (missile_n == 0) out_of_ammo = true
+		elseif current_ammo_mode == 4 then
+			if (stun_cooldown) reloading = true
+			ammo_left = stun_n
+			if (stun_n == 0) out_of_ammo = true
 		end
+		
+		if (reloading) print("rELOADING", 1, 7, 0)
+		if (not reloading and out_of_ammo) print("oUT OF AMMO", 1, 7, 0)
+		if (ammo_left != "") spr(016, 88, 2) print("x" .. ammo_left, 95, 4, 0)
 	end
 
 	if current_view != 2 then
@@ -807,8 +827,6 @@ function draw_ui()
 	if (armor > 0) spr(armor_spr,103,2)
 	spr(health_spr,111,2)
 	spr(fuel_spr,119,2)
-	spr(016, 88, 2)
-	print("x" .. missile_n, 95, 4)
 end
 
 function update_threat()
@@ -887,10 +905,10 @@ function move_encounter(e)
 		del(encounters,e)
 		if e.type == 1 then
 			transition_animation = true
-			current_view = views[2]
+			current_view = 2
 		end
 		if e.type == 2 or e.type == 3 then
-			current_view = views[4]
+			current_view = 4
 			if (e.type == 3) pirate_store = true
 		end
 	end
@@ -940,7 +958,7 @@ function fire()
 			add(missiles, missile)
 			missile_cooldown = true
 			missile_n -= 1
-		elseif current_ammo_mode == 4 and not stun_cooldown then
+		elseif current_ammo_mode == 4 and stun_n > 0 and not stun_cooldown then
 			local bullet = {}
 			bullet.mode = "stun"
 			bullet.x = ship_x
@@ -949,6 +967,7 @@ function fire()
 			bullet.damage = 0.5
 			add(bullets, bullet)
 			stun_cooldown = true
+			stun_n -= 1
 		end
 	end
 	if btnp(5) then
@@ -1124,12 +1143,12 @@ end
 function start()
 	if btnp(4) then
 		sfx(01)
-		current_view = views[1]
+		current_view = 1
 	end
 
 	if btnp(5) then
 		sfx(01)
-		current_view = views[7]
+		current_view = 7
 	end
 end
 -->8
@@ -1168,7 +1187,7 @@ function move_enemy_bullet(eb)
 			armor-=eb.damage
 			if (armor < 0) armor = 0
 		end
-		if (health <= 0) current_view = views[5]
+		if (health <= 0) current_view = 5
 	end
 end
 
@@ -1243,7 +1262,7 @@ function nav_store()
 	if btnp(5) then
 		sfx(00)
 		shop_items = {}
-		current_view = views[1]
+		current_view = 1
 		shop_last_bought = ""
 		pirate_store = false
 		shop_selector = 1
@@ -1288,6 +1307,15 @@ function nav_store()
 					scraps -= price
 				else
 					shop_last_bought = "missiles at max capacity"
+				end
+			end
+			if current_shop_item.name == "stun_shot" then
+				if stun_n < stun_max_capacity then
+					stun_n += 1
+					shop_last_bought = "bought 1 stun ammo"
+					scraps -= price
+				else
+					shop_last_bought = "stun ammo at max capacity"
 				end
 			end
 			if current_shop_item.name == "health_upgrade" then
@@ -1353,7 +1381,7 @@ function nav_store()
  
 	if btnp(3) then
 		sfx(02)
-		n_shop_items = (pirate_store) and 5 or 8
+		n_shop_items = (pirate_store) and 6 or 9
 		if (shop_selector < n_shop_items) shop_selector += 1
 	end
 	
