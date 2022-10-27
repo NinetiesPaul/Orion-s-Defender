@@ -70,8 +70,12 @@ function _init()
 	current_enemy_locked_on = null
 	stun_cooldown = false
 	stun_cooldown_counter = 0
-	stun_n = 6
+	stun_n = 4
 	stun_max_capacity = 6
+	cluster_cooldown = false
+	cluster_cooldown_counter = 0
+	cluster_n = 3
+	cluster_max_capacity  = 4
 	random_factor = 0.95
 	collateral_type =
 	{
@@ -309,6 +313,7 @@ function _draw()
 
 	if current_view == 2 then -- battle
 		spr(ship_spr,ship_x,ship_y)
+		print(ship_x, ship_x + 8, ship_y, 7)
 
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
@@ -316,7 +321,7 @@ function _draw()
 		foreach(missiles, draw_missile)
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
-		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
+		-- if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
 		if (transition_animation) draw_transition_animation()
 	end
 
@@ -782,22 +787,30 @@ function reset()
 	missile_cooldown_counter = 0
 	stun_cooldown = false
 	stun_cooldown_counter = 0
+	cluster_cooldown = false
+	cluster_cooldown_counter = 0
 	current_ammo_mode = 1
 end
 
 function draw_ui()
 	rectfill(0,0,127,12, 7)
+
 	if current_view == 2 then
 		print("weapon: " .. ammo_mode[current_ammo_mode], 1, 1, 0)
 		reloading = false
 		out_of_ammo = false
 		ammo_left = ""
+
 		if current_ammo_mode == 1 then
 			if (bullet_cooldown) reloading = true
 		elseif current_ammo_mode == 2 then
 			if (missile_cooldown) reloading = true
 			ammo_left = missile_n
 			if (missile_n == 0) out_of_ammo = true
+		elseif current_ammo_mode == 3 then
+			if (cluster_cooldown) reloading = true
+			ammo_left = cluster_n
+			if (cluster_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 4 then
 			if (stun_cooldown) reloading = true
 			ammo_left = stun_n
@@ -948,6 +961,19 @@ function fire()
 			add(missiles, missile)
 			missile_cooldown = true
 			missile_n -= 1
+		elseif current_ammo_mode == 3 and cluster_n > 0 and not cluster_cooldown then
+			local bullet = {}
+			bullet.mode = "cluster"
+			bullet.x = ship_x
+			bullet.y = ship_y - 8
+			bullet.spr = 032
+			bullet.damage = 0.5
+			bullet.fuse = 15
+			bullet.timer = 0
+			bullet.frag_n = 3
+			add(bullets, bullet)
+			cluster_cooldown = true
+			cluster_n -= 1
 		elseif current_ammo_mode == 4 and stun_n > 0 and not stun_cooldown then
 			local bullet = {}
 			bullet.mode = "stun"
@@ -984,6 +1010,11 @@ function fire()
 	if stun_cooldown then
 		stun_cooldown_counter += 1
 		if (stun_cooldown_counter % 90 == 0) stun_cooldown_counter = 0 stun_cooldown = false
+	end
+
+	if cluster_cooldown then
+		cluster_cooldown_counter += 1
+		if (cluster_cooldown_counter % 90 == 0) cluster_cooldown_counter = 0 cluster_cooldown = false
 	end
 end
 
@@ -1026,7 +1057,17 @@ function missile_ui()
 end
 
 function move_bullet(b)
-	b.y -= (b.mode == "laser") and 4 or 2
+	if b.mode == "cluster" then
+		b.timer += 1
+		if (b.timer % b.fuse == 0) create_clusters(b)
+	end
+
+	if b.mode == "cluster_frag" then
+		b.x += cos(45) * b.angle
+		b.y -= 6
+	else
+		b.y -= (b.mode == "laser") and 4 or 2
+	end
 
 	for e in all(enemies) do
 		if b.mode == "stun" then
@@ -1075,6 +1116,21 @@ function move_bullet(b)
 			del(bullets,b)
 		end
 	end
+end
+
+function create_clusters(b)
+	pos_y = {-1, 0, 1}
+	for i=1,b.frag_n do
+		local bullet = {}
+		bullet.mode = "cluster_frag"
+		bullet.x = b.x + (8 * pos_y[i])
+		bullet.y = b.y
+		bullet.spr = 000
+		bullet.damage = 1
+		bullet.angle = pos_y[i]
+		add(bullets, bullet)
+	end
+	del(bullets,b)
 end
 
 function destroy_enemy(e)
@@ -1389,10 +1445,10 @@ end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
 000000000000000099999900efe8ee801cccc6d0003bbb300b7bbb300b7bbb300b7bbb300722227007722770722222277888888777722777666666600e7e8800
-000a0000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb378777787787227877277772778777787787227876066606087e88880
-00a7a00000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b37888888778877887727117270722227078722787600600608e888e80
-009a900000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b37878878776888867728778270727727077877877666066608888e780
-00090000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb3075775700768867078877887007887007078870706666600888e7e80
+00060000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb378777787787227877277772778777787787227876066606087e88880
+0067600000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b37888888778877887727117270722227078722787600600608e888e80
+00d6d00000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b37878878776888867728778270727727077877877666066608888e780
+000d0000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb3075775700768867078877887007887007078870706666600888e7e80
 00000000000990009999990000585000005150005333335003bbbb3003bbbb3003bbbb30757007570767767007700770007887000078870006d6d6006ddddd50
 00000000000000000000000000050000000500000555550000333300003333000033330007000070007007000700007000077000000770000000000055555550
 00000000007007000000000000000000000000000000000000999900009999000099990000888800000880000888888088888888800880080666660000888000
