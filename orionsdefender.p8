@@ -768,8 +768,7 @@ end
 function draw_ui()
 	rectfill(0,0,127,12, 7)
 	if current_view == 2 then
-		current_weapon = ammo_mode[current_ammo_mode]
-		print("weapon: " .. current_weapon, 1, 1, 0)
+		print("weapon: " .. ammo_mode[current_ammo_mode], 1, 1, 0)
 		if
 			current_ammo_mode == 1 and bullet_cooldown or
 			current_ammo_mode == 2 and missile_cooldown or
