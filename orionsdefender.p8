@@ -510,8 +510,6 @@ function _update()
 		music_battle_end_playing = false
 	end
 
-	-- star effect
-
 	if current_view == 1 or current_view == 2 or current_view == 6 then
 		create_stars()
 		foreach(stars, move_star)
@@ -561,7 +559,7 @@ function update_transition_animation()
 
 			if right_side < 64 and left_side > 64 then
 				if battle_started and count(explosions) == 0 and count(enemies) == 0 then
-					transition_animation = false -- reset_transition_animation()
+					transition_animation = false 
 					current_view = 3
 				else
 					animation_direction = "out"
