@@ -321,7 +321,7 @@ function _draw()
 		foreach(missiles, draw_missile)
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
-		-- if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
+		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
 		if (transition_animation) draw_transition_animation()
 	end
 
