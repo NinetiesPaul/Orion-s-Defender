@@ -55,10 +55,10 @@ function _init()
 	bullets = {}
 	current_ammo_mode = 1
 	ammo_mode = {
-		"laser", -- laser
-		"missile", -- missile
-		"cluster", -- cluster
-		"stun" -- stun
+		"laser", -- 1
+		"missile", -- 2
+		"cluster", -- 3
+		"stun" -- 4
 	}
 	missile_damage = 3
 	missile_cooldown = false
@@ -214,7 +214,7 @@ function _init()
 			["b_health"] = 5,
 			["b_energy"] = 7,
 			["b_damage"] = 3,
-			["b_shot_speed"] = 1.5,
+			["b_shot_speed"] = 1.7,
 			["b_speed"] =  1.7,
 			["b_cdr"] = 45,
 			["n_destroyed"] = 0,
@@ -237,7 +237,6 @@ function _init()
 		{102,14},
 		{112,61},
 	}
-	rewards_given = false
 	battle_rewards = 0
 	battle_started = false
 
@@ -279,7 +278,7 @@ function _draw()
 		if show_stats then
 			rect(24,24,104,104, 7)
 			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
-			-- add page like system for proficiency and kills [wíp]
+			-- add page like system for proficiency and kills [wれとp]
 			print("proficiency", 43, 26, 7)
 
 			linect = 0
@@ -427,7 +426,13 @@ function _update()
 	end
 
 	if current_view == 3 then
-		rewards()
+		if stat(54) == 0 then
+			if btnp(4) or btnp(5) then
+				scraps += battle_rewards
+				animation_direction = "out"
+				transition_animation = true
+			end
+		end
 	end
 
 	if current_view == 4 then
@@ -628,18 +633,22 @@ function start_battle()
 	do
 		enemy_data = rnd(enemy_list)
 		local enemy = {}
-		enemy.spr = enemy_data["spr_ok"]
-		enemy.spr_damage = enemy_data["spr_damage"]
-		enemy.health = enemy_data["b_health"] + (pirate_rep - 1)
-		enemy.max_health = enemy_data["b_health"] + (pirate_rep - 1)
-		enemy.energy = enemy_data["b_energy"] + (pirate_rep - 1)
-		enemy.max_energy = enemy_data["b_energy"] + (pirate_rep - 1)
-		enemy.damage = enemy_data["b_damage"] + (pirate_rep - 1)
-		enemy.shot_v = enemy_data["b_shot_speed"] + (pirate_rep - 1)
-		enemy.v = enemy_data["b_speed"]
+		b_health = enemy_data.b_health + (pirate_rep - 1)
+		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
+
+		enemy.spr = enemy_data.spr_ok
+		enemy.spr_damage = enemy_data.spr_damage
+		enemy.health = b_health
+		enemy.max_health = b_health
+		enemy.energy = b_energy
+		enemy.max_energy = b_energy
+		enemy.damage = enemy_data.b_damage + (pirate_rep - 1)
+		enemy.shot_v = enemy_data.b_shot_speed + (pirate_rep - 1)
+		enemy.v = enemy_data.b_speed
+		enemy.base_v = enemy_data.b_speed
 		enemy.score = enemy_data.score
 		enemy.reward = enemy_data.reward
-		enemy.cdr = enemy_data["b_cdr"]
+		enemy.cdr = enemy_data.b_cdr
 		enemy.clock = 0
 
 		enemy.x = flr(rnd(48))+48
@@ -736,20 +745,6 @@ function draw_explosion(exp)
 	end
 end
 
-function rewards()
-	if rewards_given == false then
-		scraps += battle_rewards
-		rewards_given = true
-	else
-		if stat(54) == 0 then
-			if btnp(4) or btnp(5) then
-				animation_direction = "out"
-				transition_animation = true
-			end
-		end
-	end
-end
-
 function reset()
 	enemies = {}
 	enemy_bullets = {}
@@ -758,14 +753,15 @@ function reset()
 	explosions = {}
 	warnings = {}
 	missiles = {}
-	missile_cooldown = false
-	missile_cooldown_counter = 0
 	current_enemy_locked_on = null
 	battle_started = false
 	battle_rewards = 0
-	rewards_given = false
 	bullet_cooldown = false
 	bullet_cooldown_counter = 0
+	missile_cooldown = false
+	missile_cooldown_counter = 0
+	stun_cooldown = false
+	stun_cooldown_counter = 0
 	current_ammo_mode = 1
 end
 
@@ -773,11 +769,14 @@ function draw_ui()
 	rectfill(0,0,127,12, 7)
 	if current_view == 2 then
 		current_weapon = ammo_mode[current_ammo_mode]
-		print("weapon: " .. current_ammo_mode, 1, 1, 0)
-		palt(3, true)
-		palt(0, false)
-		palt(3, false)
-		palt(0, true)
+		print("weapon: " .. current_weapon, 1, 1, 0)
+		if
+			current_ammo_mode == 1 and bullet_cooldown or
+			current_ammo_mode == 2 and missile_cooldown or
+			current_ammo_mode == 4 and stun_cooldown
+			then
+			print("rELOADING", 1, 7, 0)
+		end
 	end
 
 	if current_view != 2 then
@@ -927,7 +926,7 @@ function fire()
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 048
-			bullet.damage = 1
+			bullet.damage = 0.5
 			add(bullets, bullet)
 			stun_cooldown = true
 		end
@@ -1004,6 +1003,9 @@ function move_bullet(b)
 		if b.mode == "stun" then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
 				e.energy -= 0.005
+				e.stunned = true
+			else
+				e.stunned = false
 			end
 		end
 
@@ -1016,23 +1018,25 @@ function move_bullet(b)
 			if (b.mode == "laser") e.health -= damage
 			if (b.mode == "stun") e.energy -= damage
 
-			if (e.health <= 0) destroy_enemy(e)
-
-			if e.collateral == false then
-				for el in all(enemy_list) do
-					if e.spr == el.spr_ok then
-						enemy_kl_factor = 0
-						if (el.knowledge_level == 1) enemy_kl_factor = 0.100
-						if (el.knowledge_level == 2) enemy_kl_factor = 0.200
-						if (el.knowledge_level == 3) enemy_kl_factor = 0.300
-						local_random_factor = random_factor - enemy_kl_factor
-						if rnd() > local_random_factor then
-							e.collateral = rnd(collateral_type)
-							msg = ''
-							if (e.collateral == 1) msg = "engine\ndamage!" 
-							if (e.collateral == 2) msg = "aiming\ndamage!"
-							if (e.collateral == 3) msg = "firing\ndamage!"
-							create_warning(msg, e)
+			if e.health <= 0 then
+				destroy_enemy(e)
+			else
+				if e.collateral == false and b.mode == "laser"then
+					for el in all(enemy_list) do
+						if e.spr == el.spr_ok then
+							enemy_kl_factor = 0
+							if (el.knowledge_level == 1) enemy_kl_factor = 0.100
+							if (el.knowledge_level == 2) enemy_kl_factor = 0.200
+							if (el.knowledge_level == 3) enemy_kl_factor = 0.300
+							local_random_factor = random_factor - enemy_kl_factor
+							if rnd() > local_random_factor then
+								e.collateral = rnd(collateral_type)
+								msg = ''
+								if (e.collateral == 1) msg = "engine\ndamage!" 
+								if (e.collateral == 2) msg = "aiming\ndamage!"
+								if (e.collateral == 3) msg = "firing\ndamage!"
+								create_warning(msg, e)
+							end
 						end
 					end
 				end
@@ -1063,14 +1067,6 @@ function destroy_enemy(e)
 	create_explosion(e.x,e.y)
 	sfx(05)
 	del(enemies,e)
-
-
-	-- [wip] what does it do? / remove it after done
-	--[[
-	if count(enemies) == 0 then
-		missile_available = false
-		missile_mode = false
-	end]]--
 end
 
 function create_explosion(ex,ey)
@@ -1158,7 +1154,7 @@ end
 
 function move_enemy(e)
 	e.clock += 1
-	-- [wip] if stunned halve speed else normal speed
+	e.v = (e.stunned) and 0.2 or e.base_v
 
 	if e.collateral != 1 then
 		if e.moving == false then
@@ -1191,8 +1187,6 @@ end
 
 function draw_enemy(e)
 	spr(e.spr,e.x,e.y)
-	print(e.energy, e.x + 8, 7)
-	print(e.v, e.x - 16, 7)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
@@ -1443,14 +1437,6 @@ __gfx__
 00000006222222606226660622600062266606226622606222226062266606226622600000000000000000000000000000000000000000000000000000000000
 00000006222226006222260622600062222606226622606222260062222606226062600000000000000000000000000000000000000000000000000000000000
 00000000666660000666600066000006666000660066000666600006666000660006000000000000000000000000000000000000000000000000000000000000
-33333333333333333333333333333333333333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-33333333333333333333333333333333333333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000003333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-77707770700077007770770070700700770333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-70707000700070707070707000770707000333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-77007700700070707770707070707707070333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-70707770777007707070770070700700770333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-33333333333333333333333333333333333333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
 77777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
 70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007
