@@ -23,6 +23,7 @@ function _init()
 	clock = 0
 	current_view = views[6]
 	show_stats = false
+	stats_page = 1
 	help_text_y = 0
 	stars = {}
 
@@ -276,22 +277,34 @@ function _draw()
 		foreach(encounters, draw_encounter)
 
 		if show_stats then
-			rect(24,24,104,104, 7)
-			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
-			-- add page like system for proficiency and kills [wれとp]
-			print("proficiency", 43, 26, 7)
+			if stats_page == 1 then
+				rect(24,24,104,104, 7)
+				palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
+				print("confirmed kills", 35, 26, 7)
 
-			linect = 0
-			for e in all(enemy_list) do
-				spr(e.spr_ok, 28, 38 + linect * 10)
-				print(e.name, 40, 40 + linect * 10, 7)
-				print(e.n_destroyed.." ["..e.knowledge_level .. "/3]", 74, 40 + linect * 10, 7)
+				linect = 0
+				for e in all(enemy_list) do
+					spr(e.spr_ok, 28, 38 + linect * 10)
+					print(e.name, 40, 40 + linect * 10, 7)
+					print(e.n_destroyed, 98, 40 + linect * 10, 7)
+					linect+=1
+				end
 
-				linect+=1
+				print("total: ", 28, 96, 7)
+				print(total_enemies_destroyed, 98, 96, 7)
+			elseif stats_page == 2 then
+				rect(24,24,104,104, 7)
+				palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
+				print("proficiency", 43, 26, 7)
+
+				linect = 0
+				for e in all(enemy_list) do
+					spr(e.spr_ok, 28, 38 + linect * 10)
+					print(e.name, 40, 40 + linect * 10, 7)
+					print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
+					linect+=1
+				end
 			end
-
-			print("total: ", 28, 96, 7)
-			print(total_enemies_destroyed, 98, 96, 7)
 		end
 	end
 
@@ -405,6 +418,14 @@ function _update()
 				show_stats = false
 			else
 				show_stats = true
+			end
+		end
+
+		if show_stats then
+			if btnp(0) then
+				if (stats_page > 1) stats_page -=1
+			elseif btnp(1) then
+				if (stats_page < 2) stats_page +=1
 			end
 		end
 	end
