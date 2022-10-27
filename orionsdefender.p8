@@ -286,33 +286,23 @@ function _draw()
 		foreach(encounters, draw_encounter)
 
 		if show_stats then
+			rect(24,24,104,104, 7)
+			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
+
+			linect = 0
+			for e in all(enemy_list) do
+				spr(e.spr_ok, 28, 38 + linect * 10)
+				print(e.name, 40, 40 + linect * 10, 7)
+				print(e.n_destroyed, 98, 40 + linect * 10, 7)
+				linect+=1
+			end
+
 			if stats_page == 1 then
-				rect(24,24,104,104, 7)
-				palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 				print("confirmed kills", 35, 26, 7)
-
-				linect = 0
-				for e in all(enemy_list) do
-					spr(e.spr_ok, 28, 38 + linect * 10)
-					print(e.name, 40, 40 + linect * 10, 7)
-					print(e.n_destroyed, 98, 40 + linect * 10, 7)
-					linect+=1
-				end
-
 				print("total: ", 28, 96, 7)
 				print(total_enemies_destroyed, 98, 96, 7)
 			elseif stats_page == 2 then
-				rect(24,24,104,104, 7)
-				palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 				print("proficiency", 43, 26, 7)
-
-				linect = 0
-				for e in all(enemy_list) do
-					spr(e.spr_ok, 28, 38 + linect * 10)
-					print(e.name, 40, 40 + linect * 10, 7)
-					print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
-					linect+=1
-				end
 			end
 		end
 	end
@@ -350,10 +340,10 @@ function _draw()
 		end
 
 		if (clock % 90 == 0) shop_last_bought = ""
-		print(shop_last_bought, 24, 84)
-		print("⬆️⬇️ [select]", 2, 104)
-		print("z/🅾️ [buy]", 2,112)
-		print("x/❎ [leave]", 2, 120)
+		print(shop_last_bought, 1, 7, 0)
+		print("⬆️⬇️ [select]", 2, 104, 7)
+		print("z/🅾️ [buy]", 2,112, 7)
+		print("x/❎ [leave]", 2, 120, 7)
 
 		animate_shop_selector()
 	end
@@ -1309,7 +1299,7 @@ function nav_store()
 					shop_last_bought = "missiles at max capacity"
 				end
 			end
-			if current_shop_item.name == "stun_shot" then
+			if current_shop_item.name == "stun_ammo" then
 				if stun_n < stun_max_capacity then
 					stun_n += 1
 					shop_last_bought = "bought 1 stun ammo"
@@ -1379,9 +1369,9 @@ function nav_store()
 		end
 	end
  
+	n_shop_items = count(shop_items)
 	if btnp(3) then
 		sfx(02)
-		n_shop_items = (pirate_store) and 6 or 9
 		if (shop_selector < n_shop_items) shop_selector += 1
 	end
 	
