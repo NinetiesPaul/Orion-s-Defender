@@ -43,7 +43,7 @@ function _init()
 	stat_lvl = {1,2,3}
 	current_stat_armor_lvl = 1
 	current_stat_health_lvl = 1
-	current_stat_gun_lvl = 1
+	current_stat_gun_lvl = 1.7
 	current_stat_cooldown_lvl = 2
 	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
 	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
@@ -62,7 +62,7 @@ function _init()
 		"cluster", -- 3
 		"stun" -- 4
 	}
-	missile_damage = 3
+	missile_damage = 3.5
 	missile_cooldown = false
 	missile_cooldown_counter = 0
 	missile_n = 2
@@ -70,11 +70,11 @@ function _init()
 	current_enemy_locked_on = null
 	stun_cooldown = false
 	stun_cooldown_counter = 0
-	stun_n = 4
+	stun_n = 9 -- [debug] base 3
 	stun_max_capacity = 6
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
-	cluster_n = 3
+	cluster_n = 9 -- [debug] base 3
 	cluster_max_capacity  = 4
 	random_factor = 0.95
 	collateral_type =
@@ -127,6 +127,12 @@ function _init()
 			["shops"] = "both"
 		},
 		{
+			["name"] = "cluster_ammo",
+			["price"] = 3,
+			["formatted_name"] = "cluster ammo",
+			["shops"] = "both"
+		},
+		{
 			["name"] = "health_upgrade",
 			["price"] = 50 * current_stat_health_lvl,
 			["formatted_name"] = "health upgrade",
@@ -166,7 +172,7 @@ function _init()
 			["spr_ok"] = 009,
 			["spr_damage"] = 025,
 			["b_health"] = 2,
-			["b_energy"] = 4,
+			["b_energy"] = 3,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
 			["b_speed"] =  0.75,
@@ -181,7 +187,7 @@ function _init()
 			["spr_ok"] = 010,
 			["spr_damage"] = 026,
 			["b_health"] = 3,
-			["b_energy"] = 4,
+			["b_energy"] = 3,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.0,
 			["b_speed"] =  1,
@@ -211,7 +217,7 @@ function _init()
 			["spr_ok"] = 012,
 			["spr_damage"] = 028,
 			["b_health"] = 4,
-			["b_energy"] = 6,
+			["b_energy"] = 5,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.3,
 			["b_speed"] =  1.5,
@@ -263,7 +269,7 @@ function _init()
 	enemy_by_difficulty ={
 		{1,2},
 		{3,4},
-		{5,6}
+		{5}
 	}
 
 	-- music variables
@@ -297,7 +303,8 @@ function _draw()
 			for e in all(enemy_list) do
 				spr(e.spr_ok, 28, 38 + linect * 10)
 				print(e.name, 40, 40 + linect * 10, 7)
-				print(e.n_destroyed, 98, 40 + linect * 10, 7)
+				if (stats_page == 1) print(e.n_destroyed, 98, 40 + linect * 10, 7)
+				if (stats_page == 2) print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
 				linect+=1
 			end
 
@@ -313,7 +320,6 @@ function _draw()
 
 	if current_view == 2 then -- battle
 		spr(ship_spr,ship_x,ship_y)
-		print(ship_x, ship_x + 8, ship_y, 7)
 
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
@@ -652,9 +658,21 @@ end
 function start_battle()
 	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
+	enemy_type_pool = {}
+
+	if pirate_rep == 1 then
+		add(enemy_type_pool, enemy_list[1])
+	elseif pirate_rep == 2 then
+		add(enemy_type_pool, enemy_list[2])
+		add(enemy_type_pool, enemy_list[3])
+	elseif pirate_rep == 3 then
+		add(enemy_type_pool, enemy_list[4])
+		add(enemy_type_pool, enemy_list[5])
+	end
+
 	while(enemy_count > 0)
 	do
-		enemy_data = rnd(enemy_list)
+		enemy_data = rnd(enemy_type_pool)
 		local enemy = {}
 		b_health = enemy_data.b_health + (pirate_rep - 1)
 		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
@@ -1061,8 +1079,8 @@ function move_bullet(b)
 	end
 
 	if b.mode == "cluster_frag" then
-		b.x += cos(45) * b.angle
-		b.y -= 6
+		b.x += (b.angle / 2)
+		b.y -= 3
 	else
 		b.y -= (b.mode == "laser") and 4 or 2
 	end
@@ -1083,8 +1101,13 @@ function move_bullet(b)
 				damage = damage + (flr(rnd(2)) + 1)
 				create_warning("critical\ndamage!", e)
 			end
-			if (b.mode == "laser") e.health -= damage
-			if (b.mode == "stun") e.energy -= damage
+
+			if b.mode == "stun" then
+				e.energy -= damage
+				e.stunned = false
+			else 
+				e.health -= damage
+			end
 
 			if e.health <= 0 then
 				destroy_enemy(e)
@@ -1124,7 +1147,7 @@ function create_clusters(b)
 		bullet.x = b.x + (8 * pos_y[i])
 		bullet.y = b.y
 		bullet.spr = 000
-		bullet.damage = 1
+		bullet.damage = 0.7
 		bullet.angle = pos_y[i]
 		add(bullets, bullet)
 	end
@@ -1143,7 +1166,7 @@ function destroy_enemy(e)
 	end
 
 	total_enemies_destroyed += 1
-	if (pirate_rep < 3 and total_enemies_destroyed % 15 == 0) pirate_rep += 1
+	if (pirate_rep < 3 and total_enemies_destroyed % 2 == 0) pirate_rep += 1 -- [debug] base 15
 
 	score += e.score
 	battle_rewards += flr(10 + (e.reward * (pirate_rep/2)))
@@ -1360,6 +1383,15 @@ function nav_store()
 					scraps -= price
 				else
 					shop_last_bought = "stun ammo at max capacity"
+				end
+			end
+			if current_shop_item.name == "cluster_ammo" then
+				if cluster_n < cluster_max_capacity then
+					cluster_n += 1
+					shop_last_bought = "bought 1 cluster ammo"
+					scraps -= price
+				else
+					shop_last_bought = "cluster ammo at max capacity"
 				end
 			end
 			if current_shop_item.name == "health_upgrade" then
