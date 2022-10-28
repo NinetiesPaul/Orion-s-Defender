@@ -595,7 +595,6 @@ function draw_missile(m)
 end
 
 function move_missile(m)
-	if (current_enemy_locked_on == null) current_enemy_locked_on = 1 -- [to do] get enemy coordinates on missile launch, not during missile movement
 	target_x = enemies[current_enemy_locked_on].x
 	target_y = enemies[current_enemy_locked_on].y
 
@@ -1049,7 +1048,7 @@ function draw_bullet(b)
 end
 
 function missile_ui()
-	if current_ammo_mode == 2 then
+	if current_ammo_mode == 2 and not missile_cooldown then
 		if (current_enemy_locked_on == null) current_enemy_locked_on = 1
 		last_enemy = count(enemies)
 
@@ -1089,7 +1088,7 @@ function move_bullet(b)
 	for e in all(enemies) do
 		if b.mode == "stun" and e.energy > 0 then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-				e.energy -= 0.0175
+				e.energy -= 0.035
 				e.stunned = true
 			else
 				e.stunned = false
@@ -1301,7 +1300,6 @@ end
 function draw_enemy(e)
 	enemy_sprite = (e.energy > 0) and e.spr or e.spr + 16
 	spr(enemy_sprite,e.x,e.y)
-	print(e.energy_reboot_counter, e.x + 10, e.y, 7)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
