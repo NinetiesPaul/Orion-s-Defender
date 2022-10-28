@@ -1203,7 +1203,7 @@ function create_explosion(ex,ey)
 end
 
 function move()
-	if show_stats == false or current_view == 2 and not transition_animation then
+	if show_stats == false then -- [code improv] free movement only on free mode or on battle after battle started (enemy creation)
 		if (btn(1) and ship_x < 120) ship_x+=2
 		if (btn(0) and ship_x > 0) ship_x-=2
 	end
