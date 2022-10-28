@@ -47,11 +47,11 @@ function _init()
 	current_stat_cooldown_lvl = 2
 	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
 	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
-	current_weapon_system_level = 1 -- [wip] shopify ammo system upgrade
+	current_weapon_system_level = 1 -- [to do] shopify ammo system upgrade
 	health = current_max_health
 	armor = current_max_armor
 	bullet_damage = current_stat_gun_lvl
-	bullet_cooldown = false -- [wip] rename bullet_cooldown to laser_cooldown
+	bullet_cooldown = false -- [to do] rename bullet named variables to laser and other ammo types
 	bullet_cooldown_counter = 0
 	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
@@ -66,7 +66,7 @@ function _init()
 	missile_cooldown = false
 	missile_cooldown_counter = 0
 	missile_n = 2
-	missile_max_capacity = 6 -- [wip] base missile capacity 4, make it an upgradable system
+	missile_max_capacity = 6 -- [to do] base missile capacity 4, make it an upgradable system [4,6,8]
 	current_enemy_locked_on = null
 	stun_cooldown = false
 	stun_cooldown_counter = 0
@@ -259,7 +259,6 @@ function _init()
 	}
 	battle_rewards = 0
 	battle_started = false
-
 	
 	transition_animation = false
 	left_side = 0
@@ -596,7 +595,7 @@ function draw_missile(m)
 end
 
 function move_missile(m)
-	if (current_enemy_locked_on == null) current_enemy_locked_on = 1 -- [wip] get enemy coordinates on missile launch, not during missile movement
+	if (current_enemy_locked_on == null) current_enemy_locked_on = 1 -- [to do] get enemy coordinates on missile launch, not during missile movement
 	target_x = enemies[current_enemy_locked_on].x
 	target_y = enemies[current_enemy_locked_on].y
 
@@ -996,7 +995,7 @@ function fire()
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 048
-			bullet.damage = 0.5
+			bullet.damage = 0.5 -- [debug] base value is 0.5
 			add(bullets, bullet)
 			stun_cooldown = true
 			stun_n -= 1
@@ -1086,9 +1085,9 @@ function move_bullet(b)
 	end
 
 	for e in all(enemies) do
-		if b.mode == "stun" then
+		if b.mode == "stun" and e.energy > 0 then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-				e.energy -= 0.005
+				e.energy -= 0.02
 				e.stunned = true
 			else
 				e.stunned = false
@@ -1102,37 +1101,38 @@ function move_bullet(b)
 				create_warning("critical\ndamage!", e)
 			end
 
-			if b.mode == "stun" then
+			if b.mode == "stun" and e.energy > 0 then
 				e.energy -= damage
 				e.stunned = false
+
+				if (e.energy <= 0) create_warning("knocked out!", e) -- [to do] increase energy dealing damage but implement time to reboot
 			else 
 				e.health -= damage
-			end
 
-			if e.health <= 0 then
-				destroy_enemy(e)
-			else
-				if e.collateral == false and b.mode == "laser"then
-					for el in all(enemy_list) do
-						if e.spr == el.spr_ok then
-							enemy_kl_factor = 0
-							if (el.knowledge_level == 1) enemy_kl_factor = 0.100
-							if (el.knowledge_level == 2) enemy_kl_factor = 0.200
-							if (el.knowledge_level == 3) enemy_kl_factor = 0.300
-							local_random_factor = random_factor - enemy_kl_factor
-							if rnd() > local_random_factor then
-								e.collateral = rnd(collateral_type)
-								msg = ''
-								if (e.collateral == 1) msg = "engine\ndamage!" 
-								if (e.collateral == 2) msg = "aiming\ndamage!"
-								if (e.collateral == 3) msg = "firing\ndamage!"
-								create_warning(msg, e)
+				if e.health <= 0 then
+					destroy_enemy(e)
+				else
+					if e.collateral == false and b.mode == "laser"then
+						for el in all(enemy_list) do
+							if e.spr == el.spr_ok then
+								enemy_kl_factor = 0
+								if (el.knowledge_level == 1) enemy_kl_factor = 0.100
+								if (el.knowledge_level == 2) enemy_kl_factor = 0.200
+								if (el.knowledge_level == 3) enemy_kl_factor = 0.300
+								local_random_factor = random_factor - enemy_kl_factor
+								if rnd() > local_random_factor then
+									e.collateral = rnd(collateral_type)
+									msg = ''
+									if (e.collateral == 1) msg = "engine\ndamage!" 
+									if (e.collateral == 2) msg = "aiming\ndamage!"
+									if (e.collateral == 3) msg = "firing\ndamage!"
+									create_warning(msg, e)
+								end
 							end
 						end
 					end
 				end
 			end
-
 			sfx(04)
 			del(bullets,b)
 		end
@@ -1259,49 +1259,52 @@ function move_enemy_bullet(eb)
 end
 
 function move_enemy(e)
-	e.clock += 1
-	e.v = (e.stunned) and 0.2 or e.base_v
+	if e.energy > 0 then
+		e.clock += 1
+		e.v = (e.stunned) and 0.2 or e.base_v
 
-	if e.collateral != 1 then
-		if e.moving == false then
-			e.moving = true
-			rnd_pos = rnd(positions)
-			e.from_x = e.x
-			e.to_x = rnd_pos[1]
-			e.to_y = rnd_pos[2]
-			e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
-		else
-			e.x += cos(e.angle) * e.v
-			e.y += sin(e.angle) * e.v
-			if e.from_x < e.x then
-				if e.x > e.to_x then
+		if e.collateral != 1 then
+			if e.moving == false then
+				e.moving = true
+				rnd_pos = rnd(positions)
+				e.from_x = e.x
+				e.to_x = rnd_pos[1]
+				e.to_y = rnd_pos[2]
+				e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
+			else
+				e.x += cos(e.angle) * e.v
+				e.y += sin(e.angle) * e.v
+				if e.from_x < e.x then
+					if e.x > e.to_x then
+						e.moving = false
+					end
+				end
+				if e.from_x > e.x then
+					if e.x < e.to_x then
+						e.moving = false
+					end
+				end
+				if e.y <= 0 or e.y >= 100 or
+				 e.x <= 0 or e.x >= 128 then
 					e.moving = false
 				end
-			end
-			if e.from_x > e.x then
-				if e.x < e.to_x then
-					e.moving = false
-				end
-			end
-			if e.y <= 0 or e.y >= 100 or
-			 e.x <= 0 or e.x >= 128 then
-				e.moving = false
 			end
 		end
 	end
 end
 
 function draw_enemy(e)
-	spr(e.spr,e.x,e.y)
+	enemy_sprite = (e.energy > 0) and e.spr or e.spr + 16
+	spr(enemy_sprite,e.x,e.y)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
-	length = (percentage == 1) and 6 or (percentage < 1 and percentage >= 0.5) and 4 or 2
+	length = (percentage == 1) and 6 or (percentage < 1 and percentage >= 0.5) and 4 or (percentage < 0.5 and percentage > 0) and 2 or 0
 	line(e.x + 1, e.y - 3, e.x + length, e.y - 3, color)
 
 	energy_percentage = e.energy/e.max_energy
-	length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or 2
-	line(e.x + 1, e.y - 5, e.x + length, e.y - 5, 12)
+	energy_length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or (energy_percentage < 0.5 and energy_percentage > 0) and 2 or 0
+	if (e.energy > 0) line(e.x + 1, e.y - 5, e.x + energy_length, e.y - 5, 12)
 	if (e.locked_on) rect(e.x - 2, e.y - 2, e.x + 9, e.y + 9,8)
 end
 
@@ -1474,21 +1477,21 @@ function animate_shop_selector()
 end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
-000000000000000099999900efe8ee801cccc6d0003bbb300b7bbb300b7bbb300b7bbb300722227007722770722222277888888777722777666666600e7e8800
-00060000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb378777787787227877277772778777787787227876066606087e88880
-0067600000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b37888888778877887727117270722227078722787600600608e888e80
-00d6d00000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b37878878776888867728778270727727077877877666066608888e780
-000d0000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb3075775700768867078877887007887007078870706666600888e7e80
-00000000000990009999990000585000005150005333335003bbbb3003bbbb3003bbbb30757007570767767007700770007887000078870006d6d6006ddddd50
+000000000000000099999900efe8ee801cccc6d0003bbb300b7bbb300b7bbb300b7bbb300722227007722770722222277222222777722777666666600e7e8800
+00060000000aa0009aaaaa908eeeee801ccccc1003bbbb3037bbbbb337bbbbb337b77bb378777787787227877227722772777727787227876066606087e88880
+0067600000a7aa0009aaaaa98eeeee801ccccc103b5b5b303bbbbbb33bb77bb33b7bb7b37888888778877887787887870788887078722787600600608e888e80
+00d6d00000aaaa0009aaaaa958eee85051ccc1503bb5bb303bbbbbb33bb77bb33b7bb7b3787887877e8888e7787ee7870787787077877877666066608888e780
+000d0000009aa9009aaaaa90058e8500051c15003b5b5b303bbbbbb33bbbbbb33bb77bb307e77e7007e88e707e7777e7007ee700707ee70706666600888e7e80
+00000000000990009999990000585000005150005333335003bbbb3003bbbb3003bbbb307e7007e707e77e7007700770007ee700007ee70006d6d6006ddddd50
 00000000000000000000000000050000000500000555550000333300003333000033330007000070007007000700007000077000000770000000000055555550
-00000000007007000000000000000000000000000000000000999900009999000099990000888800000880000888888088888888800880080666660000888000
-0000000077000077000000000000000000000000000000000a7aaa900a7aaa900a7aaa90080000800880088080000008800000088880088866666660088e7e00
-0008800075700757999999908eeeee801ccccc1003bbbb3097aaaaa997aaaaa997a77aa98088880880800808808888088088880880088008606660608888e780
-008788007557755709aaaaa98eeeee801ccccc103b5b5b309aaaaaa99aa77aa99a7aa7a98000000880088008808008080800008080000008608680608e888e80
-008888007571175709aaaaa958eee85051ccc1503bb5bb309aaaaaa99aa77aa99a7aa7a980800808800000088008800808088080880880886660666087e88880
-002882007577775799999990058e8500051c15003b5b5b309aaaaaa99aaaaaa99aa77aa90808808008000080800880080080080080800808066666008e7e8880
-00022000776666770000000000585000005150005333335009aaaa9009aaaa9009aaaa90808008080808808008800880008008000080080006d6d6006ddddd50
-00000000077777700000000000050000000500000555550000999900009999000099990008000080008008000800008000088000000880000000000055555550
+00000000007007000000000000000000000000000000000000999900009999000099990000777700000770000777777077777777700770070666660000888000
+0000000077000077000000000000000000000000000000000a7aaa900a7aaa900a7aaa90070000700770077070000007700000077770077766666660088e7e00
+0008800075700757999999908eeeee801ccccc1003bbbb3097aaaaa997aaaaa997a77aa97077770770700707700770077077770770700707606660608888e780
+008788007557755709aaaaa98eeeee801ccccc103b5b5b309aaaaaa99aa77aa99a7aa7a97000000770077007707007070700007070700707608680608e888e80
+008888007571175709aaaaa958eee85051ccc1503bb5bb309aaaaaa99aa77aa99a7aa7a970700707700000077070070707077070770770776660666087e88880
+002882007577775799999990058e8500051c15003b5b5b309aaaaaa99aaaaaa99aa77aa90707707007000070707777070070070070700707066666008e7e8880
+00022000776666770000000000585000005150005333335009aaaa9009aaaa9009aaaa90707007070707707007700770007007000070070006d6d6006ddddd50
+00000000077777700000000000050000000500000555550000999900009999000099990007000070007007000700007000077000000770000000000055555550
 00000000000000000000000000000000000000000000000000222200002222000022220000050000000d00000000000000000000066666000666660000888000
 00000000880000880000000000000000000000000000000008e8882008e8882008e88820000d00000006000000050000000d0000666666606666666008888800
 000dd00080800808000000000000000000000000000000002e8888822e8888822e8ee8820006000000070000000d000000060000676667606866686088888880
