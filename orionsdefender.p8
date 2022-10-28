@@ -671,7 +671,7 @@ function start_battle()
 
 	while(enemy_count > 0)
 	do
-		enemy_data = rnd(enemy_type_pool)
+		enemy_data = rnd(enemy_type_pool) -- [code improv] isn't simpler to create a copy of the object instead of copy single values to a new object?
 		local enemy = {}
 		b_health = enemy_data.b_health + (pirate_rep - 1)
 		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
@@ -700,6 +700,8 @@ function start_battle()
 		enemy.moving = false
 		enemy.locked_on = false
 		enemy.stunned = false
+		enemy.energy_reboot = 90
+		enemy.energy_reboot_counter = 0
 
 		enemy.fire = true
 		enemy.collateral = false
@@ -1087,7 +1089,7 @@ function move_bullet(b)
 	for e in all(enemies) do
 		if b.mode == "stun" and e.energy > 0 then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-				e.energy -= 0.02
+				e.energy -= 0.0175
 				e.stunned = true
 			else
 				e.stunned = false
@@ -1155,7 +1157,7 @@ function create_clusters(b)
 end
 
 function destroy_enemy(e)
-	for el in all(enemy_list) do
+	for el in all(enemy_list) do -- [code improv] -- isn't it easier to create  dict specific to handle kill stats instead of looping enemy lib?
 		if e.spr == el.spr_ok then
 			el.n_destroyed += 1
 
@@ -1201,7 +1203,7 @@ function create_explosion(ex,ey)
 end
 
 function move()
-	if show_stats == false then
+	if show_stats == false or current_view == 2 and not transition_animation then
 		if (btn(1) and ship_x < 120) ship_x+=2
 		if (btn(0) and ship_x > 0) ship_x-=2
 	end
@@ -1259,7 +1261,10 @@ function move_enemy_bullet(eb)
 end
 
 function move_enemy(e)
-	if e.energy > 0 then
+	if e.energy <= 0 then
+		e.energy_reboot_counter += 1
+		if (e.energy_reboot_counter % e.energy_reboot == 0) e.energy_reboot_counter = 0 e.energy = e.max_energy create_warning("back online!", e)
+	else
 		e.clock += 1
 		e.v = (e.stunned) and 0.2 or e.base_v
 
@@ -1296,6 +1301,7 @@ end
 function draw_enemy(e)
 	enemy_sprite = (e.energy > 0) and e.spr or e.spr + 16
 	spr(enemy_sprite,e.x,e.y)
+	print(e.energy_reboot_counter, e.x + 10, e.y, 7)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
