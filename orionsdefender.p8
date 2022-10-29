@@ -28,7 +28,6 @@ function _init()
 	stars = {}
 
 	-- player variables
-	cooldown_lvls = {75, 45, 15}
 	scraps = 30
 	ship_spr = 017
 	ship_x = 64
@@ -39,43 +38,54 @@ function _init()
 	fuel_spr = 005
 	max_fuel = 15
 	fuel_comsumption = 0.0075
-	stat_multiplier = 5
-	stat_lvl = {1,2,3}
+	stat_lvl = { 5, 10, 15 }
 	current_stat_armor_lvl = 1
 	current_stat_health_lvl = 1
-	current_stat_gun_lvl = 1.7
-	current_stat_cooldown_lvl = 2
-	current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier 
-	current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
-	current_weapon_system_level = 1 -- [to do] shopify ammo system upgrade
+	current_max_health = stat_lvl[current_stat_health_lvl] 
+	current_max_armor = stat_lvl[current_stat_armor_lvl]
 	health = current_max_health
 	armor = current_max_armor
-	bullet_damage = current_stat_gun_lvl
-	bullet_cooldown = false -- [to do] rename bullet named variables to laser and other ammo types
-	bullet_cooldown_counter = 0
-	bullet_cooldown_rate = cooldown_lvls[current_stat_cooldown_lvl]
 	bullets = {}
-	current_ammo_mode = 1
 	ammo_mode = {
 		"laser", -- 1
 		"missile", -- 2
 		"cluster", -- 3
 		"stun" -- 4
 	}
-	missile_damage = 3.5
+	current_ammo_mode = 1
+	current_weapon_system_lv = 1 -- [to do] shopify ammo system upgrade
+	special_ammo_lvls = { 4, 6, 8 }
+
+	laser_cooldown_lvls = { 75, 45, 15 }
+	laser_dmg_lvls = { 1.7, 2.4, 2.9 }
+	laser_lv = 1
+	bullet_damage = laser_dmg_lvls[laser_lv] -- [to do] rename bullet named variables to laser and other ammo types
+	bullet_cooldown = false
+	bullet_cooldown_counter = 0
+	bullet_cooldown_rate = laser_cooldown_lvls[laser_lv]
+
+	missile_lv = 1
+	missile_damage = 2.5
 	missile_cooldown = false
 	missile_cooldown_counter = 0
+	missile_max_capacity = special_ammo_lvls[missile_lv]
 	missile_n = 2
-	missile_max_capacity = 6 -- [to do] base missile capacity 4, make it an upgradable system [4,6,8]
-	current_enemy_locked_on = null
+	missile_locked_on_enemy = null
+
+	stun_lv = 1
+	stun_damage = 0.75
 	stun_cooldown = false
 	stun_cooldown_counter = 0
-	stun_n = 9 -- [debug] base 3
-	stun_max_capacity = 6
+	stun_max_capacity = special_ammo_lvls[stun_lv]
+	stun_n = 4
+
+	cluster_lv = 1
+	cluster_damage = 0.5
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
-	cluster_n = 9 -- [debug] base 3
-	cluster_max_capacity  = 4
+	cluster_max_capacity  = special_ammo_lvls[cluster_lv]
+	cluster_n = 3
+
 	random_factor = 0.95
 	collateral_type =
 	{
@@ -136,25 +146,29 @@ function _init()
 			["name"] = "health_upgrade",
 			["price"] = 50 * current_stat_health_lvl,
 			["formatted_name"] = "health upgrade",
-			["shops"] = "civ"
+			["shops"] = "civ",
+			["enabled"] = true
 		},
 		{
 			["name"] = "armor_upgrade",
-			["price"] = 75 * current_stat_armor_lvl,
+			["price"] = 65 * current_stat_armor_lvl,
 			["formatted_name"] = "armor upgrade",
-			["shops"] = "civ"
+			["shops"] = "civ",
+			["enabled"] = true
 		},
 		{
-			["name"] = "gun_damage_upgrade",
-			["price"] = 100 * current_stat_gun_lvl,
-			["formatted_name"] = "gun damage upgrade",
-			["shops"] = "civ"
+			["name"] = "laser_lv",
+			["price"] = 55 * laser_lv,
+			["formatted_name"] = "laser ammo level",
+			["shops"] = "civ",
+			["enabled"] = true
 		},
 		{
-			["name"] = "gun_cooldown_upgrade",
-			["price"] = 100 * current_stat_gun_lvl,
-			["formatted_name"] = "gun cooldown upgrade",
-			["shops"] = "civ"
+			["name"] = "current_weapon_system_lv",
+			["price"] = 75 * current_weapon_system_lv,
+			["formatted_name"] = "weapon system level",
+			["shops"] = "civ",
+			["enabled"] = true
 		},
 		{
 			["name"] = "pirate_bribe",
@@ -171,7 +185,7 @@ function _init()
 			["name"] = "ant",
 			["spr_ok"] = 009,
 			["spr_damage"] = 025,
-			["b_health"] = 2,
+			["b_health"] = 3,
 			["b_energy"] = 3,
 			["b_damage"] = 1,
 			["b_shot_speed"] = 1.5,
@@ -186,7 +200,7 @@ function _init()
 			["name"] = "ghost",
 			["spr_ok"] = 010,
 			["spr_damage"] = 026,
-			["b_health"] = 3,
+			["b_health"] = 3.5,
 			["b_energy"] = 3,
 			["b_damage"] = 2,
 			["b_shot_speed"] = 1.0,
@@ -277,7 +291,6 @@ function _init()
 	music_batttle_player = false
 	music_battle_end_playing = false
 
-	
 	siren_spr = 015
 end
 
@@ -338,11 +351,10 @@ function _draw()
 	end
 
 	if current_view == 4 then -- shop
-		current_shop_item = shop_items[shop_selector]
-
 		i = 0
 		for item in all (shop_items) do 
 			price = (pirate_store == false) and item.price or (item.name == "pirate_bribe") and item.price or ceil(item.price/2)
+			if (not item.enabled and item.shops != "both" and item.shops != "pirate") price = "---"
 			print(item.formatted_name, 14, 16 + i * 8, 7)
 			print("$", 100, 16 + i * 8, 3)
 			print(price, 104, 16 + i * 8, 7)
@@ -595,8 +607,8 @@ function draw_missile(m)
 end
 
 function move_missile(m)
-	target_x = enemies[current_enemy_locked_on].x
-	target_y = enemies[current_enemy_locked_on].y
+	target_x = enemies[missile_locked_on_enemy].x
+	target_y = enemies[missile_locked_on_enemy].y
 
 	angle = atan2(target_x - m.x, target_y - m.y)
 	m.x += cos(angle) * m.v
@@ -607,11 +619,11 @@ function move_missile(m)
 	m.y >= target_y-2 and
 	m.y <= target_y+6 then
 		sfx(04)
-		e = enemies[current_enemy_locked_on]
+		e = enemies[missile_locked_on_enemy]
 		e.health -= m.damage
 		del(missiles, m)
 		if e.health <= 0 then
-			current_enemy_locked_on = 1
+			missile_locked_on_enemy = 1
 			destroy_enemy(e)
 		end
 	end
@@ -657,6 +669,8 @@ function start_battle()
 	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
 	enemy_type_pool = {}
+	bounty_chance = { 0.9, 0.8, 0.7 }
+	bounty_lvls = { 40, 55, 70 }
 
 	if pirate_rep == 1 then
 		add(enemy_type_pool, enemy_list[1])
@@ -689,6 +703,7 @@ function start_battle()
 		enemy.reward = enemy_data.reward
 		enemy.cdr = enemy_data.b_cdr
 		enemy.clock = 0
+		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
 
 		enemy.x = flr(rnd(48))+48
 		enemy.y = 18
@@ -794,7 +809,7 @@ function reset()
 	explosions = {}
 	warnings = {}
 	missiles = {}
-	current_enemy_locked_on = null
+	missile_locked_on_enemy = null
 	battle_started = false
 	battle_rewards = 0
 	bullet_cooldown = false
@@ -983,7 +998,7 @@ function fire()
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 032
-			bullet.damage = 0.5
+			bullet.damage = cluster_damage
 			bullet.fuse = 15
 			bullet.timer = 0
 			bullet.frag_n = 3
@@ -996,14 +1011,18 @@ function fire()
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 048
-			bullet.damage = 0.5 -- [debug] base value is 0.5
+			bullet.damage = stun_damage
 			add(bullets, bullet)
 			stun_cooldown = true
 			stun_n -= 1
 		end
 	end
+
 	if btnp(5) then
 		current_ammo_mode += 1
+
+		if (current_weapon_system_lv == 1 and current_ammo_mode > 2) current_ammo_mode = 1
+		if (current_weapon_system_lv == 2 and current_ammo_mode > 3) current_ammo_mode = 1
 		if (current_ammo_mode > 4) current_ammo_mode = 1
 
 		if current_ammo_mode != 2 then
@@ -1049,22 +1068,22 @@ end
 
 function missile_ui()
 	if current_ammo_mode == 2 and not missile_cooldown then
-		if (current_enemy_locked_on == null) current_enemy_locked_on = 1
+		if (missile_locked_on_enemy == null) missile_locked_on_enemy = 1
 		last_enemy = count(enemies)
 
 		if btnp(2) then
-			enemies[current_enemy_locked_on].locked_on = false
-			current_enemy_locked_on += 1
-			if (current_enemy_locked_on > last_enemy) current_enemy_locked_on = 1
+			enemies[missile_locked_on_enemy].locked_on = false
+			missile_locked_on_enemy += 1
+			if (missile_locked_on_enemy > last_enemy) missile_locked_on_enemy = 1
 		end
 
 		if btnp(3) then
-			enemies[current_enemy_locked_on].locked_on = false
-			current_enemy_locked_on -= 1
-			if (current_enemy_locked_on <= 0) current_enemy_locked_on = last_enemy
+			enemies[missile_locked_on_enemy].locked_on = false
+			missile_locked_on_enemy -= 1
+			if (missile_locked_on_enemy <= 0) missile_locked_on_enemy = last_enemy
 		end
 
-		enemies[current_enemy_locked_on].locked_on = true
+		enemies[missile_locked_on_enemy].locked_on = true
 	else
 		for e in all(enemies) do
 			e.locked_on = false
@@ -1170,7 +1189,7 @@ function destroy_enemy(e)
 	if (pirate_rep < 3 and total_enemies_destroyed % 2 == 0) pirate_rep += 1 -- [debug] base 15
 
 	score += e.score
-	battle_rewards += flr(10 + (e.reward * (pirate_rep/2)))
+	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
 	create_explosion(e.x,e.y)
 	sfx(05)
 	del(enemies,e)
@@ -1319,6 +1338,8 @@ end
 -- shop
 
 function nav_store()
+	current_shop_item = shop_items[shop_selector]
+
 	if count(shop_items) == 0 then
 		for item in all (all_shop_items) do
 			if pirate_store == false then
@@ -1409,6 +1430,7 @@ function nav_store()
 					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
 					health = current_max_health
 					shop_last_bought = "hull upgraded"
+					if (current_stat_health_lvl == 3) current_shop_item.enabled = false
 				else
 					shop_last_bought = "hull upgrade maxed out"
 				end
@@ -1421,30 +1443,33 @@ function nav_store()
 					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
 					armor = current_max_armor
 					shop_last_bought = "armor upgraded"
+					if (current_stat_armor_lvl == 3) current_shop_item.enabled = false
 				else
 					shop_last_bought = "armor upgrade maxed out"
 				end
 			end
-			if current_shop_item.name == "gun_damage_upgrade" then
-				if current_stat_gun_lvl < 3 then
+			if current_shop_item.name == "laser_lv" then
+				if laser_lv < 3 then
 					scraps -= price
-					current_stat_gun_lvl += 1
-					bullet_damage = current_stat_gun_lvl
-					current_shop_item.price = price * current_stat_gun_lvl
-					shop_last_bought = "gun damage upgraded"
+					laser_lv += 1
+					bullet_damage = laser_dmg_lvls[laser_lv]
+					bullet_cooldown_rate = laser_cooldown_lvls[laser_lv]
+					current_shop_item.price = price * laser_lv
+					shop_last_bought = "laser weapon upgraded"
+					if (laser_lv == 3) current_shop_item.enabled = false
 				else
-					shop_last_bought = "gun damage upgrade maxed out"
+					shop_last_bought = "laser weapon level maxed out"
 				end
 			end
-			if current_shop_item.name == "gun_cooldown_upgrade" then
-				if current_stat_cooldown_lvl < 3 then
+			if current_shop_item.name == "current_weapon_system_lv" then
+				if current_weapon_system_lv < 3 then
 					scraps -= price
-					current_stat_cooldown_lvl += 1
-					bullet_cooldown_rate = current_stat_cooldown_lvl
-					current_shop_item.price = price * current_stat_cooldown_lvl
-					shop_last_bought = "gun damage upgraded"
+					current_weapon_system_lv += 1
+					current_shop_item.price = price * current_weapon_system_lv
+					shop_last_bought = "weapon system upgraded"
+					if (current_weapon_system_lv == 3) current_shop_item.enabled = false
 				else
-					shop_last_bought = "gun cooldown upgrade maxed out"
+					shop_last_bought = "weapon system level maxed out"
 				end
 			end
 			if current_shop_item.name == "pirate_bribe" then
