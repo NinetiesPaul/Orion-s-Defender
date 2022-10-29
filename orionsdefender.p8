@@ -22,8 +22,8 @@ function _init()
 	pirate_rep = 1
 	clock = 0
 	current_view = 6
-	show_stats = false
-	stats_page = 1
+	pause_menu = false
+	pause_menu_page = 1
 	help_text_y = 0
 	stars = {}
 
@@ -53,36 +53,49 @@ function _init()
 		"stun" -- 4
 	}
 	current_ammo_mode = 1
-	current_weapon_system_lv = 1 -- [to do] shopify ammo system upgrade
+	current_weapon_system_lv = 3
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
 	laser_dmg_lvls = { 1.7, 2.4, 2.9 }
 	laser_lv = 1
-	bullet_damage = laser_dmg_lvls[laser_lv] -- [to do] rename bullet named variables to laser and other ammo types
-	bullet_cooldown = false
-	bullet_cooldown_counter = 0
-	bullet_cooldown_rate = laser_cooldown_lvls[laser_lv]
+	laser_dmg = laser_dmg_lvls[laser_lv]
+	laser_cooldown = false
+	laser_cooldown_counter = 0
+	laser_cooldown_rate = laser_cooldown_lvls[laser_lv]
 
+	missile_cooldown_lvls = { 120, 90, 75 }
+	missile_dmg_lvls = { 2.5, 3.2, 4.1 }
 	missile_lv = 1
-	missile_damage = 2.5
+	missile_damage = missile_dmg_lvls[missile_lv]
 	missile_cooldown = false
 	missile_cooldown_counter = 0
+	missile_cooldown_rate = missile_cooldown_lvls[missile_lv]
 	missile_max_capacity = special_ammo_lvls[missile_lv]
 	missile_n = 2
 	missile_locked_on_enemy = null
 
+	stun_cooldown_lvls = { 100, 75, 45 }
+	stun_dmg_lvls = { 0.7, 0.9, 1.1 }
+	stun_proximity_dmg_lvs = { 0.035, 0.05, 0.075 }
 	stun_lv = 1
-	stun_damage = 0.75
+	stun_damage = stun_dmg_lvls[stun_lv]
+	stun_proximity_dmg = stun_proximity_dmg_lvs[stun_lv]
 	stun_cooldown = false
 	stun_cooldown_counter = 0
+	stun_cooldown_rate = stun_cooldown_lvls[stun_lv]
 	stun_max_capacity = special_ammo_lvls[stun_lv]
 	stun_n = 4
 
+	cluster_cooldown_lvls = { 95, 70, 35 }
+	cluster_dmg_lvls = { 0.5, 0.65, 0.7 }
+	cluster_frag_dmg_lvls = { 0.85, 1.15, 1.3 }
 	cluster_lv = 1
-	cluster_damage = 0.5
+	cluster_damage = cluster_dmg_lvls[cluster_lv]
+	cluster_frag_damage = cluster_frag_dmg_lvls[cluster_lv]
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
+	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lv]
 	cluster_max_capacity  = special_ammo_lvls[cluster_lv]
 	cluster_n = 3
 
@@ -301,38 +314,100 @@ function _draw()
 	-- rect(0,0,127,127, 7)
 	if (current_view == 1 or current_view == 2 or current_view == 4) draw_ui()
 	if (current_view == 1 or current_view == 2 or current_view == 6) foreach(stars, draw_star)
+	if (current_view == 1 or current_view == 2 and not transition_animation) spr(ship_spr,ship_x,ship_y)
 
 	if current_view == 1 then -- world
 		draw_threat()
-		spr(ship_spr,ship_x,ship_y)
 		foreach(encounters, draw_encounter)
 
-		if show_stats then
+		if pause_menu then
 			rect(24,24,104,104, 7)
 			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 
-			linect = 0
-			for e in all(enemy_list) do
-				spr(e.spr_ok, 28, 38 + linect * 10)
-				print(e.name, 40, 40 + linect * 10, 7)
-				if (stats_page == 1) print(e.n_destroyed, 98, 40 + linect * 10, 7)
-				if (stats_page == 2) print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
-				linect+=1
+			if pause_menu_page == 1 or  pause_menu_page == 2 then
+				linect = 0
+				for e in all(enemy_list) do
+					spr(e.spr_ok, 28, 38 + linect * 10)
+					print(e.name, 40, 40 + linect * 10, 7)
+					if (pause_menu_page == 1) print(e.n_destroyed, 98, 40 + linect * 10, 7)
+					if (pause_menu_page == 2) print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
+					linect+=1
+				end
 			end
 
-			if stats_page == 1 then
+			if pause_menu_page == 1 then
 				print("confirmed kills", 35, 26, 7)
 				print("total: ", 28, 96, 7)
 				print(total_enemies_destroyed, 98, 96, 7)
-			elseif stats_page == 2 then
+			elseif pause_menu_page == 2 then
 				print("proficiency", 43, 26, 7)
+			elseif pause_menu_page == 3 then
+				print("ship and hull", 42, 26, 7)
+
+				print("health system lv", 28, 40, 7)
+				print(current_stat_health_lvl, 98, 40, 7)
+				print("armor system lv", 28, 48, 7)
+				print(current_stat_armor_lvl, 98, 48, 7)
+				spr(003, 28, 58)
+				print("health", 37, 59, 7)
+				print(health.."/"..current_max_health, 90, 58, 7)
+				spr(004, 28, 68)
+				print("armor", 37, 69, 7)
+				print(armor.."/"..current_max_armor, 90, 68, 7)
+				spr(005, 28, 78)
+				print("fuel", 37, 79, 7)
+				print(flr(fuel).."/"..max_fuel, 82, 78, 7)
+			elseif pause_menu_page == 4 then
+				print("main weapon system", 29, 26, 7)
+
+				print("system lv", 28, 40, 7)
+				print(laser_lv, 98, 40, 7)
+				print("damage", 28, 48, 7)
+				print(laser_dmg, 90, 48, 7)
+				print("reload time", 28, 56, 7)
+				print(laser_cooldown_rate, 94, 56, 7)
+			elseif pause_menu_page == 5 then
+				print("guided wpn system", 30, 26, 7)
+
+				print("system lv", 28, 40, 7)
+				print(missile_lv, 98, 40, 7)
+				print("damage", 28, 48, 7)
+				print(missile_damage, 90, 48, 7)
+				print("reload time", 28, 56, 7)
+				print(missile_cooldown_rate, 90, 56, 7)
+				print("stockpile", 28, 64, 7)
+				print(missile_n.."/"..missile_max_capacity, 90, 64, 7)
+			elseif pause_menu_page == 6 then
+				print("cluster wpn system", 30, 26, 7)
+
+				print("system lv", 28, 40, 7)
+				print(cluster_lv, 98, 40, 7)
+				print("damage", 28, 48, 7)
+				print(cluster_damage, 90, 48, 7)
+				print("cluster dmg", 28, 56, 7)
+				print(cluster_frag_damage, 86, 56, 7)
+				print("reload time", 28, 64, 7)
+				print(cluster_cooldown_rate, 90, 64, 7)
+				print("stockpile", 28, 72, 7)
+				print(cluster_n.."/"..cluster_max_capacity, 90, 72, 7)
+			elseif pause_menu_page == 7 then
+				print("stun weapon system", 30, 26, 7)
+
+				print("system lv", 28, 40, 7)
+				print(stun_lv, 98, 40, 7)
+				print("damage", 28, 48, 7)
+				print(stun_damage, 90, 48, 7)
+				print("prox damage", 28, 56, 7)
+				print(stun_proximity_dmg, 82, 56, 7)
+				print("reload time", 28, 64, 7)
+				print(stun_cooldown_rate, 90, 64, 7)
+				print("stockpile", 28, 72, 7)
+				print(stun_n.."/"..stun_max_capacity, 90, 72, 7)
 			end
 		end
 	end
 
 	if current_view == 2 then -- battle
-		spr(ship_spr,ship_x,ship_y)
-
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
@@ -427,7 +502,7 @@ function _update()
 	update_icons()
 
 	if current_view == 1 then
-		if show_stats == false then
+		if pause_menu == false then
 			fuel -= fuel_comsumption
 			if (clock % 60 == 0) create_encounter()
 			if (fuel <= 0) current_view = 5
@@ -435,19 +510,23 @@ function _update()
 		end
 
 		if btnp(4) then
-			if show_stats then
-				show_stats = false
+			if pause_menu then
+				pause_menu = false
+				pause_menu_page = 1
 			else
-				show_stats = true
+				pause_menu = true
 			end
 		end
 
-		if show_stats then
+		if pause_menu then
 			if btnp(0) then
-				if (stats_page > 1) stats_page -=1
+				if (pause_menu_page > 1) pause_menu_page -=1
 			elseif btnp(1) then
-				if (stats_page < 2) stats_page +=1
+				if (pause_menu_page < 7) pause_menu_page +=1
 			end
+
+			if (pause_menu_page == 6 and current_weapon_system_lv < 2)  pause_menu_page = 5
+			if (pause_menu_page == 7 and current_weapon_system_lv < 3)  pause_menu_page = 6
 		end
 	end
 
@@ -600,6 +679,7 @@ function reset_transition_animation()
 	left_side = 0
 	right_side = 127
 	animation_direction = "in"
+	ship_x = 64
 end
 
 function draw_missile(m)
@@ -723,7 +803,6 @@ function start_battle()
 		enemy_count -= 1
 	end
 
-	ship_x = 64
 	encounters = {}
 	battle_started = true
 end
@@ -812,8 +891,8 @@ function reset()
 	missile_locked_on_enemy = null
 	battle_started = false
 	battle_rewards = 0
-	bullet_cooldown = false
-	bullet_cooldown_counter = 0
+	laser_cooldown = false
+	laser_cooldown_counter = 0
 	missile_cooldown = false
 	missile_cooldown_counter = 0
 	stun_cooldown = false
@@ -897,7 +976,7 @@ end
 
 function create_encounter()
 	local random_factor = rnd()
-	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
+	type = 2 -- (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd({ 12, 36, 64, 96, 108})
@@ -974,15 +1053,15 @@ end
 
 function fire()
 	if btnp(4) then
-		if current_ammo_mode == 1 and not bullet_cooldown then
+		if current_ammo_mode == 1 and not laser_cooldown then
 			local bullet = {}
 			bullet.mode = "laser"
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 001
-			bullet.damage = bullet_damage
+			bullet.damage = laser_dmg
 			add(bullets, bullet)
-			bullet_cooldown = true
+			laser_cooldown = true
 		elseif current_ammo_mode == 2 and missile_n > 0 and not missile_cooldown then
 			local missile = {}
 			missile.x = ship_x
@@ -1012,6 +1091,7 @@ function fire()
 			bullet.y = ship_y - 8
 			bullet.spr = 048
 			bullet.damage = stun_damage
+			bullet.proximity_dmg = stun_proximity_dmg
 			add(bullets, bullet)
 			stun_cooldown = true
 			stun_n -= 1
@@ -1032,24 +1112,24 @@ function fire()
 		end
 	end
 
-	if bullet_cooldown then
-		bullet_cooldown_counter += 1
-		if (bullet_cooldown_counter % bullet_cooldown_rate == 0) bullet_cooldown_counter = 0 bullet_cooldown = false
+	if laser_cooldown then
+		laser_cooldown_counter += 1
+		if (laser_cooldown_counter % laser_cooldown_rate == 0) laser_cooldown_counter = 0 laser_cooldown = false
 	end
 
 	if missile_cooldown then
 		missile_cooldown_counter += 1
-		if (missile_cooldown_counter % 90 == 0 and count(enemies) > 0) missile_cooldown_counter = 0 missile_cooldown = false
+		if (missile_cooldown_counter % missile_cooldown_rate == 0) missile_cooldown_counter = 0 missile_cooldown = false -- [detail] removed (and count(enemies) > 0)
 	end
 
 	if stun_cooldown then
 		stun_cooldown_counter += 1
-		if (stun_cooldown_counter % 90 == 0) stun_cooldown_counter = 0 stun_cooldown = false
+		if (stun_cooldown_counter % stun_cooldown_rate == 0) stun_cooldown_counter = 0 stun_cooldown = false
 	end
 
 	if cluster_cooldown then
 		cluster_cooldown_counter += 1
-		if (cluster_cooldown_counter % 90 == 0) cluster_cooldown_counter = 0 cluster_cooldown = false
+		if (cluster_cooldown_counter % cluster_cooldown_rate == 0) cluster_cooldown_counter = 0 cluster_cooldown = false
 	end
 end
 
@@ -1107,7 +1187,7 @@ function move_bullet(b)
 	for e in all(enemies) do
 		if b.mode == "stun" and e.energy > 0 then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-				e.energy -= 0.035
+				e.energy -= b.proximity_dmg
 				e.stunned = true
 			else
 				e.stunned = false
@@ -1125,7 +1205,7 @@ function move_bullet(b)
 				e.energy -= damage
 				e.stunned = false
 
-				if (e.energy <= 0) create_warning("knocked out!", e) -- [to do] increase energy dealing damage but implement time to reboot
+				if (e.energy <= 0) create_warning("knocked out!", e)
 			else 
 				e.health -= damage
 
@@ -1167,7 +1247,7 @@ function create_clusters(b)
 		bullet.x = b.x + (8 * pos_y[i])
 		bullet.y = b.y
 		bullet.spr = 000
-		bullet.damage = 0.7
+		bullet.damage = cluster_frag_damage[cluster_lv]
 		bullet.angle = pos_y[i]
 		add(bullets, bullet)
 	end
@@ -1186,7 +1266,7 @@ function destroy_enemy(e)
 	end
 
 	total_enemies_destroyed += 1
-	if (pirate_rep < 3 and total_enemies_destroyed % 2 == 0) pirate_rep += 1 -- [debug] base 15
+	if (pirate_rep < 3 and total_enemies_destroyed % 15 == 0) pirate_rep += 1
 
 	score += e.score
 	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
@@ -1221,7 +1301,7 @@ function create_explosion(ex,ey)
 end
 
 function move()
-	if show_stats == false then -- [code improv] free movement only on free mode or on battle after battle started (enemy creation)
+	if not pause_menu then -- [code improv] free movement only on free mode or on battle after battle started (enemy creation)
 		if (btn(1) and ship_x < 120) ship_x+=2
 		if (btn(0) and ship_x > 0) ship_x-=2
 	end
@@ -1452,8 +1532,8 @@ function nav_store()
 				if laser_lv < 3 then
 					scraps -= price
 					laser_lv += 1
-					bullet_damage = laser_dmg_lvls[laser_lv]
-					bullet_cooldown_rate = laser_cooldown_lvls[laser_lv]
+					laser_dmg = laser_dmg_lvls[laser_lv]
+					laser_cooldown_rate = laser_cooldown_lvls[laser_lv]
 					current_shop_item.price = price * laser_lv
 					shop_last_bought = "laser weapon upgraded"
 					if (laser_lv == 3) current_shop_item.enabled = false
