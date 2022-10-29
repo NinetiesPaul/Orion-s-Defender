@@ -107,74 +107,74 @@ function _init()
 	shop_items = {}
 	all_shop_items = {
 		{
-			["name"] = "fuel",
-			["formatted_name"] = "fuel",
-			["price"] = 3,
-			["shops"] = "both"
+			name = "fuel",
+			formatted_name = "fuel",
+			price = 3,
+			shops = "both"
 		},
 		{
-			["name"] = "health",
-			["price"] = 4,
-			["formatted_name"] = "health",
-			["shops"] = "both"
+			name = "health",
+			price = 4,
+			formatted_name = "health",
+			shops = "both"
 		},
 		{
-			["name"] = "armor",
-			["price"] = 4,
-			["formatted_name"] = "armor",
-			["shops"] = "both"
+			name = "armor",
+			price = 4,
+			formatted_name = "armor",
+			shops = "both"
 		},
 		{
-			["name"] = "missile",
-			["price"] = 7,
-			["formatted_name"] = "missile",
-			["shops"] = "both"
+			name = "missile",
+			price = 7,
+			formatted_name = "missile",
+			shops = "both"
 		},
 		{
-			["name"] = "stun_ammo",
-			["price"] = 4,
-			["formatted_name"] = "stun ammo",
-			["shops"] = "both"
+			name = "stun_ammo",
+			price = 4,
+			formatted_name = "stun ammo",
+			shops = "both"
 		},
 		{
-			["name"] = "cluster_ammo",
-			["price"] = 3,
-			["formatted_name"] = "cluster ammo",
-			["shops"] = "both"
+			name = "cluster_ammo",
+			price = 3,
+			formatted_name = "cluster ammo",
+			shops = "both"
 		},
 		{
-			["name"] = "health_upgrade",
-			["price"] = 50 * current_stat_health_lvl,
-			["formatted_name"] = "health upgrade",
-			["shops"] = "civ",
-			["enabled"] = true
+			name = "health_upgrade",
+			price = 50 * current_stat_health_lvl,
+			formatted_name = "health upgrade",
+			shops = "civ",
+			enabled = true
 		},
 		{
-			["name"] = "armor_upgrade",
-			["price"] = 65 * current_stat_armor_lvl,
-			["formatted_name"] = "armor upgrade",
-			["shops"] = "civ",
-			["enabled"] = true
+			name = "armor_upgrade",
+			price = 65 * current_stat_armor_lvl,
+			formatted_name = "armor upgrade",
+			shops = "civ",
+			enabled = true
 		},
 		{
-			["name"] = "laser_lv",
-			["price"] = 55 * laser_lv,
-			["formatted_name"] = "laser ammo level",
-			["shops"] = "civ",
-			["enabled"] = true
+			name = "laser_lv",
+			price = 55 * laser_lv,
+			formatted_name = "laser ammo level",
+			shops = "civ",
+			enabled = true
 		},
 		{
-			["name"] = "current_weapon_system_lv",
-			["price"] = 75 * current_weapon_system_lv,
-			["formatted_name"] = "weapon system level",
-			["shops"] = "civ",
-			["enabled"] = true
+			name = "current_weapon_system_lv",
+			price = 75 * current_weapon_system_lv,
+			formatted_name = "weapon system level",
+			shops = "civ",
+			enabled = true
 		},
 		{
-			["name"] = "pirate_bribe",
-			["price"] = 50 * pirate_rep,
-			["formatted_name"] = "pirate bribe faction",
-			["shops"] = "pirate"
+			name = "pirate_bribe",
+			price = 50 * pirate_rep,
+			formatted_name = "pirate bribe faction",
+			shops = "pirate"
 		},
 	}
 
@@ -182,79 +182,79 @@ function _init()
 	enemy_list = 
 	{
 		{
-			["name"] = "ant",
-			["spr_ok"] = 009,
-			["spr_damage"] = 025,
-			["b_health"] = 3,
-			["b_energy"] = 3,
-			["b_damage"] = 1,
-			["b_shot_speed"] = 1.5,
-			["b_speed"] =  0.75,
-			["b_cdr"] = 90,
-			["n_destroyed"] = 0,
-			["knowledge_level"] = 0,
-			["score"] = 100,
-			["reward"] = 8
+			name = "ant",
+			spr_ok = 009,
+			spr_damage = 025,
+			b_health = 3,
+			b_energy = 3,
+			b_damage = 1,
+			b_shot_speed = 1.5,
+			b_speed =  0.75,
+			b_cdr = 90,
+			n_destroyed = 0,
+			knowledge_level = 0,
+			score = 100,
+			reward = 8
 		},
 		{
-			["name"] = "ghost",
-			["spr_ok"] = 010,
-			["spr_damage"] = 026,
-			["b_health"] = 3.5,
-			["b_energy"] = 3,
-			["b_damage"] = 2,
-			["b_shot_speed"] = 1.0,
-			["b_speed"] =  1,
-			["b_cdr"] = 75,
-			["n_destroyed"] = 0,
-			["knowledge_level"] = 0,
-			["score"] = 125,
-			["reward"] = 12
+			name = "ghost",
+			spr_ok = 010,
+			spr_damage = 026,
+			b_health = 3.5,
+			b_energy = 3,
+			b_damage = 2,
+			b_shot_speed = 1.0,
+			b_speed =  1,
+			b_cdr = 75,
+			n_destroyed = 0,
+			knowledge_level = 0,
+			score = 125,
+			reward = 12
 		},
 		{
-			["name"] = "eagle",
-			["spr_ok"] = 011,
-			["spr_damage"] = 027,
-			["b_health"] = 5,
-			["b_energy"] = 4,
-			["b_damage"] = 1,
-			["b_shot_speed"] = 1.5,
-			["b_speed"] =  1.7,
-			["b_cdr"] = 60,
-			["n_destroyed"] = 0,
-			["knowledge_level"] = 0,
-			["score"] = 150,
-			["reward"] = 14
+			name = "eagle",
+			spr_ok = 011,
+			spr_damage = 027,
+			b_health = 5,
+			b_energy = 4,
+			b_damage = 1,
+			b_shot_speed = 1.5,
+			b_speed =  1.7,
+			b_cdr = 60,
+			n_destroyed = 0,
+			knowledge_level = 0,
+			score = 150,
+			reward = 14
 		},
 		{
-			["name"] = "spectre",
-			["spr_ok"] = 012,
-			["spr_damage"] = 028,
-			["b_health"] = 4,
-			["b_energy"] = 5,
-			["b_damage"] = 2,
-			["b_shot_speed"] = 1.3,
-			["b_speed"] =  1.5,
-			["b_cdr"] = 45,
-			["n_destroyed"] = 0,
-			["knowledge_level"] = 0,
-			["score"] = 175,
-			["reward"] = 16
+			name = "spectre",
+			spr_ok = 012,
+			spr_damage = 028,
+			b_health = 4,
+			b_energy = 5,
+			b_damage = 2,
+			b_shot_speed = 1.3,
+			b_speed =  1.5,
+			b_cdr = 45,
+			n_destroyed = 0,
+			knowledge_level = 0,
+			score = 175,
+			reward = 16
 		},
 		{
-			["name"] = "sentinel",
-			["spr_ok"] = 013,
-			["spr_damage"] = 029,
-			["b_health"] = 5,
-			["b_energy"] = 7,
-			["b_damage"] = 3,
-			["b_shot_speed"] = 1.7,
-			["b_speed"] =  1.7,
-			["b_cdr"] = 45,
-			["n_destroyed"] = 0,
-			["knowledge_level"] = 0,
-			["score"] = 250,
-			["reward"] = 20
+			name = "sentinel",
+			spr_ok = 013,
+			spr_damage = 029,
+			b_health = 5,
+			b_energy = 7,
+			b_damage = 3,
+			b_shot_speed = 1.7,
+			b_speed =  1.7,
+			b_cdr = 45,
+			n_destroyed = 0,
+			knowledge_level = 0,
+			score = 250,
+			reward = 20
 		}
 	}
 	enemies = {}
@@ -1427,7 +1427,7 @@ function nav_store()
 					scraps -= price
 					current_stat_health_lvl += 1
 					current_shop_item.price = price * current_stat_health_lvl
-					current_max_health = stat_lvl[current_stat_health_lvl] * stat_multiplier
+					current_max_health = stat_lvl[current_stat_health_lvl]
 					health = current_max_health
 					shop_last_bought = "hull upgraded"
 					if (current_stat_health_lvl == 3) current_shop_item.enabled = false
@@ -1440,7 +1440,7 @@ function nav_store()
 					scraps -= price
 					current_stat_armor_lvl += 1
 					current_shop_item.price = price * current_stat_armor_lvl
-					current_max_armor = stat_lvl[current_stat_armor_lvl] * stat_multiplier
+					current_max_armor = stat_lvl[current_stat_armor_lvl]
 					armor = current_max_armor
 					shop_last_bought = "armor upgraded"
 					if (current_stat_armor_lvl == 3) current_shop_item.enabled = false
