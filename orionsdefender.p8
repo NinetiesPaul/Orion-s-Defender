@@ -33,9 +33,9 @@ function _init()
 	ship_x = 64
 	ship_y = 118
 	fuel = 15
-	health_spr = 003
-	armor_spr =  004
-	fuel_spr = 005
+	health_spr = 1
+	armor_spr =  1
+	fuel_spr = 1
 	max_fuel = 15
 	fuel_comsumption = 0.0075
 	stat_lvl = { 5, 10, 15 }
@@ -718,17 +718,14 @@ function move_warning(w)
 end
 
 function update_icons()
-	health_spr = (health/current_max_health == 1) and 003 or
-	(health/current_max_health > 0.50 and health/current_max_health < 1) and 019 or 
-	(health/current_max_health > 0.25 and health/current_max_health < 0.50) and 035 or 051
+	health_pct = health/current_max_health
+	health_spr = (health_pct == 1) and 8 or flr(health_pct * 10)
 
-	fuel_spr = (fuel/max_fuel == 1) and 005 or 
-	(fuel/max_fuel > 0.50 and fuel/max_fuel < 1) and 021 or 
-	(fuel/max_fuel > 0.25 and fuel/max_fuel < 0.50) and 037 or 053
+	fuel_pct = fuel/max_fuel
+	fuel_spr = (fuel_pct == 1) and 8 or flr(fuel_pct * 10)
 
-	armor_spr = (armor/current_max_armor == 1) and 004 or 
-	(armor/current_max_armor > 0.50 and armor/current_max_armor < 1) and 020 or
-	(armor/current_max_armor > 0.25 and armor/current_max_armor < 0.50) and 036 or 052
+	armor_pct = armor/current_max_armor
+	armor_spr = (armor_pct == 1) and 8 or flr(armor_pct * 10)
 end
 
 function create_warning(msg, e)
@@ -784,10 +781,10 @@ function start_battle()
 		enemy.stunned = false
 		enemy.energy_reboot = 90
 		enemy.energy_reboot_counter = 0
-
 		enemy.fire = true
 		enemy.collateral = false
 		add(enemies, enemy)
+
 		enemy_count -= 1
 	end
 
@@ -925,9 +922,9 @@ function draw_ui()
 		if (current_view != 4) print("score: " .. score,1,7, 0)
 	end
 
-	if (armor > 0) spr(armor_spr,103,2)
-	spr(health_spr,111,2)
-	spr(fuel_spr,119,2)
+	sspr(32, 0, 7, armor_spr, 103, 2)
+	sspr(24, 0, 7, health_spr, 111, 2)
+	sspr(40, 0, 7, fuel_spr, 119, 2)
 end
 
 function update_threat()
@@ -1295,7 +1292,7 @@ function create_enemy_bullet(e)
 		enemy_bullet.x = e.x
 		enemy_bullet.y = e.y+8
 		enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
-		enemy_bullet.damage = e.damage
+		enemy_bullet.damage = e.b_damage
 		enemy_bullet.v = e.b_shot_speed
 		enemy_bullet.aimless = (e.collateral == 2) and true or false
 		sfx(08)
