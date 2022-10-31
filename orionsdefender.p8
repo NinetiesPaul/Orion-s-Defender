@@ -53,7 +53,7 @@ function _init()
 		"stun" -- 4
 	}
 	current_ammo_mode = 1
-	current_weapon_system_lv = 3
+	current_weapon_system_lv = 1
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
@@ -912,7 +912,7 @@ function draw_ui()
 		ammo_left = ""
 
 		if current_ammo_mode == 1 then
-			if (bullet_cooldown) reloading = true
+			if (laser_cooldown) reloading = true
 		elseif current_ammo_mode == 2 then
 			if (missile_cooldown) reloading = true
 			ammo_left = missile_n
@@ -976,7 +976,7 @@ end
 
 function create_encounter()
 	local random_factor = rnd()
-	type = 2 -- (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
+	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd({ 12, 36, 64, 96, 108})
@@ -1247,7 +1247,7 @@ function create_clusters(b)
 		bullet.x = b.x + (8 * pos_y[i])
 		bullet.y = b.y
 		bullet.spr = 000
-		bullet.damage = cluster_frag_damage[cluster_lv]
+		bullet.damage = cluster_frag_damage
 		bullet.angle = pos_y[i]
 		add(bullets, bullet)
 	end
