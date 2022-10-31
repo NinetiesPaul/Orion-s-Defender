@@ -196,7 +196,7 @@ function _init()
 	{
 		{
 			name = "ant",
-			spr_ok = 009,
+			spr = 009,
 			spr_damage = 025,
 			b_health = 3,
 			b_energy = 3,
@@ -209,7 +209,7 @@ function _init()
 		},
 		{
 			name = "ghost",
-			spr_ok = 010,
+			spr = 010,
 			spr_damage = 026,
 			b_health = 3.5,
 			b_energy = 3,
@@ -222,7 +222,7 @@ function _init()
 		},
 		{
 			name = "eagle",
-			spr_ok = 011,
+			spr = 011,
 			spr_damage = 027,
 			b_health = 5,
 			b_energy = 4,
@@ -235,7 +235,7 @@ function _init()
 		},
 		{
 			name = "spectre",
-			spr_ok = 012,
+			spr = 012,
 			spr_damage = 028,
 			b_health = 4,
 			b_energy = 5,
@@ -248,7 +248,7 @@ function _init()
 		},
 		{
 			name = "sentinel",
-			spr_ok = 013,
+			spr = 013,
 			spr_damage = 029,
 			b_health = 5,
 			b_energy = 7,
@@ -765,23 +765,14 @@ function start_battle()
 		b_health = enemy_data.b_health + (pirate_rep - 1)
 		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
 
-		enemy.name = enemy_data.name
-		enemy.spr = enemy_data.spr_ok
-		enemy.spr_damage = enemy_data.spr_damage
+		enemy = enemy_data
 		enemy.health = b_health
 		enemy.max_health = b_health
 		enemy.energy = b_energy
 		enemy.max_energy = b_energy
-		enemy.damage = enemy_data.b_damage + (pirate_rep - 1)
-		enemy.shot_v = enemy_data.b_shot_speed + (pirate_rep - 1)
-		enemy.v = enemy_data.b_speed
-		enemy.base_v = enemy_data.b_speed
-		enemy.score = enemy_data.score
-		enemy.reward = enemy_data.reward
-		enemy.cdr = enemy_data.b_cdr
+
 		enemy.clock = 0
 		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
-
 		enemy.x = flr(rnd(48))+48
 		enemy.y = 18
 		enemy.angle = 0
@@ -1305,12 +1296,12 @@ function create_enemy_bullet(e)
 		enemy_bullet.y = e.y+8
 		enemy_bullet.angle = atan2(ship_x - e.x, ship_y - e.y)
 		enemy_bullet.damage = e.damage
-		enemy_bullet.v = e.shot_v
+		enemy_bullet.v = e.b_shot_speed
 		enemy_bullet.aimless = (e.collateral == 2) and true or false
 		sfx(08)
 		add(enemy_bullets,enemy_bullet)
 	else
-		if (e.clock % e.cdr == 0) e.fire = true
+		if (e.clock % e.b_cdr == 0) e.fire = true
 	end
 end
 
@@ -1351,8 +1342,8 @@ function move_enemy(e)
 				e.to_y = rnd_pos[2]
 				e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
 			else
-				e.x += cos(e.angle) * e.v
-				e.y += sin(e.angle) * e.v
+				e.x += cos(e.angle) * e.b_speed
+				e.y += sin(e.angle) * e.b_speed
 				if e.from_x < e.x then
 					if e.x > e.to_x then
 						e.moving = false
@@ -1375,6 +1366,7 @@ end
 function draw_enemy(e)
 	enemy_sprite = (e.energy > 0) and e.spr or e.spr + 16
 	spr(enemy_sprite,e.x,e.y)
+	print(e.health, e.x + 10, e.y, 7)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
