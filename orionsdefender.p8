@@ -204,8 +204,6 @@ function _init()
 			b_shot_speed = 1.5,
 			b_speed =  0.75,
 			b_cdr = 90,
-			n_destroyed = 0,
-			knowledge_level = 0,
 			score = 100,
 			reward = 8
 		},
@@ -219,8 +217,6 @@ function _init()
 			b_shot_speed = 1.0,
 			b_speed =  1,
 			b_cdr = 75,
-			n_destroyed = 0,
-			knowledge_level = 0,
 			score = 125,
 			reward = 12
 		},
@@ -234,8 +230,6 @@ function _init()
 			b_shot_speed = 1.5,
 			b_speed =  1.7,
 			b_cdr = 60,
-			n_destroyed = 0,
-			knowledge_level = 0,
 			score = 150,
 			reward = 14
 		},
@@ -249,8 +243,6 @@ function _init()
 			b_shot_speed = 1.3,
 			b_speed =  1.5,
 			b_cdr = 45,
-			n_destroyed = 0,
-			knowledge_level = 0,
 			score = 175,
 			reward = 16
 		},
@@ -264,8 +256,6 @@ function _init()
 			b_shot_speed = 1.7,
 			b_speed =  1.7,
 			b_cdr = 45,
-			n_destroyed = 0,
-			knowledge_level = 0,
 			score = 250,
 			reward = 20
 		}
@@ -286,6 +276,13 @@ function _init()
 	}
 	battle_rewards = 0
 	battle_started = false
+	confirmed_kills = {
+		ant = { n_destroyed = 0, knowledge_level = 0 },
+		ghost = { n_destroyed = 0, knowledge_level = 0 },
+		eagle = { n_destroyed = 0, knowledge_level = 0 },
+		spectre = { n_destroyed = 0, knowledge_level = 0 },
+		sentinel = { n_destroyed = 0, knowledge_level = 0 }
+	}
 	
 	transition_animation = false
 	left_side = 0
@@ -324,14 +321,13 @@ function _draw()
 			rect(24,24,104,104, 7)
 			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 
-			if pause_menu_page == 1 or  pause_menu_page == 2 then
-				linect = 0
-				for e in all(enemy_list) do
-					spr(e.spr_ok, 28, 38 + linect * 10)
-					print(e.name, 40, 40 + linect * 10, 7)
-					if (pause_menu_page == 1) print(e.n_destroyed, 98, 40 + linect * 10, 7)
-					if (pause_menu_page == 2) print(e.knowledge_level .. "/3", 90, 40 + linect * 10, 7)
-					linect+=1
+			if pause_menu_page == 1 or pause_menu_page == 2 then
+				line_ct = 0
+				for k,v in pairs(confirmed_kills) do
+					print(k, 28, 40 + line_ct * 8, 7)
+					if (pause_menu_page == 1) print(v.n_destroyed, 98, 40 + line_ct * 8, 7)
+					if (pause_menu_page == 2) print(v.knowledge_level.."/3", 90, 40 + line_ct * 8, 7)
+					line_ct += 1
 				end
 			end
 
@@ -769,6 +765,7 @@ function start_battle()
 		b_health = enemy_data.b_health + (pirate_rep - 1)
 		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
 
+		enemy.name = enemy_data.name
 		enemy.spr = enemy_data.spr_ok
 		enemy.spr_damage = enemy_data.spr_damage
 		enemy.health = b_health
@@ -1254,27 +1251,6 @@ function create_clusters(b)
 	del(bullets,b)
 end
 
-function destroy_enemy(e)
-	for el in all(enemy_list) do -- [code improv] -- isn't it easier to create  dict specific to handle kill stats instead of looping enemy lib?
-		if e.spr == el.spr_ok then
-			el.n_destroyed += 1
-
-			if el.n_destroyed % 5 == 0 and el.knowledge_level < 3 then
-				el.knowledge_level += 1
-			end
-		end
-	end
-
-	total_enemies_destroyed += 1
-	if (pirate_rep < 3 and total_enemies_destroyed % 15 == 0) pirate_rep += 1
-
-	score += e.score
-	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
-	create_explosion(e.x,e.y)
-	sfx(05)
-	del(enemies,e)
-end
-
 function create_explosion(ex,ey)
 	local explosion = {}
 	explosion.spr = 054
@@ -1413,6 +1389,20 @@ end
 
 function draw_enemy_bullet(eb)
 	spr(001,eb.x,eb.y)
+end
+
+function destroy_enemy(e)
+	confirmed_kills[e.name].n_destroyed += 1
+	if (confirmed_kills[e.name].n_destroyed % 5 == 0 and confirmed_kills[e.name].knowledge_level < 3) confirmed_kills[e.name].knowledge_level += 1
+
+	total_enemies_destroyed += 1
+	if (pirate_rep < 3 and total_enemies_destroyed % 10 == 0) pirate_rep += 1
+
+	score += e.score
+	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
+	create_explosion(e.x,e.y)
+	sfx(05)
+	del(enemies,e)
 end
 -->8
 -- shop
