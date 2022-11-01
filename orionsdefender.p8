@@ -1360,7 +1360,6 @@ end
 function draw_enemy(e)
 	enemy_sprite = (e.energy > 0) and e.spr or e.spr + 16
 	spr(enemy_sprite,e.x,e.y)
-	print(e.health, e.x + 10, e.y, 7)
 
 	percentage = e.health/e.max_health
 	color = (percentage == 1) and 11 or (percentage < 1 and percentage >= 0.5) and 10 or 8
