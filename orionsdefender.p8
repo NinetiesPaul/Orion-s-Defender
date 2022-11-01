@@ -398,8 +398,6 @@ function _draw()
 	end
 
 	if current_view == 2 then -- battle
-		print(count(enemies), 64, 112, 7)
-
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
@@ -788,7 +786,6 @@ function start_battle()
 		enemy_count -= 1
 	end
 
-	encounters = {}
 	battle_started = true
 end
 
