@@ -28,7 +28,7 @@ function _init()
 	stars = {}
 
 	-- player variables
-	scraps = 30
+	scraps = 5000
 	ship_spr = 017
 	ship_x = 64
 	ship_y = 118
@@ -46,10 +46,10 @@ function _init()
 		"stun" -- 4
 	}
 
-	current_stat_armor_lvl = 1
-	current_stat_health_lvl = 1
-	max_health = stat_lvl[current_stat_health_lvl]
-	max_armor = stat_lvl[current_stat_armor_lvl]
+	armor_lvl = 1
+	health_lvl = 1
+	max_health = stat_lvl[health_lvl]
+	max_armor = stat_lvl[armor_lvl]
 
 	current_ammo_mode = 1
 	current_weapon_system_lv = 1
@@ -101,13 +101,23 @@ function _init()
 	player = {
 		fuel = 15,
 		max_fuel = 15,
+		health_lvl = 1,
+		health_max_lvl = 3,
 		health = max_health,
 		max_health = max_health,
+		armor_lvl = 1,
+		armor_max_lvl = 3,
 		armor = max_armor,
 		max_armor = max_armor,
 		missile_lv = missile_lv,
 		missile_n = missile_n,
 		missile_max_capacity = missile_max_capacity,
+		stun_lv = stun_lv,
+		stun_n = stun_n,
+		stun_max_capacity = stun_max_capacity,
+		cluster_lv = cluster_lv,
+		cluster_n = cluster_n,
+		cluster_max_capacity = cluster_max_capacity,
 	}
 
 	random_factor = 0.95
@@ -157,28 +167,37 @@ function _init()
 			formatted_name = "missile",
 			shops = "both",
 			compare_with = "missile_max_capacity"
-		},--[[
+		},
 		{
-			name = "stun_ammo",
+			name = "stun_n",
 			price = 4,
 			formatted_name = "stun ammo",
 			shops = "both",
-			compare_with = "max_armor"
+			compare_with = "stun_max_capacity"
 		},
 		{
-			name = "cluster_ammo",
+			name = "cluster_n",
 			price = 3,
 			formatted_name = "cluster ammo",
 			shops = "both",
-			compare_with = "max_armor"
+			compare_with = "cluster_max_capacity"
 		},
 		{
-			name = "health_upgrade",
-			price = 50 * current_stat_health_lvl,
+			name = "health_lvl",
+			price = 50 * health_lvl,
 			formatted_name = "health upgrade",
 			shops = "civ",
+			compare_with = "health_max_lvl",
 			enabled = true
 		},
+		{
+			name = "armor_lvl",
+			price = 65 * armor_lvl,
+			formatted_name = "armor upgrade",
+			shops = "civ",
+			compare_with = "armor_max_lvl",
+			enabled = true
+		},--[[
 		{
 			name = "armor_upgrade",
 			price = 65 * current_stat_armor_lvl,
@@ -354,9 +373,9 @@ function _draw()
 				print("ship and hull", 42, 26, 7)
 
 				print("health system lv", 28, 40, 7)
-				print(current_stat_health_lvl, 98, 40, 7)
+				print(player.health_lvl, 98, 40, 7)
 				print("armor system lv", 28, 48, 7)
-				print(current_stat_armor_lvl, 98, 48, 7)
+				print(player.armor_lvl, 98, 48, 7)
 				spr(003, 28, 58)
 				print("health", 37, 59, 7)
 				print(player.health.."/"..player.max_health, 90, 58, 7)
@@ -977,7 +996,7 @@ end
 
 function create_encounter()
 	local random_factor = rnd()
-	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
+	type = 2 -- (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd({ 12, 36, 64, 96, 108})
@@ -1443,8 +1462,19 @@ function nav_store()
 			if player[current_shop_item.name] < player[current_shop_item.compare_with] then
 				player[current_shop_item.name] = flr(player[current_shop_item.name])
 				player[current_shop_item.name] += 1
-				shop_last_bought = "bought 1 " .. current_shop_item.formatted_name
+				shop_last_bought = "bought " .. current_shop_item.formatted_name
 				scraps -= price
+				if current_shop_item.name == "armor_lvl" then
+					player.armor = stat_lvl[player.armor_lvl]
+					player.max_armor = stat_lvl[player.armor_lvl]
+					current_shop_item.price = player.armor_lvl * price
+					if (player[current_shop_item.name] == 3) current_shop_item.enabled = false
+				elseif current_shop_item.name == "health_lvl" then
+					player.health = stat_lvl[player.health_lvl]
+					player.max_health = stat_lvl[player.health_lvl]
+					current_shop_item.price = player.health_lvl * price
+					if (player[current_shop_item.name] == 3) current_shop_item.enabled = false
+				end
 			else
 				shop_last_bought = current_shop_item.formatted_name .. " at max capacity"
 			end
