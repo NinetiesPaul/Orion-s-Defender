@@ -28,7 +28,7 @@ function _init()
 	stars = {}
 
 	-- player variables
-	scraps = 5000
+	scraps = 30
 	ship_spr = 017
 	ship_x = 64
 	ship_y = 118
@@ -52,7 +52,7 @@ function _init()
 	max_armor = stat_lvl[armor_lvl]
 
 	current_ammo_mode = 1
-	current_weapon_system_lv = 3
+	weapon_system_lvl = 1
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
@@ -71,7 +71,7 @@ function _init()
 	missile_cooldown = false
 	missile_cooldown_counter = 0
 	missile_n = 2
-	missile_locked_on_enemy = null
+	missile_locked_on_enemy = 1
 
 	stun_cooldown_lvls = { 100, 75, 45 }
 	stun_dmg_lvls = { 0.7, 0.9, 1.1 }
@@ -120,6 +120,8 @@ function _init()
 		cluster_max_capacity = special_ammo_lvls[cluster_lvl],
 		laser_lvl = laser_lvl,
 		laser_max_lvl = 3,
+		weapon_system_lvl = weapon_system_lvl,
+		weapon_system_max_lvl = 3
 	}
 
 	random_factor = 0.95
@@ -173,14 +175,14 @@ function _init()
 		{
 			name = "stun_n",
 			price = 4,
-			formatted_name = "stun ammo",
+			formatted_name = "stun",
 			shops = "both",
 			compare_with = "stun_max_capacity"
 		},
 		{
 			name = "cluster_n",
 			price = 3,
-			formatted_name = "cluster ammo",
+			formatted_name = "cluster",
 			shops = "both",
 			compare_with = "cluster_max_capacity"
 		},
@@ -231,22 +233,21 @@ function _init()
 			shops = "civ",
 			compare_with = "stun_max_lvl",
 			enabled = true
-		},--[[
+		},
 		{
-			name = "current_weapon_system_lv",
-			price = 75 * current_weapon_system_lv,
+			name = "weapon_system_lvl",
+			price = 75 * weapon_system_lvl,
 			formatted_name = "weapon system level",
 			shops = "civ",
+			compare_with = "weapon_system_max_lvl",
 			enabled = true
 		},
 		{
 			name = "pirate_bribe",
 			price = 50 * pirate_rep,
-			formatted_name = "pirate bribe faction",
+			formatted_name = "bribe pirate faction",
 			shops = "pirate"
-			shops = "both",
-			compare_with = "max_armor"
-		},]]--
+		}
 	}
 
 	-- enemy and battle
@@ -486,9 +487,7 @@ function _draw()
 
 		if (clock % 90 == 0) shop_last_bought = ""
 		print(shop_last_bought, 1, 7, 0)
-		print("⬆️⬇️ [select]", 2, 104, 7)
-		print("z/🅾️ [buy]", 2,112, 7)
-		print("x/❎ [leave]", 2, 120, 7)
+		print("z/🅾️ [buy] - x/❎ [exit] - ⬆️⬇️ [select]", 2, 120, 7)
 
 		animate_shop_selector()
 	end
@@ -573,8 +572,8 @@ function _update()
 				if (pause_menu_page < 7) pause_menu_page +=1
 			end
 
-			if (pause_menu_page == 6 and current_weapon_system_lv < 2)  pause_menu_page = 5
-			if (pause_menu_page == 7 and current_weapon_system_lv < 3)  pause_menu_page = 6
+			if (pause_menu_page == 6 and player.weapon_system_lvl < 2)  pause_menu_page = 5
+			if (pause_menu_page == 7 and player.weapon_system_lvl < 3)  pause_menu_page = 6
 		end
 	end
 
@@ -928,7 +927,7 @@ function reset()
 	explosions = {}
 	warnings = {}
 	missiles = {}
-	missile_locked_on_enemy = null
+	missile_locked_on_enemy = 1
 	battle_started = false
 	battle_rewards = 0
 	laser_cooldown = false
@@ -1016,7 +1015,7 @@ end
 
 function create_encounter()
 	local random_factor = rnd()
-	type = 2 -- (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
+	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
 	encounter.x = rnd({ 12, 36, 64, 96, 108})
@@ -1141,8 +1140,8 @@ function fire()
 	if btnp(5) then
 		current_ammo_mode += 1
 
-		if (current_weapon_system_lv == 1 and current_ammo_mode > 2) current_ammo_mode = 1
-		if (current_weapon_system_lv == 2 and current_ammo_mode > 3) current_ammo_mode = 1
+		if (player.weapon_system_lvl == 1 and current_ammo_mode > 2) current_ammo_mode = 1
+		if (player.weapon_system_lvl == 2 and current_ammo_mode > 3) current_ammo_mode = 1
 		if (current_ammo_mode > 4) current_ammo_mode = 1
 
 		if current_ammo_mode != 2 then
@@ -1188,7 +1187,6 @@ end
 
 function missile_ui()
 	if current_ammo_mode == 2 and not missile_cooldown then
-		if (missile_locked_on_enemy == null) missile_locked_on_enemy = 1
 		last_enemy = count(enemies)
 
 		if btnp(2) then
@@ -1479,7 +1477,16 @@ function nav_store()
 	if btnp(4) then
 		price = (pirate_store == false) and current_shop_item.price or (current_shop_item.name == "pirate_bribe") and current_shop_item.price or ceil(current_shop_item.price/2)
 		if scraps >= price then
-			if player[current_shop_item.name] < player[current_shop_item.compare_with] then
+			if current_shop_item.name == "pirate_bribe" then
+				if pirate_rep > 1 then
+					scraps -= price
+					pirate_rep -= 1
+					current_shop_item.price = pirate_rep * 75
+					shop_last_bought = "pirate rep downgraded"
+				else
+					shop_last_bought = "already at minimum pirate rep"
+				end
+			elseif player[current_shop_item.name] < player[current_shop_item.compare_with] then
 				player[current_shop_item.name] = flr(player[current_shop_item.name])
 				player[current_shop_item.name] += 1
 				shop_last_bought = "bought " .. current_shop_item.formatted_name
