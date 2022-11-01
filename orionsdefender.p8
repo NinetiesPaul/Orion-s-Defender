@@ -289,12 +289,6 @@ function _init()
 	right_side = 127
 	animation_direction = "in"
 
-	enemy_by_difficulty ={
-		{1,2},
-		{3,4},
-		{5}
-	}
-
 	-- music variables
 	can_leave_screen = false
 	music_view_1_playing = false
@@ -404,6 +398,8 @@ function _draw()
 	end
 
 	if current_view == 2 then -- battle
+		print(count(enemies), 64, 112, 7)
+
 		foreach(enemies, draw_enemy)
 		foreach(enemy_bullets, draw_enemy_bullet)
 		foreach(bullets, draw_bullet)
@@ -739,11 +735,12 @@ function create_warning(msg, e)
 end
 
 function start_battle()
-	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
-
 	enemy_type_pool = {}
+	enemy_by_difficulty ={ { 1,2 }, { 3, 4 }, { 5 } }
 	bounty_chance = { 0.9, 0.8, 0.7 }
 	bounty_lvls = { 40, 55, 70 }
+
+	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
 	if pirate_rep == 1 then
 		add(enemy_type_pool, enemy_list[1])
@@ -757,12 +754,15 @@ function start_battle()
 
 	while(enemy_count > 0)
 	do
-		enemy_data = rnd(enemy_type_pool) -- [code improv] isn't simpler to create a copy of the object instead of copy single values to a new object?
-		local enemy = {}
-		b_health = enemy_data.b_health + (pirate_rep - 1)
-		b_energy = enemy_data.b_energy+ (pirate_rep - 1)
+		enemy_data = rnd(enemy_type_pool)
 
-		enemy = enemy_data
+		local enemy = {}
+		for k, v in pairs(enemy_data) do
+			enemy[k] = v
+		end
+
+		b_health = enemy_data.b_health + (pirate_rep - 1)
+		b_energy = enemy_data.b_energy + (pirate_rep - 1)
 		enemy.health = b_health
 		enemy.max_health = b_health
 		enemy.energy = b_energy
@@ -770,7 +770,7 @@ function start_battle()
 
 		enemy.clock = 0
 		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
-		enemy.x = flr(rnd(48))+48
+		enemy.x = flr(rnd(48)) + 48
 		enemy.y = 18
 		enemy.angle = 0
 		enemy.from_x = 0
