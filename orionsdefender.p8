@@ -220,7 +220,7 @@ function _init()
 		},
 		{
 			name = "cluster_lvl",
-			price = 35 * missile_lvl,
+			price = 35 * cluster_lvl,
 			formatted_name = "cluster ammo level",
 			shops = "civ",
 			compare_with = "cluster_max_lvl",
@@ -228,7 +228,7 @@ function _init()
 		},
 		{
 			name = "stun_lvl",
-			price = 45 * missile_lvl,
+			price = 45 * stun_lvl,
 			formatted_name = "stun ammo level",
 			shops = "civ",
 			compare_with = "stun_max_lvl",
@@ -954,16 +954,16 @@ function draw_ui()
 			if (laser_cooldown) reloading = true
 		elseif current_ammo_mode == 2 then
 			if (missile_cooldown) reloading = true
-			ammo_left = missile_n
-			if (missile_n == 0) out_of_ammo = true
+			ammo_left = player.missile_n
+			if (player.missile_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 3 then
 			if (cluster_cooldown) reloading = true
-			ammo_left = cluster_n
-			if (cluster_n == 0) out_of_ammo = true
+			ammo_left = player.cluster_n
+			if (player.cluster_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 4 then
 			if (stun_cooldown) reloading = true
-			ammo_left = stun_n
-			if (stun_n == 0) out_of_ammo = true
+			ammo_left = player.stun_n
+			if (player.stun_n == 0) out_of_ammo = true
 		end
 		
 		if (reloading) print("rELOADING", 1, 7, 0)
@@ -1101,7 +1101,7 @@ function fire()
 			bullet.damage = laser_dmg
 			add(bullets, bullet)
 			laser_cooldown = true
-		elseif current_ammo_mode == 2 and missile_n > 0 and not missile_cooldown then
+		elseif current_ammo_mode == 2 and player.missile_n > 0 and not missile_cooldown then
 			local missile = {}
 			missile.x = ship_x
 			missile.y =ship_y - 8
@@ -1109,8 +1109,8 @@ function fire()
 			missile.damage = missile_damage
 			add(missiles, missile)
 			missile_cooldown = true
-			missile_n -= 1
-		elseif current_ammo_mode == 3 and cluster_n > 0 and not cluster_cooldown then
+			player.missile_n -= 1
+		elseif current_ammo_mode == 3 and player.cluster_n > 0 and not cluster_cooldown then
 			local bullet = {}
 			bullet.mode = "cluster"
 			bullet.x = ship_x
@@ -1122,8 +1122,8 @@ function fire()
 			bullet.frag_n = 3
 			add(bullets, bullet)
 			cluster_cooldown = true
-			cluster_n -= 1
-		elseif current_ammo_mode == 4 and stun_n > 0 and not stun_cooldown then
+			player.cluster_n -= 1
+		elseif current_ammo_mode == 4 and player.stun_n > 0 and not stun_cooldown then
 			local bullet = {}
 			bullet.mode = "stun"
 			bullet.x = ship_x
@@ -1133,7 +1133,7 @@ function fire()
 			bullet.proximity_dmg = stun_proximity_dmg
 			add(bullets, bullet)
 			stun_cooldown = true
-			stun_n -= 1
+			player.stun_n -= 1
 		end
 	end
 
@@ -1501,14 +1501,17 @@ function nav_store()
 				elseif current_shop_item.name == "missile_lvl" then
 					missile_damage = missile_dmg_lvls[player.missile_lvl]
 					missile_cooldown_rate = missile_cooldown_lvls[player.missile_lvl]
+					player.missile_max_capacity = special_ammo_lvls[player.missile_lvl]
 				elseif current_shop_item.name == "cluster_lvl" then
 					cluster_damage = cluster_dmg_lvls[player.cluster_lvl]
 					cluster_frag_damage = cluster_frag_dmg_lvls[player.cluster_lvl]
 					cluster_cooldown_rate = cluster_cooldown_lvls[player.cluster_lvl]
+					player.cluster_max_capacity = special_ammo_lvls[player.cluster_lvl]
 				elseif current_shop_item.name == "stun_lvl" then
 					stun_damage = stun_dmg_lvls[player.stun_lvl]
 					stun_proximity_dmg = stun_proximity_dmg_lvs[player.stun_lvl]
 					stun_cooldown_rate = stun_cooldown_lvls[player.stun_lvl]
+					player.stun_max_capacity = special_ammo_lvls[player.stun_lvl]
 				end
 
 				if current_shop_item.shops == "civ" then
