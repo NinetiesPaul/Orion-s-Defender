@@ -75,7 +75,7 @@ function _init()
 
 	stun_cooldown_lvls = { 100, 75, 45 }
 	stun_dmg_lvls = { 0.7, 0.9, 1.1 }
-	stun_proximity_dmg_lvs = { 0.035, 0.05, 0.075 }
+	stun_proximity_dmg_lvs = { 0.1, 0.16, 0.22 }
 	stun_lvl = 1
 	stun_damage = stun_dmg_lvls[stun_lvl]
 	stun_proximity_dmg = stun_proximity_dmg_lvs[stun_lvl]
@@ -816,13 +816,11 @@ function start_battle()
 			enemy[k] = v
 		end
 
-		b_health = enemy_data.b_health + (pirate_rep - 1)
-		b_energy = enemy_data.b_energy + (pirate_rep - 1)
-		enemy.health = b_health
-		enemy.max_health = b_health
-		enemy.energy = b_energy
-		enemy.max_energy = b_energy
-
+		enemy.health = enemy_data.b_health
+		enemy.max_health = enemy_data.b_health
+		enemy.energy = enemy_data.b_energy
+		enemy.max_energy = enemy_data.b_energy
+		enemy.current_speed = enemy_data.b_speed
 		enemy.clock = 0
 		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
 		enemy.x = flr(rnd(48)) + 48
@@ -834,7 +832,7 @@ function start_battle()
 		enemy.moving = false
 		enemy.locked_on = false
 		enemy.stunned = false
-		enemy.energy_reboot = 90
+		enemy.energy_reboot = 300
 		enemy.energy_reboot_counter = 0
 		enemy.fire = true
 		enemy.collateral = false
@@ -1177,7 +1175,7 @@ function draw_bullet(b)
 
 	if b.mode == "stun" then
 		for e in all(enemies) do
-			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
+			if e.x >= b.x-20 and e.x <= b.x+20 and e.y >= b.y-20 and e.y <= b.y+20 then
 				line_color = (clock % 2 == 0) and 12 or 7
 				line(b.x+4, b.y+4, e.x+4, e.y+4, line_color)
 			end
@@ -1381,7 +1379,7 @@ function move_enemy(e)
 		if (e.energy_reboot_counter % e.energy_reboot == 0) e.energy_reboot_counter = 0 e.energy = e.max_energy create_warning("back online!", e)
 	else
 		e.clock += 1
-		e.v = (e.stunned) and 0.2 or e.base_v
+		e.current_speed = (e.stunned) and 0.15 or e.b_speed
 
 		if e.collateral != 1 then
 			if e.moving == false then
@@ -1392,8 +1390,8 @@ function move_enemy(e)
 				e.to_y = rnd_pos[2]
 				e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
 			else
-				e.x += cos(e.angle) * e.b_speed
-				e.y += sin(e.angle) * e.b_speed
+				e.x += cos(e.angle) * e.current_speed
+				e.y += sin(e.angle) * e.current_speed
 				if e.from_x < e.x then
 					if e.x > e.to_x then
 						e.moving = false
