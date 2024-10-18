@@ -32,19 +32,12 @@ function _init()
 	ship_spr = 017
 	ship_x = 64
 	ship_y = 118
-	fuel = 15
 	health_spr = 1
 	armor_spr =  1
 	fuel_spr = 1
 	max_fuel = 15
 	fuel_comsumption = 0.0075
 	stat_lvl = { 5, 10, 15 }
-	current_stat_armor_lvl = 1
-	current_stat_health_lvl = 1
-	current_max_health = stat_lvl[current_stat_health_lvl] 
-	current_max_armor = stat_lvl[current_stat_armor_lvl]
-	health = current_max_health
-	armor = current_max_armor
 	bullets = {}
 	ammo_mode = {
 		"laser", -- 1
@@ -52,52 +45,84 @@ function _init()
 		"cluster", -- 3
 		"stun" -- 4
 	}
+
+	armor_lvl = 1
+	health_lvl = 1
+	max_health = stat_lvl[health_lvl]
+	max_armor = stat_lvl[armor_lvl]
+
 	current_ammo_mode = 1
-	current_weapon_system_lv = 1
+	weapon_system_lvl = 1
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
 	laser_dmg_lvls = { 1.7, 2.4, 2.9 }
-	laser_lv = 1
-	laser_dmg = laser_dmg_lvls[laser_lv]
+	laser_lvl = 1
+	laser_dmg = laser_dmg_lvls[laser_lvl]
+	laser_cooldown_rate = laser_cooldown_lvls[laser_lvl]
 	laser_cooldown = false
 	laser_cooldown_counter = 0
-	laser_cooldown_rate = laser_cooldown_lvls[laser_lv]
 
 	missile_cooldown_lvls = { 120, 90, 75 }
 	missile_dmg_lvls = { 2.5, 3.2, 4.1 }
-	missile_lv = 1
-	missile_damage = missile_dmg_lvls[missile_lv]
+	missile_lvl = 1
+	missile_damage = missile_dmg_lvls[missile_lvl]
+	missile_cooldown_rate = missile_cooldown_lvls[missile_lvl]
 	missile_cooldown = false
 	missile_cooldown_counter = 0
-	missile_cooldown_rate = missile_cooldown_lvls[missile_lv]
-	missile_max_capacity = special_ammo_lvls[missile_lv]
 	missile_n = 2
-	missile_locked_on_enemy = null
+	missile_locked_on_enemy = 1
 
 	stun_cooldown_lvls = { 100, 75, 45 }
 	stun_dmg_lvls = { 0.7, 0.9, 1.1 }
 	stun_proximity_dmg_lvs = { 0.035, 0.05, 0.075 }
-	stun_lv = 1
-	stun_damage = stun_dmg_lvls[stun_lv]
-	stun_proximity_dmg = stun_proximity_dmg_lvs[stun_lv]
+	stun_lvl = 1
+	stun_damage = stun_dmg_lvls[stun_lvl]
+	stun_proximity_dmg = stun_proximity_dmg_lvs[stun_lvl]
+	stun_cooldown_rate = stun_cooldown_lvls[stun_lvl]
 	stun_cooldown = false
 	stun_cooldown_counter = 0
-	stun_cooldown_rate = stun_cooldown_lvls[stun_lv]
-	stun_max_capacity = special_ammo_lvls[stun_lv]
 	stun_n = 4
 
 	cluster_cooldown_lvls = { 95, 70, 35 }
 	cluster_dmg_lvls = { 0.5, 0.65, 0.7 }
 	cluster_frag_dmg_lvls = { 0.85, 1.15, 1.3 }
-	cluster_lv = 1
-	cluster_damage = cluster_dmg_lvls[cluster_lv]
-	cluster_frag_damage = cluster_frag_dmg_lvls[cluster_lv]
+	cluster_lvl = 1
+	cluster_damage = cluster_dmg_lvls[cluster_lvl]
+	cluster_frag_damage = cluster_frag_dmg_lvls[cluster_lvl]
+	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lvl]
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
-	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lv]
-	cluster_max_capacity  = special_ammo_lvls[cluster_lv]
 	cluster_n = 3
+
+	player = {
+		fuel = 15,
+		max_fuel = 15,
+		health_lvl = 1,
+		health_max_lvl = 3,
+		health = max_health,
+		max_health = max_health,
+		armor_lvl = 1,
+		armor_max_lvl = 3,
+		armor = max_armor,
+		max_armor = max_armor,
+		missile_lvl = missile_lvl,
+		missile_max_lvl = 3,
+		missile_n = missile_n,
+		missile_max_capacity = special_ammo_lvls[missile_lvl],
+		stun_lvl = stun_lvl,
+		stun_max_lvl = 3,
+		stun_n = stun_n,
+		stun_max_capacity = special_ammo_lvls[stun_lvl],
+		cluster_lvl = cluster_lvl,
+		cluster_max_lvl = 3,
+		cluster_n = cluster_n,
+		cluster_max_capacity = special_ammo_lvls[cluster_lvl],
+		laser_lvl = laser_lvl,
+		laser_max_lvl = 3,
+		weapon_system_lvl = weapon_system_lvl,
+		weapon_system_max_lvl = 3
+	}
 
 	random_factor = 0.95
 	collateral_type =
@@ -123,72 +148,106 @@ function _init()
 			name = "fuel",
 			formatted_name = "fuel",
 			price = 3,
-			shops = "both"
+			shops = "both",
+			compare_with = "max_fuel"
 		},
 		{
 			name = "health",
 			price = 4,
 			formatted_name = "health",
-			shops = "both"
+			shops = "both",
+			compare_with = "max_health"
 		},
 		{
 			name = "armor",
 			price = 4,
 			formatted_name = "armor",
-			shops = "both"
+			shops = "both",
+			compare_with = "max_armor"
 		},
 		{
-			name = "missile",
+			name = "missile_n",
 			price = 7,
 			formatted_name = "missile",
-			shops = "both"
+			shops = "both",
+			compare_with = "missile_max_capacity"
 		},
 		{
-			name = "stun_ammo",
+			name = "stun_n",
 			price = 4,
-			formatted_name = "stun ammo",
-			shops = "both"
+			formatted_name = "stun",
+			shops = "both",
+			compare_with = "stun_max_capacity"
 		},
 		{
-			name = "cluster_ammo",
+			name = "cluster_n",
 			price = 3,
-			formatted_name = "cluster ammo",
-			shops = "both"
+			formatted_name = "cluster",
+			shops = "both",
+			compare_with = "cluster_max_capacity"
 		},
 		{
-			name = "health_upgrade",
-			price = 50 * current_stat_health_lvl,
+			name = "health_lvl",
+			price = 50 * health_lvl,
 			formatted_name = "health upgrade",
 			shops = "civ",
+			compare_with = "health_max_lvl",
 			enabled = true
 		},
 		{
-			name = "armor_upgrade",
-			price = 65 * current_stat_armor_lvl,
+			name = "armor_lvl",
+			price = 65 * armor_lvl,
 			formatted_name = "armor upgrade",
 			shops = "civ",
+			compare_with = "armor_max_lvl",
 			enabled = true
 		},
 		{
-			name = "laser_lv",
-			price = 55 * laser_lv,
+			name = "laser_lvl",
+			price = 55 * laser_lvl,
 			formatted_name = "laser ammo level",
 			shops = "civ",
+			compare_with = "laser_max_lvl",
 			enabled = true
 		},
 		{
-			name = "current_weapon_system_lv",
-			price = 75 * current_weapon_system_lv,
+			name = "missile_lvl",
+			price = 55 * missile_lvl,
+			formatted_name = "missile ammo level",
+			shops = "civ",
+			compare_with = "missile_max_lvl",
+			enabled = true
+		},
+		{
+			name = "cluster_lvl",
+			price = 35 * cluster_lvl,
+			formatted_name = "cluster ammo level",
+			shops = "civ",
+			compare_with = "cluster_max_lvl",
+			enabled = true
+		},
+		{
+			name = "stun_lvl",
+			price = 45 * stun_lvl,
+			formatted_name = "stun ammo level",
+			shops = "civ",
+			compare_with = "stun_max_lvl",
+			enabled = true
+		},
+		{
+			name = "weapon_system_lvl",
+			price = 75 * weapon_system_lvl,
 			formatted_name = "weapon system level",
 			shops = "civ",
+			compare_with = "weapon_system_max_lvl",
 			enabled = true
 		},
 		{
 			name = "pirate_bribe",
 			price = 50 * pirate_rep,
-			formatted_name = "pirate bribe faction",
+			formatted_name = "bribe pirate faction",
 			shops = "pirate"
-		},
+		}
 	}
 
 	-- enemy and battle
@@ -335,23 +394,23 @@ function _draw()
 				print("ship and hull", 42, 26, 7)
 
 				print("health system lv", 28, 40, 7)
-				print(current_stat_health_lvl, 98, 40, 7)
+				print(player.health_lvl, 98, 40, 7)
 				print("armor system lv", 28, 48, 7)
-				print(current_stat_armor_lvl, 98, 48, 7)
+				print(player.armor_lvl, 98, 48, 7)
 				spr(003, 28, 58)
 				print("health", 37, 59, 7)
-				print(health.."/"..current_max_health, 90, 58, 7)
+				print(player.health.."/"..player.max_health, 90, 58, 7)
 				spr(004, 28, 68)
 				print("armor", 37, 69, 7)
-				print(armor.."/"..current_max_armor, 90, 68, 7)
+				print(player.armor.."/"..player.max_armor, 90, 68, 7)
 				spr(005, 28, 78)
 				print("fuel", 37, 79, 7)
-				print(flr(fuel).."/"..max_fuel, 82, 78, 7)
+				print(flr(player.fuel).."/"..player.max_fuel, 82, 78, 7)
 			elseif pause_menu_page == 4 then
 				print("main weapon system", 29, 26, 7)
 
 				print("system lv", 28, 40, 7)
-				print(laser_lv, 98, 40, 7)
+				print(player.laser_lvl, 98, 40, 7)
 				print("damage", 28, 48, 7)
 				print(laser_dmg, 90, 48, 7)
 				print("reload time", 28, 56, 7)
@@ -360,18 +419,18 @@ function _draw()
 				print("guided wpn system", 30, 26, 7)
 
 				print("system lv", 28, 40, 7)
-				print(missile_lv, 98, 40, 7)
+				print(player.missile_lvl, 98, 40, 7)
 				print("damage", 28, 48, 7)
 				print(missile_damage, 90, 48, 7)
 				print("reload time", 28, 56, 7)
 				print(missile_cooldown_rate, 90, 56, 7)
 				print("stockpile", 28, 64, 7)
-				print(missile_n.."/"..missile_max_capacity, 90, 64, 7)
+				print(player.missile_n.."/"..player.missile_max_capacity, 90, 64, 7)
 			elseif pause_menu_page == 6 then
 				print("cluster wpn system", 30, 26, 7)
 
 				print("system lv", 28, 40, 7)
-				print(cluster_lv, 98, 40, 7)
+				print(player.cluster_lvl, 98, 40, 7)
 				print("damage", 28, 48, 7)
 				print(cluster_damage, 90, 48, 7)
 				print("cluster dmg", 28, 56, 7)
@@ -379,12 +438,12 @@ function _draw()
 				print("reload time", 28, 64, 7)
 				print(cluster_cooldown_rate, 90, 64, 7)
 				print("stockpile", 28, 72, 7)
-				print(cluster_n.."/"..cluster_max_capacity, 90, 72, 7)
+				print(player.cluster_n.."/"..player.cluster_max_capacity, 90, 72, 7)
 			elseif pause_menu_page == 7 then
 				print("stun weapon system", 30, 26, 7)
 
 				print("system lv", 28, 40, 7)
-				print(stun_lv, 98, 40, 7)
+				print(player.stun_lvl, 98, 40, 7)
 				print("damage", 28, 48, 7)
 				print(stun_damage, 90, 48, 7)
 				print("prox damage", 28, 56, 7)
@@ -392,7 +451,7 @@ function _draw()
 				print("reload time", 28, 64, 7)
 				print(stun_cooldown_rate, 90, 64, 7)
 				print("stockpile", 28, 72, 7)
-				print(stun_n.."/"..stun_max_capacity, 90, 72, 7)
+				print(player.stun_n.."/"..player.stun_max_capacity, 90, 72, 7)
 			end
 		end
 	end
@@ -428,17 +487,15 @@ function _draw()
 
 		if (clock % 90 == 0) shop_last_bought = ""
 		print(shop_last_bought, 1, 7, 0)
-		print("⬆️⬇️ [select]", 2, 104, 7)
-		print("z/🅾️ [buy]", 2,112, 7)
-		print("x/❎ [leave]", 2, 120, 7)
+		print("z/🅾️ [buy] - x/❎ [exit] - ⬆️⬇️ [select]", 2, 120, 7)
 
 		animate_shop_selector()
 	end
 
 	if current_view == 5 then -- gameover
 		print("game over",44,64)
-		if (health <= 0) print("you were destroyed",24,72)
-		if (fuel <= 0) print("you ran out of fuel",23,72)
+		if (player.health <= 0) print("you were destroyed",24,72)
+		if (player.fuel <= 0) print("you ran out of fuel",23,72)
 		print("press any key", 18, 104)
 	end
 
@@ -493,9 +550,9 @@ function _update()
 
 	if current_view == 1 then
 		if pause_menu == false then
-			fuel -= fuel_comsumption
+			player.fuel -= fuel_comsumption
 			if (clock % 60 == 0) create_encounter()
-			if (fuel <= 0) current_view = 5
+			if (player.fuel <= 0) current_view = 5
 			foreach(encounters, move_encounter)
 		end
 
@@ -515,8 +572,8 @@ function _update()
 				if (pause_menu_page < 7) pause_menu_page +=1
 			end
 
-			if (pause_menu_page == 6 and current_weapon_system_lv < 2)  pause_menu_page = 5
-			if (pause_menu_page == 7 and current_weapon_system_lv < 3)  pause_menu_page = 6
+			if (pause_menu_page == 6 and player.weapon_system_lvl < 2)  pause_menu_page = 5
+			if (pause_menu_page == 7 and player.weapon_system_lvl < 3)  pause_menu_page = 6
 		end
 	end
 
@@ -712,13 +769,13 @@ function move_warning(w)
 end
 
 function update_icons()
-	health_pct = health/current_max_health
+	health_pct = player.health/player.max_health
 	health_spr = (health_pct == 1) and 8 or flr(health_pct * 10)
 
-	fuel_pct = fuel/max_fuel
+	fuel_pct = player.fuel/player.max_fuel
 	fuel_spr = (fuel_pct == 1) and 8 or flr(fuel_pct * 10)
 
-	armor_pct = armor/current_max_armor
+	armor_pct = player.armor/player.max_armor
 	armor_spr = (armor_pct == 1) and 8 or flr(armor_pct * 10)
 end
 
@@ -870,7 +927,7 @@ function reset()
 	explosions = {}
 	warnings = {}
 	missiles = {}
-	missile_locked_on_enemy = null
+	missile_locked_on_enemy = 1
 	battle_started = false
 	battle_rewards = 0
 	laser_cooldown = false
@@ -897,16 +954,16 @@ function draw_ui()
 			if (laser_cooldown) reloading = true
 		elseif current_ammo_mode == 2 then
 			if (missile_cooldown) reloading = true
-			ammo_left = missile_n
-			if (missile_n == 0) out_of_ammo = true
+			ammo_left = player.missile_n
+			if (player.missile_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 3 then
 			if (cluster_cooldown) reloading = true
-			ammo_left = cluster_n
-			if (cluster_n == 0) out_of_ammo = true
+			ammo_left = player.cluster_n
+			if (player.cluster_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 4 then
 			if (stun_cooldown) reloading = true
-			ammo_left = stun_n
-			if (stun_n == 0) out_of_ammo = true
+			ammo_left = player.stun_n
+			if (player.stun_n == 0) out_of_ammo = true
 		end
 		
 		if (reloading) print("rELOADING", 1, 7, 0)
@@ -1044,7 +1101,7 @@ function fire()
 			bullet.damage = laser_dmg
 			add(bullets, bullet)
 			laser_cooldown = true
-		elseif current_ammo_mode == 2 and missile_n > 0 and not missile_cooldown then
+		elseif current_ammo_mode == 2 and player.missile_n > 0 and not missile_cooldown then
 			local missile = {}
 			missile.x = ship_x
 			missile.y =ship_y - 8
@@ -1052,8 +1109,8 @@ function fire()
 			missile.damage = missile_damage
 			add(missiles, missile)
 			missile_cooldown = true
-			missile_n -= 1
-		elseif current_ammo_mode == 3 and cluster_n > 0 and not cluster_cooldown then
+			player.missile_n -= 1
+		elseif current_ammo_mode == 3 and player.cluster_n > 0 and not cluster_cooldown then
 			local bullet = {}
 			bullet.mode = "cluster"
 			bullet.x = ship_x
@@ -1065,8 +1122,8 @@ function fire()
 			bullet.frag_n = 3
 			add(bullets, bullet)
 			cluster_cooldown = true
-			cluster_n -= 1
-		elseif current_ammo_mode == 4 and stun_n > 0 and not stun_cooldown then
+			player.cluster_n -= 1
+		elseif current_ammo_mode == 4 and player.stun_n > 0 and not stun_cooldown then
 			local bullet = {}
 			bullet.mode = "stun"
 			bullet.x = ship_x
@@ -1076,15 +1133,15 @@ function fire()
 			bullet.proximity_dmg = stun_proximity_dmg
 			add(bullets, bullet)
 			stun_cooldown = true
-			stun_n -= 1
+			player.stun_n -= 1
 		end
 	end
 
 	if btnp(5) then
 		current_ammo_mode += 1
 
-		if (current_weapon_system_lv == 1 and current_ammo_mode > 2) current_ammo_mode = 1
-		if (current_weapon_system_lv == 2 and current_ammo_mode > 3) current_ammo_mode = 1
+		if (player.weapon_system_lvl == 1 and current_ammo_mode > 2) current_ammo_mode = 1
+		if (player.weapon_system_lvl == 2 and current_ammo_mode > 3) current_ammo_mode = 1
 		if (current_ammo_mode > 4) current_ammo_mode = 1
 
 		if current_ammo_mode != 2 then
@@ -1130,7 +1187,6 @@ end
 
 function missile_ui()
 	if current_ammo_mode == 2 and not missile_cooldown then
-		if (missile_locked_on_enemy == null) missile_locked_on_enemy = 1
 		last_enemy = count(enemies)
 
 		if btnp(2) then
@@ -1310,12 +1366,12 @@ function move_enemy_bullet(eb)
 		del(enemy_bullets,eb)
 		sfx(06)
 
-		if (armor == 0) health-=eb.damage
-		if armor > 0 then 
-			armor-=eb.damage
-			if (armor < 0) armor = 0
+		if (player.armor == 0) player.health-=eb.damage
+		if player.armor > 0 then 
+			player.armor-=eb.damage
+			if (player.armor < 0) player.armor = 0
 		end
-		if (health <= 0) current_view = 5
+		if (player.health <= 0) current_view = 5
 	end
 end
 
@@ -1421,124 +1477,52 @@ function nav_store()
 	if btnp(4) then
 		price = (pirate_store == false) and current_shop_item.price or (current_shop_item.name == "pirate_bribe") and current_shop_item.price or ceil(current_shop_item.price/2)
 		if scraps >= price then
-			if current_shop_item.name == "fuel" then
-				if fuel < max_fuel then
-					fuel = flr(fuel)
-					fuel += 1
-					shop_last_bought = "bought 1 fuel"
-					scraps -= price
-					if (fuel > max_fuel) fuel = max_fuel
-				else
-					shop_last_bought = "fuel at max capacity"
-				end
-			end
-			if current_shop_item.name == "health" then
-				if health < current_max_health then
-					health += 1
-					shop_last_bought = "bought 1 health"
-					scraps -= price
-				else
-					shop_last_bought = "current at max health"
-				end
-			end
-			if current_shop_item.name == "armor" then
-				if armor < current_max_armor then
-					armor += 1
-					shop_last_bought = "bought 1 armor"
-					scraps -= price
-				else
-					shop_last_bought = "current at max armor"
-				end
-			end
-			if current_shop_item.name == "missile" then
-				if missile_n < missile_max_capacity then
-					missile_n += 1
-					shop_last_bought = "bought 1 missile"
-					scraps -= price
-				else
-					shop_last_bought = "missiles at max capacity"
-				end
-			end
-			if current_shop_item.name == "stun_ammo" then
-				if stun_n < stun_max_capacity then
-					stun_n += 1
-					shop_last_bought = "bought 1 stun ammo"
-					scraps -= price
-				else
-					shop_last_bought = "stun ammo at max capacity"
-				end
-			end
-			if current_shop_item.name == "cluster_ammo" then
-				if cluster_n < cluster_max_capacity then
-					cluster_n += 1
-					shop_last_bought = "bought 1 cluster ammo"
-					scraps -= price
-				else
-					shop_last_bought = "cluster ammo at max capacity"
-				end
-			end
-			if current_shop_item.name == "health_upgrade" then
-				if current_stat_health_lvl < 3 then
-					scraps -= price
-					current_stat_health_lvl += 1
-					current_shop_item.price = price * current_stat_health_lvl
-					current_max_health = stat_lvl[current_stat_health_lvl]
-					health = current_max_health
-					shop_last_bought = "hull upgraded"
-					if (current_stat_health_lvl == 3) current_shop_item.enabled = false
-				else
-					shop_last_bought = "hull upgrade maxed out"
-				end
-			end
-			if current_shop_item.name == "armor_upgrade" then
-				if current_stat_armor_lvl < 3 then
-					scraps -= price
-					current_stat_armor_lvl += 1
-					current_shop_item.price = price * current_stat_armor_lvl
-					current_max_armor = stat_lvl[current_stat_armor_lvl]
-					armor = current_max_armor
-					shop_last_bought = "armor upgraded"
-					if (current_stat_armor_lvl == 3) current_shop_item.enabled = false
-				else
-					shop_last_bought = "armor upgrade maxed out"
-				end
-			end
-			if current_shop_item.name == "laser_lv" then
-				if laser_lv < 3 then
-					scraps -= price
-					laser_lv += 1
-					laser_dmg = laser_dmg_lvls[laser_lv]
-					laser_cooldown_rate = laser_cooldown_lvls[laser_lv]
-					current_shop_item.price = price * laser_lv
-					shop_last_bought = "laser weapon upgraded"
-					if (laser_lv == 3) current_shop_item.enabled = false
-				else
-					shop_last_bought = "laser weapon level maxed out"
-				end
-			end
-			if current_shop_item.name == "current_weapon_system_lv" then
-				if current_weapon_system_lv < 3 then
-					scraps -= price
-					current_weapon_system_lv += 1
-					current_shop_item.price = price * current_weapon_system_lv
-					shop_last_bought = "weapon system upgraded"
-					if (current_weapon_system_lv == 3) current_shop_item.enabled = false
-				else
-					shop_last_bought = "weapon system level maxed out"
-				end
-			end
 			if current_shop_item.name == "pirate_bribe" then
 				if pirate_rep > 1 then
 					scraps -= price
 					pirate_rep -= 1
-					current_shop_item.price = pirate_rep * 50
-					shop_last_bought = "pirate reputation diminished"
+					current_shop_item.price = pirate_rep * 75
+					shop_last_bought = "pirate rep downgraded"
 				else
-					shop_last_bought = "already at minimum pirate rep level"
+					shop_last_bought = "already at minimum pirate rep"
 				end
+			elseif player[current_shop_item.name] < player[current_shop_item.compare_with] then
+				player[current_shop_item.name] = flr(player[current_shop_item.name])
+				player[current_shop_item.name] += 1
+				shop_last_bought = "bought " .. current_shop_item.formatted_name
+				scraps -= price
+				if current_shop_item.name == "armor_lvl" then
+					player.max_armor = stat_lvl[player.armor_lvl]
+				elseif current_shop_item.name == "health_lvl" then
+					player.max_health = stat_lvl[player.health_lvl]
+				elseif current_shop_item.name == "laser_lvl" then
+					laser_dmg = laser_dmg_lvls[player.laser_lvl]
+					laser_cooldown_rate = laser_cooldown_lvls[player.laser_lvl]
+				elseif current_shop_item.name == "missile_lvl" then
+					missile_damage = missile_dmg_lvls[player.missile_lvl]
+					missile_cooldown_rate = missile_cooldown_lvls[player.missile_lvl]
+					player.missile_max_capacity = special_ammo_lvls[player.missile_lvl]
+				elseif current_shop_item.name == "cluster_lvl" then
+					cluster_damage = cluster_dmg_lvls[player.cluster_lvl]
+					cluster_frag_damage = cluster_frag_dmg_lvls[player.cluster_lvl]
+					cluster_cooldown_rate = cluster_cooldown_lvls[player.cluster_lvl]
+					player.cluster_max_capacity = special_ammo_lvls[player.cluster_lvl]
+				elseif current_shop_item.name == "stun_lvl" then
+					stun_damage = stun_dmg_lvls[player.stun_lvl]
+					stun_proximity_dmg = stun_proximity_dmg_lvs[player.stun_lvl]
+					stun_cooldown_rate = stun_cooldown_lvls[player.stun_lvl]
+					player.stun_max_capacity = special_ammo_lvls[player.stun_lvl]
+				end
+
+				if current_shop_item.shops == "civ" then
+					current_shop_item.price = player[current_shop_item.name] * price
+					if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
+				end
+			else
+				shop_last_bought = current_shop_item.formatted_name .. " at max capacity"
 			end
 		else
-			shop_last_bought = "too expensive"
+			shop_last_bought = "not enough cash"
 		end
 	end
  
