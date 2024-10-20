@@ -205,7 +205,7 @@ function _init()
 		{
 			name = "laser_lvl",
 			price = 55 * laser_lvl,
-			formatted_name = "laser ammo level",
+			formatted_name = "laser upgrade",
 			shops = "civ",
 			compare_with = "laser_max_lvl",
 			enabled = true
@@ -213,7 +213,7 @@ function _init()
 		{
 			name = "missile_lvl",
 			price = 55 * missile_lvl,
-			formatted_name = "missile ammo level",
+			formatted_name = "missile upgrade",
 			shops = "civ",
 			compare_with = "missile_max_lvl",
 			enabled = true
@@ -221,7 +221,7 @@ function _init()
 		{
 			name = "cluster_lvl",
 			price = 35 * cluster_lvl,
-			formatted_name = "cluster ammo level",
+			formatted_name = "cluster upgrade",
 			shops = "civ",
 			compare_with = "cluster_max_lvl",
 			enabled = true
@@ -229,7 +229,7 @@ function _init()
 		{
 			name = "stun_lvl",
 			price = 45 * stun_lvl,
-			formatted_name = "stun ammo level",
+			formatted_name = "stun upgrade",
 			shops = "civ",
 			compare_with = "stun_max_lvl",
 			enabled = true
@@ -237,7 +237,7 @@ function _init()
 		{
 			name = "weapon_system_lvl",
 			price = 75 * weapon_system_lvl,
-			formatted_name = "weapon system level",
+			formatted_name = "weapon system upgrade",
 			shops = "civ",
 			compare_with = "weapon_system_max_lvl",
 			enabled = true
@@ -253,7 +253,7 @@ function _init()
 	-- enemy and battle
 	enemy_list = 
 	{
-		{
+		ant = {
 			name = "ant",
 			spr = 009,
 			spr_damage = 025,
@@ -266,7 +266,7 @@ function _init()
 			score = 100,
 			reward = 8
 		},
-		{
+		ghost = {
 			name = "ghost",
 			spr = 010,
 			spr_damage = 026,
@@ -279,7 +279,7 @@ function _init()
 			score = 125,
 			reward = 12
 		},
-		{
+		eagle = {
 			name = "eagle",
 			spr = 011,
 			spr_damage = 027,
@@ -292,7 +292,7 @@ function _init()
 			score = 150,
 			reward = 14
 		},
-		{
+		spectre = {
 			name = "spectre",
 			spr = 012,
 			spr_damage = 028,
@@ -305,7 +305,7 @@ function _init()
 			score = 175,
 			reward = 16
 		},
-		{
+		sentinel = {
 			name = "sentinel",
 			spr = 013,
 			spr_damage = 029,
@@ -371,87 +371,91 @@ function _draw()
 		foreach(encounters, draw_encounter)
 
 		if pause_menu then
-			rect(24,24,104,104, 7)
+			rect(24,24,104,104, 11)
 			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 
-			if pause_menu_page == 1 or pause_menu_page == 2 then
+			if pause_menu_page == 2 or pause_menu_page == 3 then
 				line_ct = 0
 				for k,v in pairs(confirmed_kills) do
-					print(k, 28, 40 + line_ct * 8, 7)
-					if (pause_menu_page == 1) print(v.n_destroyed, 98, 40 + line_ct * 8, 7)
-					if (pause_menu_page == 2) print(v.knowledge_level.."/3", 90, 40 + line_ct * 8, 7)
+					spr(enemy_list[k]["spr"], 28, 39 + line_ct * 8)
+					print(k, 37, 41 + line_ct * 8, 7)
+					if (pause_menu_page == 2) print(v.n_destroyed, 98, 41 + line_ct * 8, 7)
+					if (pause_menu_page == 3) print(v.knowledge_level.."/3", 90, 41 + line_ct * 8, 7)
 					line_ct += 1
 				end
-			end
+				if (pause_menu_page == 3) print("proficiency", 28, 26, 11)
+				if pause_menu_page == 2 then
+					print("combat report", 28, 26, 11)
+					print("total	 ", 28, 32 + (line_ct + 1) * 8, 7)
+					print(total_enemies_destroyed, 98, 32 + (line_ct + 1) * 8, 7)
+					print("score: " .. score, 28, 32 + (line_ct + 3) * 8, 7)
+				end
 
-			if pause_menu_page == 1 then
-				print("confirmed kills", 35, 26, 7)
-				print("total: ", 28, 96, 7)
-				print(total_enemies_destroyed, 98, 96, 7)
-			elseif pause_menu_page == 2 then
-				print("proficiency", 43, 26, 7)
-			elseif pause_menu_page == 3 then
-				print("ship and hull", 42, 26, 7)
 
-				print("health system lv", 28, 40, 7)
-				print(player.health_lvl, 98, 40, 7)
-				print("armor system lv", 28, 48, 7)
-				print(player.armor_lvl, 98, 48, 7)
-				spr(003, 28, 58)
-				print("health", 37, 59, 7)
-				print(player.health.."/"..player.max_health, 90, 58, 7)
-				spr(004, 28, 68)
-				print("armor", 37, 69, 7)
-				print(player.armor.."/"..player.max_armor, 90, 68, 7)
-				spr(005, 28, 78)
-				print("fuel", 37, 79, 7)
-				print(flr(player.fuel).."/"..player.max_fuel, 82, 78, 7)
+			elseif pause_menu_page == 1 then
+				print("ship systems", 28, 26, 11)
+
+				spr(003, 28, 40)
+				print("health", 37, 41, 7)
+				print(player.health.."/"..player.max_health, 90, 41, 7)
+				print("current ver: ", 37, 48, 7)
+				print(player.health_lvl .. "/3", 90, 48, 7)
+
+				spr(004, 28, 55)
+				print("armor", 37, 56, 7)
+				print(player.armor.."/"..player.max_armor, 90, 56, 7)
+				print("current ver: ", 37, 63, 7)
+				print(player.armor_lvl .. "/3", 90, 63, 7)
+
+				spr(005, 28, 70)
+				print("fuel", 37, 71, 7)
+				print(flr(player.fuel).."/"..player.max_fuel, 82, 71, 7)
 			elseif pause_menu_page == 4 then
-				print("main weapon system", 29, 26, 7)
+				print("laser weapon", 28, 26, 11)
 
 				print("system lv", 28, 40, 7)
 				print(player.laser_lvl, 98, 40, 7)
-				print("damage", 28, 48, 7)
-				print(laser_dmg, 90, 48, 7)
-				print("reload time", 28, 56, 7)
-				print(laser_cooldown_rate, 94, 56, 7)
+				print("damage", 28, 46, 7)
+				print(laser_dmg, 90, 46, 7)
+				print("reload time", 28, 52, 7)
+				print(laser_cooldown_rate, 94, 52, 7)
 			elseif pause_menu_page == 5 then
-				print("guided wpn system", 30, 26, 7)
+				print("guided shot", 28, 26, 11)
 
 				print("system lv", 28, 40, 7)
 				print(player.missile_lvl, 98, 40, 7)
-				print("damage", 28, 48, 7)
-				print(missile_damage, 90, 48, 7)
-				print("reload time", 28, 56, 7)
-				print(missile_cooldown_rate, 90, 56, 7)
-				print("stockpile", 28, 64, 7)
-				print(player.missile_n.."/"..player.missile_max_capacity, 90, 64, 7)
+				print("damage", 28, 46, 7)
+				print(missile_damage, 90, 46, 7)
+				print("reload time", 28, 52, 7)
+				print(missile_cooldown_rate, 90, 52, 7)
+				print("stockpile", 28, 58, 7)
+				print(player.missile_n.."/"..player.missile_max_capacity, 90, 58, 7)
 			elseif pause_menu_page == 6 then
-				print("cluster wpn system", 30, 26, 7)
+				print("cluster shot", 28, 26, 11)
 
 				print("system lv", 28, 40, 7)
 				print(player.cluster_lvl, 98, 40, 7)
-				print("damage", 28, 48, 7)
-				print(cluster_damage, 90, 48, 7)
-				print("cluster dmg", 28, 56, 7)
-				print(cluster_frag_damage, 86, 56, 7)
-				print("reload time", 28, 64, 7)
-				print(cluster_cooldown_rate, 90, 64, 7)
-				print("stockpile", 28, 72, 7)
-				print(player.cluster_n.."/"..player.cluster_max_capacity, 90, 72, 7)
+				print("damage", 28, 46, 7)
+				print(cluster_damage, 90, 46, 7)
+				print("cluster dmg", 28, 52, 7)
+				print(cluster_frag_damage, 86, 52, 7)
+				print("reload time", 28, 58, 7)
+				print(cluster_cooldown_rate, 94, 58, 7)
+				print("stockpile", 28, 64, 7)
+				print(player.cluster_n.."/"..player.cluster_max_capacity, 90, 64, 7)
 			elseif pause_menu_page == 7 then
-				print("stun weapon system", 30, 26, 7)
+				print("stun shot", 28, 26, 11)
 
 				print("system lv", 28, 40, 7)
 				print(player.stun_lvl, 98, 40, 7)
-				print("damage", 28, 48, 7)
-				print(stun_damage, 90, 48, 7)
-				print("prox damage", 28, 56, 7)
-				print(stun_proximity_dmg, 82, 56, 7)
-				print("reload time", 28, 64, 7)
-				print(stun_cooldown_rate, 90, 64, 7)
-				print("stockpile", 28, 72, 7)
-				print(player.stun_n.."/"..player.stun_max_capacity, 90, 72, 7)
+				print("damage", 28, 46, 7)
+				print(stun_damage, 90, 46, 7)
+				print("prox damage", 28, 52, 7)
+				print(stun_proximity_dmg, 90, 52, 7)
+				print("reload time", 28, 58, 7)
+				print(stun_cooldown_rate, 90, 58, 7)
+				print("stockpile", 28, 64, 7)
+				print(player.stun_n.."/"..player.stun_max_capacity, 90, 64, 7)
 			end
 		end
 	end
@@ -479,15 +483,17 @@ function _draw()
 		for item in all (shop_items) do 
 			price = (pirate_store == false) and item.price or (item.name == "pirate_bribe") and item.price or ceil(item.price/2)
 			if (not item.enabled and item.shops != "both" and item.shops != "pirate") price = "---"
-			print(item.formatted_name, 14, 16 + i * 8, 7)
-			print("$", 100, 16 + i * 8, 3)
-			print(price, 104, 16 + i * 8, 7)
+			print(item.formatted_name, 14, 16 + i * 6, 7)
+			print("$", 100, 16 + i * 6, 3)
+			print(price, 104, 16 + i * 6, 7)
 			i += 1
 		end
 
 		if (clock % 90 == 0) shop_last_bought = ""
-		print(shop_last_bought, 1, 7, 0)
-		print("z/🅾️ [buy] - x/❎ [exit] - ⬆️⬇️ [select]", 2, 120, 7)
+		print(shop_last_bought, 64, 7, 0)
+
+		rectfill(0,121,127,127, 7)
+		print("z/🅾️ [buy] - x/❎ [exit] - ⬆️⬇️ [select]", 2, 122, 0)
 
 		animate_shop_selector()
 	end
@@ -798,13 +804,13 @@ function start_battle()
 	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
 	if pirate_rep == 1 then
-		add(enemy_type_pool, enemy_list[1])
+		add(enemy_type_pool, enemy_list["ant"])
 	elseif pirate_rep == 2 then
-		add(enemy_type_pool, enemy_list[2])
-		add(enemy_type_pool, enemy_list[3])
+		add(enemy_type_pool, enemy_list["ghost"])
+		add(enemy_type_pool, enemy_list["eagle"])
 	elseif pirate_rep == 3 then
-		add(enemy_type_pool, enemy_list[4])
-		add(enemy_type_pool, enemy_list[5])
+		add(enemy_type_pool, enemy_list["spectre"])
+		add(enemy_type_pool, enemy_list["sentinel"])
 	end
 
 	while(enemy_count > 0)
@@ -943,7 +949,6 @@ function draw_ui()
 	rectfill(0,0,127,12, 7)
 
 	if current_view == 2 then
-		print("weapon: " .. ammo_mode[current_ammo_mode], 1, 1, 0)
 		reloading = false
 		out_of_ammo = false
 		ammo_left = ""
@@ -963,20 +968,23 @@ function draw_ui()
 			ammo_left = player.stun_n
 			if (player.stun_n == 0) out_of_ammo = true
 		end
-		
-		if (reloading) print("rELOADING", 1, 7, 0)
-		if (not reloading and out_of_ammo) print("oUT OF AMMO", 1, 7, 0)
-		if (ammo_left != "") spr(016, 88, 2) print("x" .. ammo_left, 95, 4, 0)
+
+		ammo_left_text = (ammo_left != "") and "x" .. ammo_left or ammo_left
+		print(ammo_mode[current_ammo_mode] .. " " .. ammo_left_text, 1, 1, 0)
+		if (reloading and not out_of_ammo) print("rELOADING", 1, 7, 0)
+		if (out_of_ammo) print("oUT OF AMMO", 1, 7, 0)
+
+		sspr(32, 0, 7, armor_spr, 103, 2)
+		sspr(24, 0, 7, health_spr, 111, 2)
+		sspr(40, 0, 7, fuel_spr, 119, 2)
 	end
 
 	if current_view != 2 then
-		print("$" .. scraps,1,1, 0)
-		if (current_view != 4) print("score: " .. score,1,7, 0)
+		current_view_text = "travelling"
+		if (current_view == 4) current_view_text = (pirate_store) and "pirate shop" or "shop"
+		print(current_view_text,1,1, 0)
+		print("$" .. scraps,1,7, 0)
 	end
-
-	sspr(32, 0, 7, armor_spr, 103, 2)
-	sspr(24, 0, 7, health_spr, 111, 2)
-	sspr(40, 0, 7, fuel_spr, 119, 2)
 end
 
 function update_threat()
@@ -995,12 +1003,12 @@ function update_threat()
 end
 
 function draw_threat()
-	rectfill(62,1,72,11, 0)
+	rectfill(116,1,126,11, 0)
 	pirate_sprite = (pirate_rep == 1) and 014 or (pirate_rep == 2) and 030 or 046
 	pirate_mouth = 062
 
-	spr(pirate_sprite, 64, pirate_sprite_y)
-	spr(pirate_mouth, 64, 4)
+	spr(pirate_sprite, 118, pirate_sprite_y)
+	spr(pirate_mouth, 118, 4)
 end
 
 function restart_from_gameover()
@@ -1517,7 +1525,7 @@ function nav_store()
 					if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
 				end
 			else
-				shop_last_bought = current_shop_item.formatted_name .. " at max capacity"
+				shop_last_bought = current_shop_item.formatted_name .. " maxed out"
 			end
 		else
 			shop_last_bought = "not enough cash"
@@ -1539,7 +1547,7 @@ end
 function animate_shop_selector()
 	if (clock % 5 == 0) shop_selector_spr += 16
 	if (shop_selector_spr > 034) shop_selector_spr = 002
-	spr(shop_selector_spr, 4, (shop_selector_y - 9) + shop_selector * 8)
+	spr(shop_selector_spr, 4, (shop_selector_y - 7) + shop_selector * 6)
 end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
