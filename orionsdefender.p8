@@ -23,7 +23,11 @@ function _init()
 	clock = 0
 	current_view = 6
 	pause_menu = false
-	pause_menu_page = 1
+	pause_menu_option = 1
+	pause_menu_myship = false
+	pause_menu_myship_page = 0
+	pause_menu_battlerep = false
+	pause_menu_battlerep_page = 0
 	help_text_y = 0
 	stars = {}
 
@@ -253,7 +257,8 @@ function _init()
 	-- enemy and battle
 	enemy_list = 
 	{
-		ant = {
+		{
+			id = 1,
 			name = "ant",
 			spr = 009,
 			spr_damage = 025,
@@ -264,9 +269,12 @@ function _init()
 			b_speed =  0.75,
 			b_cdr = 90,
 			score = 100,
-			reward = 8
+			reward = 8,
+			n_destroyed = 0,
+			knowledge_level = 0
 		},
-		ghost = {
+		{
+			id = 2,
 			name = "ghost",
 			spr = 010,
 			spr_damage = 026,
@@ -277,9 +285,12 @@ function _init()
 			b_speed =  1,
 			b_cdr = 75,
 			score = 125,
-			reward = 12
+			reward = 12,
+			n_destroyed = 0,
+			knowledge_level = 0
 		},
-		eagle = {
+		{
+			id = 3,
 			name = "eagle",
 			spr = 011,
 			spr_damage = 027,
@@ -290,9 +301,12 @@ function _init()
 			b_speed =  1.7,
 			b_cdr = 60,
 			score = 150,
-			reward = 14
+			reward = 14,
+			n_destroyed = 0,
+			knowledge_level = 0
 		},
-		spectre = {
+		{
+			id = 4,
 			name = "spectre",
 			spr = 012,
 			spr_damage = 028,
@@ -303,9 +317,12 @@ function _init()
 			b_speed =  1.5,
 			b_cdr = 45,
 			score = 175,
-			reward = 16
+			reward = 16,
+			n_destroyed = 0,
+			knowledge_level = 0
 		},
-		sentinel = {
+		{
+			id = 5,
 			name = "sentinel",
 			spr = 013,
 			spr_damage = 029,
@@ -316,7 +333,9 @@ function _init()
 			b_speed =  1.7,
 			b_cdr = 45,
 			score = 250,
-			reward = 20
+			reward = 20,
+			n_destroyed = 0,
+			knowledge_level = 0
 		}
 	}
 	enemies = {}
@@ -335,13 +354,6 @@ function _init()
 	}
 	battle_rewards = 0
 	battle_started = false
-	confirmed_kills = {
-		ant = { n_destroyed = 0, knowledge_level = 0 },
-		ghost = { n_destroyed = 0, knowledge_level = 0 },
-		eagle = { n_destroyed = 0, knowledge_level = 0 },
-		spectre = { n_destroyed = 0, knowledge_level = 0 },
-		sentinel = { n_destroyed = 0, knowledge_level = 0 }
-	}
 	
 	transition_animation = false
 	left_side = 0
@@ -374,88 +386,105 @@ function _draw()
 			rect(24,24,104,104, 11)
 			palt(0, false) rectfill(25,25,103,103, 0) palt(0, true)
 
-			if pause_menu_page == 2 or pause_menu_page == 3 then
-				line_ct = 0
-				for k,v in pairs(confirmed_kills) do
-					spr(enemy_list[k]["spr"], 28, 39 + line_ct * 8)
-					print(k, 37, 41 + line_ct * 8, 7)
-					if (pause_menu_page == 2) print(v.n_destroyed, 98, 41 + line_ct * 8, 7)
-					if (pause_menu_page == 3) print(v.knowledge_level.."/3", 90, 41 + line_ct * 8, 7)
-					line_ct += 1
+			-- line(64,0,64,127, 7)
+
+			if not pause_menu_myship and not pause_menu_battlerep then
+				print("ship systems", 40, 58, (pause_menu_option == 1) and 7 or 11)
+				print("battle report", 38, 64, (pause_menu_option == 2) and 7 or 11)
+			end
+
+			if pause_menu_battlerep then
+				print("battle report", 26, 26, 11)
+				spr(enemy_list[pause_menu_battlerep_page]["spr"], 26, 39)
+				print("the " .. "\""..enemy_list[pause_menu_battlerep_page]["name"].."\"", 37, 40, 7)
+
+				print("hull: " .. enemy_list[pause_menu_battlerep_page]["b_health"], 26, 48, 7)
+				print("shield: " .. enemy_list[pause_menu_battlerep_page]["b_energy"], 26, 54, 7)
+				print("speed: " .. enemy_list[pause_menu_battlerep_page]["b_speed"], 26, 60, 7)
+				print("shot speed: " .. enemy_list[pause_menu_battlerep_page]["b_shot_speed"], 26, 66, 7)
+				print("damage: " .. enemy_list[pause_menu_battlerep_page]["b_damage"], 26, 72, 7)
+				print("cooldown: " .. enemy_list[pause_menu_battlerep_page]["b_cdr"], 26, 78, 7)
+				
+				threath = (pause_menu_battlerep_page == 1) and "low" or (pause_menu_battlerep_page == 2 or pause_menu_battlerep_page == 3) and "mid" or "high"
+				print("threath level: " .. threath, 28, 84, 7)
+				print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page]["n_destroyed"], 26, 90, 7)
+				print("proficiency: " .. enemy_list[pause_menu_battlerep_page]["knowledge_level"], 26, 96, 7)
+			end
+
+			if pause_menu_myship then
+				if pause_menu_myship_page == 1 then
+					print("ship systems", 26, 26, 11)
+
+					spr(003, 26, 40)
+					print("health", 34, 41, 7)
+					print(player.health.."/"..player.max_health, 92, 41, 7)
+					print("current ver: ", 26, 49, 7)
+					print(player.health_lvl .. "/3", 92, 49, 7)
+
+					spr(004, 26, 55)
+					print("armor", 34, 56, 7)
+					print(player.armor.."/"..player.max_armor, 92, 56, 7)
+					print("current ver: ", 26, 64, 7)
+					print(player.armor_lvl .. "/3", 92, 64, 7)
+
+					spr(005, 26, 70)
+					print("fuel", 34, 71, 7)
+					print(flr(player.fuel).."/"..player.max_fuel, 84, 71, 7)
+				elseif pause_menu_myship_page == 2 then
+					print("laser weapon", 26, 26, 11)
+
+					print("system lv", 26, 40, 7)
+					print(player.laser_lvl, 100, 40, 7)
+					print("damage", 26, 46, 7)
+					print(laser_dmg, 92, 46, 7)
+					print("reload time", 26, 52, 7)
+					print(laser_cooldown_rate, 96, 52, 7)
+				elseif pause_menu_myship_page == 3 then
+					print("guided shot", 26, 26, 11)
+
+					print("system lv", 26, 40, 7)
+					print(player.missile_lvl, 100, 40, 7)
+					print("damage", 26, 46, 7)
+					print(missile_damage, 92, 46, 7)
+					print("reload time", 26, 52, 7)
+					print(missile_cooldown_rate, 92, 52, 7)
+					print("stockpile", 26, 58, 7)
+					print(player.missile_n.."/"..player.missile_max_capacity, 92, 58, 7)
+				elseif pause_menu_myship_page == 4 then
+					print("cluster shot", 26, 26, 11)
+
+					if weapon_system_lvl >= 2 then
+						print("system lv", 26, 40, 7)
+						print(player.cluster_lvl, 100, 40, 7)
+						print("damage", 26, 46, 7)
+						print(cluster_damage, 92, 46, 7)
+						print("cluster dmg", 26, 52, 7)
+						print(cluster_frag_damage, 88, 52, 7)
+						print("reload time", 26, 58, 7)
+						print(cluster_cooldown_rate, 96, 58, 7)
+						print("stockpile", 26, 64, 7)
+						print(player.cluster_n.."/"..player.cluster_max_capacity, 92, 64, 7)
+					else
+						print("unavailable", 26, 40, 7)
+					end
+				elseif pause_menu_myship_page == 5 then
+					print("stun shot", 26, 26, 11)
+
+					if weapon_system_lvl == 3 then
+						print("system lv", 26, 40, 7)
+						print(player.stun_lvl, 100, 40, 7)
+						print("damage", 26, 46, 7)
+						print(stun_damage, 92, 46, 7)
+						print("prox damage", 26, 52, 7)
+						print(stun_proximity_dmg, 92, 52, 7)
+						print("reload time", 26, 58, 7)
+						print(stun_cooldown_rate, 92, 58, 7)
+						print("stockpile", 26, 64, 7)
+						print(player.stun_n.."/"..player.stun_max_capacity, 92, 64, 7)
+					else
+						print("unavailable", 26, 40, 7)
+					end
 				end
-				if (pause_menu_page == 3) print("proficiency", 28, 26, 11)
-				if pause_menu_page == 2 then
-					print("combat report", 28, 26, 11)
-					print("total	 ", 28, 32 + (line_ct + 1) * 8, 7)
-					print(total_enemies_destroyed, 98, 32 + (line_ct + 1) * 8, 7)
-					print("score: " .. score, 28, 32 + (line_ct + 3) * 8, 7)
-				end
-
-
-			elseif pause_menu_page == 1 then
-				print("ship systems", 28, 26, 11)
-
-				spr(003, 28, 40)
-				print("health", 37, 41, 7)
-				print(player.health.."/"..player.max_health, 90, 41, 7)
-				print("current ver: ", 37, 48, 7)
-				print(player.health_lvl .. "/3", 90, 48, 7)
-
-				spr(004, 28, 55)
-				print("armor", 37, 56, 7)
-				print(player.armor.."/"..player.max_armor, 90, 56, 7)
-				print("current ver: ", 37, 63, 7)
-				print(player.armor_lvl .. "/3", 90, 63, 7)
-
-				spr(005, 28, 70)
-				print("fuel", 37, 71, 7)
-				print(flr(player.fuel).."/"..player.max_fuel, 82, 71, 7)
-			elseif pause_menu_page == 4 then
-				print("laser weapon", 28, 26, 11)
-
-				print("system lv", 28, 40, 7)
-				print(player.laser_lvl, 98, 40, 7)
-				print("damage", 28, 46, 7)
-				print(laser_dmg, 90, 46, 7)
-				print("reload time", 28, 52, 7)
-				print(laser_cooldown_rate, 94, 52, 7)
-			elseif pause_menu_page == 5 then
-				print("guided shot", 28, 26, 11)
-
-				print("system lv", 28, 40, 7)
-				print(player.missile_lvl, 98, 40, 7)
-				print("damage", 28, 46, 7)
-				print(missile_damage, 90, 46, 7)
-				print("reload time", 28, 52, 7)
-				print(missile_cooldown_rate, 90, 52, 7)
-				print("stockpile", 28, 58, 7)
-				print(player.missile_n.."/"..player.missile_max_capacity, 90, 58, 7)
-			elseif pause_menu_page == 6 then
-				print("cluster shot", 28, 26, 11)
-
-				print("system lv", 28, 40, 7)
-				print(player.cluster_lvl, 98, 40, 7)
-				print("damage", 28, 46, 7)
-				print(cluster_damage, 90, 46, 7)
-				print("cluster dmg", 28, 52, 7)
-				print(cluster_frag_damage, 86, 52, 7)
-				print("reload time", 28, 58, 7)
-				print(cluster_cooldown_rate, 94, 58, 7)
-				print("stockpile", 28, 64, 7)
-				print(player.cluster_n.."/"..player.cluster_max_capacity, 90, 64, 7)
-			elseif pause_menu_page == 7 then
-				print("stun shot", 28, 26, 11)
-
-				print("system lv", 28, 40, 7)
-				print(player.stun_lvl, 98, 40, 7)
-				print("damage", 28, 46, 7)
-				print(stun_damage, 90, 46, 7)
-				print("prox damage", 28, 52, 7)
-				print(stun_proximity_dmg, 90, 52, 7)
-				print("reload time", 28, 58, 7)
-				print(stun_cooldown_rate, 90, 58, 7)
-				print("stockpile", 28, 64, 7)
-				print(player.stun_n.."/"..player.stun_max_capacity, 90, 64, 7)
 			end
 		end
 	end
@@ -473,8 +502,8 @@ function _draw()
 
 	if current_view == 3 then -- rewards
 		draw_transition_animation()
-		print("victory!", 48,64, 7)
-		print("found " .. battle_rewards .. " scraps", 35,72, 7)
+		print("victory!", 48,64, 0)
+		print("found " .. battle_rewards .. " scraps", 35,72, 0)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104, 0)
 	end
 
@@ -554,32 +583,38 @@ function _update()
 	update_threat()
 	update_icons()
 
-	if current_view == 1 then
-		if pause_menu == false then
+	if current_view == 1 then -- world
+		if not pause_menu then
 			player.fuel -= fuel_comsumption
 			if (clock % 60 == 0) create_encounter()
 			if (player.fuel <= 0) current_view = 5
 			foreach(encounters, move_encounter)
-		end
-
-		if btnp(4) then
-			if pause_menu then
-				pause_menu = false
-				pause_menu_page = 1
-			else
-				pause_menu = true
+		else
+			if btnp(3) then
+				if (pause_menu_option < 2) pause_menu_option += 1
+			elseif btnp(2) then
+				if (pause_menu_option > 1) pause_menu_option -= 1
 			end
-		end
 
-		if pause_menu then
 			if btnp(0) then
-				if (pause_menu_page > 1) pause_menu_page -=1
+				if (pause_menu_myship and pause_menu_myship_page > 1) pause_menu_myship_page -= 1
+				if (pause_menu_battlerep and pause_menu_battlerep_page > 1) pause_menu_battlerep_page -= 1
 			elseif btnp(1) then
-				if (pause_menu_page < 7) pause_menu_page +=1
+				if (pause_menu_myship and pause_menu_myship_page < 5) pause_menu_myship_page += 1
+				if (pause_menu_battlerep and pause_menu_battlerep_page < 5) pause_menu_battlerep_page += 1
 			end
 
-			if (pause_menu_page == 6 and player.weapon_system_lvl < 2)  pause_menu_page = 5
-			if (pause_menu_page == 7 and player.weapon_system_lvl < 3)  pause_menu_page = 6
+			if btnp(4) then
+				if (pause_menu_option == 1) pause_menu_myship = true pause_menu_myship_page = 1 pause_menu_battlerep = false
+				if (pause_menu_option == 2) pause_menu_myship = false pause_menu_battlerep = true pause_menu_battlerep_page = 1
+			end
+		end
+
+		if (btnp(4) and not pause_menu) pause_menu = true
+		if btnp(5) then
+			if (not pause_menu_myship and not pause_menu_battlerep) pause_menu = false
+			if (pause_menu_myship) pause_menu_myship_page = 0 pause_menu_myship = false
+			if (pause_menu_battlerep) pause_menu_battlerep_page = 0 pause_menu_battlerep = false
 		end
 	end
 
@@ -696,8 +731,8 @@ function move_star(s)
 end
 
 function draw_transition_animation()
-	rectfill(0, 0, left_side, 128, 1)
-	rectfill(127, 0, right_side, 128, 1)
+	rectfill(0, 0, left_side, 128, 7)
+	rectfill(127, 0, right_side, 128, 7)
 end
 
 function update_transition_animation()
@@ -804,13 +839,13 @@ function start_battle()
 	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
 	if pirate_rep == 1 then
-		add(enemy_type_pool, enemy_list["ant"])
+		add(enemy_type_pool, enemy_list[1])
 	elseif pirate_rep == 2 then
-		add(enemy_type_pool, enemy_list["ghost"])
-		add(enemy_type_pool, enemy_list["eagle"])
+		add(enemy_type_pool, enemy_list[2])
+		add(enemy_type_pool, enemy_list[3])
 	elseif pirate_rep == 3 then
-		add(enemy_type_pool, enemy_list["spectre"])
-		add(enemy_type_pool, enemy_list["sentinel"])
+		add(enemy_type_pool, enemy_list[4])
+		add(enemy_type_pool, enemy_list[5])
 	end
 
 	while(enemy_count > 0)
@@ -822,6 +857,7 @@ function start_battle()
 			enemy[k] = v
 		end
 
+		enemy.id = enemy_data.id
 		enemy.health = enemy_data.b_health
 		enemy.max_health = enemy_data.b_health
 		enemy.energy = enemy_data.b_energy
@@ -981,10 +1017,8 @@ function draw_ui()
 	end
 
 	if current_view != 2 then
-		current_view_text = "travelling"
-		if (current_view == 4) current_view_text = (pirate_store) and "pirate shop" or "shop"
-		print(current_view_text,1,1, 0)
-		print("$" .. scraps,1,7, 0)
+		print((current_view == 1) and "travelling" or (pirate_store) and "pirate shop" or "shop", 1, 1, 0)
+		print("funds: $" .. scraps .. ((current_view == 1) and (" /" .. " score: " .. score) or ""), 1, 7, 0)
 	end
 end
 
@@ -1442,8 +1476,8 @@ function draw_enemy_bullet(eb)
 end
 
 function destroy_enemy(e)
-	confirmed_kills[e.name].n_destroyed += 1
-	if (confirmed_kills[e.name].n_destroyed % 5 == 0 and confirmed_kills[e.name].knowledge_level < 3) confirmed_kills[e.name].knowledge_level += 1
+	enemy_list[e.id].n_destroyed += 1
+	if (enemy_list[e.id].n_destroyed % 5 == 0 and enemy_list[e.id].knowledge_level < 3) enemy_list[e.id].knowledge_level += 1
 
 	total_enemies_destroyed += 1
 	if (pirate_rep < 3 and total_enemies_destroyed % 10 == 0) pirate_rep += 1
@@ -1532,7 +1566,7 @@ function nav_store()
 				shop_last_bought = "item maxed out"
 			end
 		else
-			shop_last_bought = "not enough cash"
+			shop_last_bought = "not enough credits"
 		end
 	end
  
