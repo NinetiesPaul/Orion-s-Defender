@@ -797,7 +797,7 @@ end
 
 function start_battle()
 	enemy_type_pool = {}
-	enemy_by_difficulty ={ { 1,2 }, { 3, 4 }, { 5 } }
+	enemy_by_difficulty ={ { 1,2 }, { 2, 3 }, { 3, 4 } }
 	bounty_chance = { 0.9, 0.8, 0.7 }
 	bounty_lvls = { 40, 55, 70 }
 
@@ -826,7 +826,8 @@ function start_battle()
 		enemy.max_health = enemy_data.b_health
 		enemy.energy = enemy_data.b_energy
 		enemy.max_energy = enemy_data.b_energy
-		enemy.current_speed = enemy_data.b_speed
+		enemy.current_speed = 0
+		enemy.max_speed = enemy_data.b_speed
 		enemy.clock = 0
 		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
 		enemy.x = flr(rnd(48)) + 48
@@ -1387,7 +1388,7 @@ function move_enemy(e)
 		if (e.energy_reboot_counter % e.energy_reboot == 0) e.energy_reboot_counter = 0 e.energy = e.max_energy create_warning("back online!", e)
 	else
 		e.clock += 1
-		e.current_speed = (e.stunned) and 0.15 or e.b_speed
+		e.max_speed = (e.stunned) and 0.15 or e.b_speed
 
 		if e.collateral != 1 then
 			if e.moving == false then
@@ -1397,7 +1398,9 @@ function move_enemy(e)
 				e.to_x = rnd_pos[1]
 				e.to_y = rnd_pos[2]
 				e.angle = atan2(e.to_x - e.x, e.to_y - e.y)
+				e.current_speed = 0
 			else
+				if (e.current_speed < e.max_speed) e.current_speed += 0.05
 				e.x += cos(e.angle) * e.current_speed
 				e.y += sin(e.angle) * e.current_speed
 				if e.from_x < e.x then
@@ -1525,7 +1528,8 @@ function nav_store()
 					if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
 				end
 			else
-				shop_last_bought = current_shop_item.formatted_name .. " maxed out"
+				--shop_last_bought = current_shop_item.formatted_name .. " maxed out"
+				shop_last_bought = "item maxed out"
 			end
 		else
 			shop_last_bought = "not enough cash"
