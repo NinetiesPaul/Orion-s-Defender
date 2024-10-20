@@ -128,7 +128,7 @@ function _init()
 		weapon_system_max_lvl = 3
 	}
 
-	random_factor = 0.95
+	game_random_factor = 0.95
 	collateral_type =
 	{
 		1,	-- motor damage
@@ -163,34 +163,6 @@ function _init()
 			compare_with = "max_health"
 		},
 		{
-			name = "armor",
-			price = 4,
-			formatted_name = "armor",
-			shops = "both",
-			compare_with = "max_armor"
-		},
-		{
-			name = "missile_n",
-			price = 7,
-			formatted_name = "missile",
-			shops = "both",
-			compare_with = "missile_max_capacity"
-		},
-		{
-			name = "stun_n",
-			price = 4,
-			formatted_name = "stun",
-			shops = "both",
-			compare_with = "stun_max_capacity"
-		},
-		{
-			name = "cluster_n",
-			price = 3,
-			formatted_name = "cluster",
-			shops = "both",
-			compare_with = "cluster_max_capacity"
-		},
-		{
 			name = "health_lvl",
 			price = 50 * health_lvl,
 			formatted_name = "health upgrade",
@@ -199,11 +171,26 @@ function _init()
 			enabled = true
 		},
 		{
+			name = "armor",
+			price = 4,
+			formatted_name = "armor",
+			shops = "both",
+			compare_with = "max_armor"
+		},
+		{
 			name = "armor_lvl",
 			price = 65 * armor_lvl,
 			formatted_name = "armor upgrade",
 			shops = "civ",
 			compare_with = "armor_max_lvl",
+			enabled = true
+		},
+		{
+			name = "weapon_system_lvl",
+			price = 75 * weapon_system_lvl,
+			formatted_name = "weapon system upgrade",
+			shops = "civ",
+			compare_with = "weapon_system_max_lvl",
 			enabled = true
 		},
 		{
@@ -215,6 +202,13 @@ function _init()
 			enabled = true
 		},
 		{
+			name = "missile_n",
+			price = 7,
+			formatted_name = "missile ammo",
+			shops = "both",
+			compare_with = "missile_max_capacity"
+		},
+		{
 			name = "missile_lvl",
 			price = 55 * missile_lvl,
 			formatted_name = "missile upgrade",
@@ -223,12 +217,11 @@ function _init()
 			enabled = true
 		},
 		{
-			name = "cluster_lvl",
-			price = 35 * cluster_lvl,
-			formatted_name = "cluster upgrade",
-			shops = "civ",
-			compare_with = "cluster_max_lvl",
-			enabled = true
+			name = "stun_n",
+			price = 4,
+			formatted_name = "stun ammo",
+			shops = "both",
+			compare_with = "stun_max_capacity"
 		},
 		{
 			name = "stun_lvl",
@@ -239,11 +232,18 @@ function _init()
 			enabled = true
 		},
 		{
-			name = "weapon_system_lvl",
-			price = 75 * weapon_system_lvl,
-			formatted_name = "weapon system upgrade",
+			name = "cluster_n",
+			price = 3,
+			formatted_name = "cluster ammo",
+			shops = "both",
+			compare_with = "cluster_max_capacity"
+		},
+		{
+			name = "cluster_lvl",
+			price = 35 * cluster_lvl,
+			formatted_name = "cluster upgrade",
 			shops = "civ",
-			compare_with = "weapon_system_max_lvl",
+			compare_with = "cluster_max_lvl",
 			enabled = true
 		},
 		{
@@ -294,11 +294,11 @@ function _init()
 			name = "eagle",
 			spr = 011,
 			spr_damage = 027,
-			b_health = 5,
-			b_energy = 4,
+			b_health = 4,
+			b_energy = 3.8,
 			b_damage = 1,
 			b_shot_speed = 1.5,
-			b_speed =  1.7,
+			b_speed =  1.3,
 			b_cdr = 60,
 			score = 150,
 			reward = 14,
@@ -310,12 +310,12 @@ function _init()
 			name = "spectre",
 			spr = 012,
 			spr_damage = 028,
-			b_health = 4,
+			b_health = 4.2,
 			b_energy = 5,
 			b_damage = 2,
 			b_shot_speed = 1.3,
 			b_speed =  1.5,
-			b_cdr = 45,
+			b_cdr = 50,
 			score = 175,
 			reward = 16,
 			n_destroyed = 0,
@@ -331,7 +331,7 @@ function _init()
 			b_damage = 3,
 			b_shot_speed = 1.7,
 			b_speed =  1.7,
-			b_cdr = 45,
+			b_cdr = 50,
 			score = 250,
 			reward = 20,
 			n_destroyed = 0,
@@ -406,7 +406,7 @@ function _draw()
 				print("cooldown: " .. enemy_list[pause_menu_battlerep_page]["b_cdr"], 26, 78, 7)
 				
 				threath = (pause_menu_battlerep_page == 1) and "low" or (pause_menu_battlerep_page == 2 or pause_menu_battlerep_page == 3) and "mid" or "high"
-				print("threath level: " .. threath, 28, 84, 7)
+				print("threath level: " .. threath, 26, 84, 7)
 				print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page]["n_destroyed"], 26, 90, 7)
 				print("proficiency: " .. enemy_list[pause_menu_battlerep_page]["knowledge_level"], 26, 96, 7)
 			end
@@ -518,11 +518,13 @@ function _draw()
 			i += 1
 		end
 
-		if (clock % 90 == 0) shop_last_bought = ""
-		print(shop_last_bought, 64, 7, 0)
-
 		rectfill(0,121,127,127, 7)
-		print("z/🅾️ [buy] - x/❎ [exit] - ⬆️⬇️ [select]", 2, 122, 0)
+
+		if (clock % 90 == 0) shop_last_bought = ""
+		print(shop_last_bought, 1, 122, 0)
+
+		print("z/🅾️ [buy]", 88, 1, 0)
+		print("x/❎ [exit]", 84, 7, 0)
 
 		animate_shop_selector()
 	end
@@ -541,35 +543,47 @@ function _draw()
 	end
 
 	if current_view == 7 then -- help
-		spr(017, 2, 16 + help_text_y)
-		print("this is you! move sideways to\navoid getting shot", 11, 14 + help_text_y, 7)
+		print("*** basic gameplay", 2, 8 + help_text_y, 7)
+		print("when travelling, pick fights by\nentering the battle encounter\nicon or go to shops to refuel\nand buy goods and ship upgrades", 2, 16 + help_text_y, 7)
 
-		spr(001, 2, 32 + help_text_y)
-		spr(016, 2, 49 + help_text_y)
-		print("when in battle, press x/❎ to\nswitch between main gun and\nsecondary gun. z/🅾️ to shoot", 11, 28 + help_text_y, 7)
-		print("in missile mode, press ⬆️ or\n⬇️ to switch targets", 11, 48 + help_text_y, 7)
+		spr(064, 0, 38 + help_text_y, 2, 2)
+		print("this is a battle encounter!\nload up!", 17, 41 + help_text_y)
 
-		spr(009, 2, 64 + help_text_y)
-		print("this is a pirate! fight them\nfor rewards", 11, 62 + help_text_y, 7)
+		spr(072, 0, 52 + help_text_y, 2, 2)
+		print("regular shop. refuel, rearm\nand upgrade", 17, 55 + help_text_y)
 
-		spr(030, 2, 83 + help_text_y)
-		spr(062, 2, 83 + help_text_y)
-		print("as you fight and destroy\npirates, your wanted level\nincreases. the skull icon\nindicates this. ", 11, 76 + help_text_y, 7)
+		spr(072, 0, 69 + help_text_y, 2, 2)
+		spr(046, 7, 75 + help_text_y)
+		spr(062, 7, 75 + help_text_y)
+		print("pirate owned shop. it's\ncheaper but sell no upgrade", 17, 72 + help_text_y)
 
-		spr(064, 2, 100 + help_text_y, 2, 2)
-		print("this is a battle encounter!\nload up!", 17, 103 + help_text_y)
+		print("press z/🅾️ while travelling,\nto show the pause menu. on it,\nyou can get a view on your ship\nstats and current loadout.", 2, 86 + help_text_y, 7)
 
-		spr(072, 2, 117 + help_text_y, 2, 2)
-		print("this is a shop encounter.\nrefuel, rearm and upgrade", 17, 120 + help_text_y)
+		print("you can also see the enemy\ndatabase with valuable\ninformation about the enemy\nships, as well as how many you\nhave destroyed and how\nproficient you are.", 2, 110 + help_text_y, 7)
 
-		spr(072, 2, 140 + help_text_y, 2, 2)
-		spr(046, 9, 148 + help_text_y)
-		spr(062, 9, 148 + help_text_y)
-		print("a pirate owned shop.\nit's cheaper due to the\nmysterious source of the\ngoods, but sell no\nupgrade.", 17, 136 + help_text_y)
+		print("*** fighting", 2, 148 + help_text_y, 7)
 
-		rectfill(0,0, 126,12, 7)
-		print("help screen", 40, 3, 0)
-		line(40, 9, 82, 9, 0)
+		print("by entering the battle\nencounter you'll start a ship\nfight! be careful to start one\nwith sufficient health as once\nstarted you can't escape it", 2, 156 + help_text_y)
+
+		spr(001, 2, 192 + help_text_y)
+		print("when in battle, press x/❎ to\nswitch between different kind\nof ammo. press z/🅾️ to shoot", 11, 188 + help_text_y, 7)
+
+		spr(016, 2, 208 + help_text_y)
+		print("in missile mode, press ⬆️ or\n⬇️ to switch targets", 11, 208 + help_text_y, 7)
+
+		print("the more you destroy an enemy\nof a particular class, the more\nknowledge you acquire about\nthat class and with that you\nimprove your chances of giving\ncollateral damage.", 2, 222 + help_text_y, 7)
+
+		spr(030, 2, 270 + help_text_y)
+		spr(062, 2, 270 + help_text_y)
+		print("as you fight and destroy\npirates, your wanted level\nincreases. the skull icon\nindicates this. ", 11, 260 + help_text_y, 7)
+
+		print("greater wanted levels increases\nthe difficulty (more enemies to\nfight, enemies of increased\nthreat level), but also\nincreases your rewards.", 2, 286 + help_text_y, 7)
+
+		print("you can pay a tax to the pirate\ntribe to decrease your wanted\nlevel at the pirate shop", 2, 318 + help_text_y, 7)
+
+		rectfill(0,0, 127,6, 7)
+		rect(0,0,127,127,7)
+		print("game help", 40, 1, 0)
 	end
 end
 
@@ -655,10 +669,10 @@ function _update()
 	if current_view == 6 or current_view == 7 then
 		start()
 
-		if (btn(2)) help_text_y += 3
-		if (btn(3)) help_text_y -= 3
+		if (btn(2)) help_text_y += 5
+		if (btn(3)) help_text_y -= 5
 		if (help_text_y > 0) help_text_y = 0
-		if (help_text_y < -69) help_text_y = -69
+		if (help_text_y < -210) help_text_y = -210
 	end
 
 	if current_view != 1 then
@@ -1055,7 +1069,7 @@ end
 -- encounters
 
 function create_encounter()
-	local random_factor = rnd()
+	random_factor = rnd()
 	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
 
 	local encounter = {}
@@ -1275,7 +1289,7 @@ function move_bullet(b)
 
 		if e.x >= b.x-4 and e.x <= b.x+6 and e.y >= b.y-4 and e.y <= b.y+6 then
 			damage = b.damage
-			if rnd() > random_factor and b.mode == "laser" then
+			if rnd() > game_random_factor and b.mode == "laser" then
 				damage = damage + (flr(rnd(2)) + 1)
 				create_warning("critical\ndamage!", e)
 			end
@@ -1294,11 +1308,7 @@ function move_bullet(b)
 					if e.collateral == false and b.mode == "laser"then
 						for el in all(enemy_list) do
 							if e.spr == el.spr_ok then
-								enemy_kl_factor = 0
-								if (el.knowledge_level == 1) enemy_kl_factor = 0.100
-								if (el.knowledge_level == 2) enemy_kl_factor = 0.200
-								if (el.knowledge_level == 3) enemy_kl_factor = 0.300
-								local_random_factor = random_factor - enemy_kl_factor
+								local_random_factor = game_random_factor - (el.knowledge_level/10)
 								if rnd() > local_random_factor then
 									e.collateral = rnd(collateral_type)
 									msg = ''
@@ -1562,8 +1572,7 @@ function nav_store()
 					if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
 				end
 			else
-				--shop_last_bought = current_shop_item.formatted_name .. " maxed out"
-				shop_last_bought = "item maxed out"
+				shop_last_bought = current_shop_item.formatted_name .. " maxed out"
 			end
 		else
 			shop_last_bought = "not enough credits"
