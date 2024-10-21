@@ -60,70 +60,77 @@ function _init()
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
-	laser_dmg_lvls = { 1.7, 2.4, 2.9 }
+	laser_damage_lvls = { 1.7, 2.4, 2.9 }
 	laser_lvl = 1
-	laser_dmg = laser_dmg_lvls[laser_lvl]
+	laser_damage = laser_damage_lvls[laser_lvl]
 	laser_cooldown_rate = laser_cooldown_lvls[laser_lvl]
 	laser_cooldown = false
 	laser_cooldown_counter = 0
 
 	missile_cooldown_lvls = { 120, 90, 75 }
-	missile_dmg_lvls = { 2.5, 3.2, 4.1 }
+	missile_damage_lvls = { 2.5, 3.2, 4.1 }
 	missile_lvl = 1
-	missile_damage = missile_dmg_lvls[missile_lvl]
+	missile_n = 2
+	missile_damage = missile_damage_lvls[missile_lvl]
 	missile_cooldown_rate = missile_cooldown_lvls[missile_lvl]
 	missile_cooldown = false
 	missile_cooldown_counter = 0
-	missile_n = 2
 	missile_locked_on_enemy = 1
 
 	stun_cooldown_lvls = { 100, 75, 45 }
-	stun_dmg_lvls = { 0.7, 0.9, 1.1 }
-	stun_proximity_dmg_lvs = { 0.1, 0.16, 0.22 }
+	stun_damage_lvls = { 0.7, 0.9, 1.1 }
+	stun_proximity_damage_lvs = { 0.1, 0.16, 0.22 }
 	stun_lvl = 1
-	stun_damage = stun_dmg_lvls[stun_lvl]
-	stun_proximity_dmg = stun_proximity_dmg_lvs[stun_lvl]
+	stun_n = 4
+	stun_damage = stun_damage_lvls[stun_lvl]
+	stun_proximity_damage = stun_proximity_damage_lvs[stun_lvl]
 	stun_cooldown_rate = stun_cooldown_lvls[stun_lvl]
 	stun_cooldown = false
 	stun_cooldown_counter = 0
-	stun_n = 4
 
 	cluster_cooldown_lvls = { 95, 70, 35 }
-	cluster_dmg_lvls = { 0.5, 0.65, 0.7 }
-	cluster_frag_dmg_lvls = { 0.85, 1.15, 1.3 }
+	cluster_damage_lvls = { 0.5, 0.65, 0.7 }
+	cluster_frag_damage_lvls = { 0.85, 1.15, 1.3 }
 	cluster_lvl = 1
-	cluster_damage = cluster_dmg_lvls[cluster_lvl]
-	cluster_frag_damage = cluster_frag_dmg_lvls[cluster_lvl]
+	cluster_n = 3
+	cluster_damage = cluster_damage_lvls[cluster_lvl]
+	cluster_frag_damage = cluster_frag_damage_lvls[cluster_lvl]
 	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lvl]
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
-	cluster_n = 3
 
 	player = {
 		fuel = 15,
 		max_fuel = 15,
+
 		health_lvl = 1,
 		health_max_lvl = 3,
 		health = max_health,
 		max_health = max_health,
+
 		armor_lvl = 1,
 		armor_max_lvl = 3,
 		armor = max_armor,
 		max_armor = max_armor,
+
 		missile_lvl = missile_lvl,
 		missile_max_lvl = 3,
 		missile_n = missile_n,
 		missile_max_capacity = special_ammo_lvls[missile_lvl],
+
 		stun_lvl = stun_lvl,
 		stun_max_lvl = 3,
 		stun_n = stun_n,
 		stun_max_capacity = special_ammo_lvls[stun_lvl],
+
 		cluster_lvl = cluster_lvl,
 		cluster_max_lvl = 3,
 		cluster_n = cluster_n,
 		cluster_max_capacity = special_ammo_lvls[cluster_lvl],
+		
 		laser_lvl = laser_lvl,
 		laser_max_lvl = 3,
+
 		weapon_system_lvl = weapon_system_lvl,
 		weapon_system_max_lvl = 3
 	}
@@ -436,7 +443,7 @@ function _draw()
 					print("system lv", 26, 40, 7)
 					print(player.laser_lvl, 100, 40, 7)
 					print("damage", 26, 46, 7)
-					print(laser_dmg, 92, 46, 7)
+					print(laser_damage, 92, 46, 7)
 					print("reload time", 26, 52, 7)
 					print(laser_cooldown_rate, 96, 52, 7)
 				elseif pause_menu_myship_page == 3 then
@@ -453,12 +460,12 @@ function _draw()
 				elseif pause_menu_myship_page == 4 then
 					print("cluster shot", 26, 26, 11)
 
-					if weapon_system_lvl >= 2 then
+					if player.weapon_system_lvl >= 2 then
 						print("system lv", 26, 40, 7)
 						print(player.cluster_lvl, 100, 40, 7)
 						print("damage", 26, 46, 7)
 						print(cluster_damage, 92, 46, 7)
-						print("cluster dmg", 26, 52, 7)
+						print("cluster damage", 26, 52, 7)
 						print(cluster_frag_damage, 88, 52, 7)
 						print("reload time", 26, 58, 7)
 						print(cluster_cooldown_rate, 96, 58, 7)
@@ -470,13 +477,13 @@ function _draw()
 				elseif pause_menu_myship_page == 5 then
 					print("stun shot", 26, 26, 11)
 
-					if weapon_system_lvl == 3 then
+					if player.weapon_system_lvl == 3 then
 						print("system lv", 26, 40, 7)
 						print(player.stun_lvl, 100, 40, 7)
 						print("damage", 26, 46, 7)
 						print(stun_damage, 92, 46, 7)
 						print("prox damage", 26, 52, 7)
-						print(stun_proximity_dmg, 92, 52, 7)
+						print(stun_proximity_damage, 92, 52, 7)
 						print("reload time", 26, 58, 7)
 						print(stun_cooldown_rate, 92, 58, 7)
 						print("stockpile", 26, 64, 7)
@@ -1008,20 +1015,19 @@ function draw_ui()
 			if (laser_cooldown) reloading = true
 		elseif current_ammo_mode == 2 then
 			if (missile_cooldown) reloading = true
-			ammo_left = player.missile_n
+			ammo_left = "X" .. player.missile_n
 			if (player.missile_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 3 then
 			if (cluster_cooldown) reloading = true
-			ammo_left = player.cluster_n
+			ammo_left = "X" .. player.cluster_n
 			if (player.cluster_n == 0) out_of_ammo = true
 		elseif current_ammo_mode == 4 then
 			if (stun_cooldown) reloading = true
-			ammo_left = player.stun_n
+			ammo_left = "X" .. player.stun_n
 			if (player.stun_n == 0) out_of_ammo = true
 		end
 
-		ammo_left_text = (ammo_left != "") and "x" .. ammo_left or ammo_left
-		print(ammo_mode[current_ammo_mode] .. " " .. ammo_left_text, 1, 1, 0)
+		print(ammo_mode[current_ammo_mode] .. " " .. ammo_left, 1, 1, 0)
 		if (reloading and not out_of_ammo) print("rELOADING", 1, 7, 0)
 		if (out_of_ammo) print("oUT OF AMMO", 1, 7, 0)
 
@@ -1153,7 +1159,7 @@ function fire()
 			bullet.x = ship_x
 			bullet.y = ship_y - 8
 			bullet.spr = 001
-			bullet.damage = laser_dmg
+			bullet.damage = laser_damage
 			add(bullets, bullet)
 			laser_cooldown = true
 		elseif current_ammo_mode == 2 and player.missile_n > 0 and not missile_cooldown then
@@ -1185,7 +1191,7 @@ function fire()
 			bullet.y = ship_y - 8
 			bullet.spr = 048
 			bullet.damage = stun_damage
-			bullet.proximity_dmg = stun_proximity_dmg
+			bullet.proximity_damage = stun_proximity_damage
 			add(bullets, bullet)
 			stun_cooldown = true
 			player.stun_n -= 1
@@ -1280,7 +1286,7 @@ function move_bullet(b)
 	for e in all(enemies) do
 		if b.mode == "stun" and e.energy > 0 then
 			if e.x >= b.x-12 and e.x <= b.x+20 and e.y >= b.y-12 and e.y <= b.y+20 then
-				e.energy -= b.proximity_dmg
+				e.energy -= b.proximity_damage
 				e.stunned = true
 			else
 				e.stunned = false
@@ -1549,20 +1555,20 @@ function nav_store()
 				elseif current_shop_item.name == "health_lvl" then
 					player.max_health = stat_lvl[player.health_lvl]
 				elseif current_shop_item.name == "laser_lvl" then
-					laser_dmg = laser_dmg_lvls[player.laser_lvl]
+					laser_damage = laser_damage_lvls[player.laser_lvl]
 					laser_cooldown_rate = laser_cooldown_lvls[player.laser_lvl]
 				elseif current_shop_item.name == "missile_lvl" then
-					missile_damage = missile_dmg_lvls[player.missile_lvl]
+					missile_damage = missile_damage_lvls[player.missile_lvl]
 					missile_cooldown_rate = missile_cooldown_lvls[player.missile_lvl]
 					player.missile_max_capacity = special_ammo_lvls[player.missile_lvl]
 				elseif current_shop_item.name == "cluster_lvl" then
-					cluster_damage = cluster_dmg_lvls[player.cluster_lvl]
-					cluster_frag_damage = cluster_frag_dmg_lvls[player.cluster_lvl]
+					cluster_damage = cluster_damage_lvls[player.cluster_lvl]
+					cluster_frag_damage = cluster_frag_damage_lvls[player.cluster_lvl]
 					cluster_cooldown_rate = cluster_cooldown_lvls[player.cluster_lvl]
 					player.cluster_max_capacity = special_ammo_lvls[player.cluster_lvl]
 				elseif current_shop_item.name == "stun_lvl" then
-					stun_damage = stun_dmg_lvls[player.stun_lvl]
-					stun_proximity_dmg = stun_proximity_dmg_lvs[player.stun_lvl]
+					stun_damage = stun_damage_lvls[player.stun_lvl]
+					stun_proximity_damage = stun_proximity_damage_lvs[player.stun_lvl]
 					stun_cooldown_rate = stun_cooldown_lvls[player.stun_lvl]
 					player.stun_max_capacity = special_ammo_lvls[player.stun_lvl]
 				end
