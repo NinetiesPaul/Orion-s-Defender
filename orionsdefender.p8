@@ -41,7 +41,6 @@ function _init()
 	fuel_spr = 1
 	max_fuel = 15
 	fuel_comsumption = 0.0075
-	stat_lvl = { 5, 10, 15 }
 	bullets = {}
 	ammo_mode = {
 		"laser", -- 1
@@ -50,52 +49,40 @@ function _init()
 		"stun" -- 4
 	}
 
-	armor_lvl = 1
-	health_lvl = 1
-	max_health = stat_lvl[health_lvl]
-	max_armor = stat_lvl[armor_lvl]
-
+	stat_lvl = { 5, 10, 15 }
 	current_ammo_mode = 1
-	weapon_system_lvl = 1
 	special_ammo_lvls = { 4, 6, 8 }
 
 	laser_cooldown_lvls = { 75, 45, 15 }
 	laser_damage_lvls = { 1.7, 2.4, 2.9 }
-	laser_lvl = 1
-	laser_damage = laser_damage_lvls[laser_lvl]
-	laser_cooldown_rate = laser_cooldown_lvls[laser_lvl]
+	laser_damage = laser_damage_lvls[1]
+	laser_cooldown_rate = laser_cooldown_lvls[1]
 	laser_cooldown = false
 	laser_cooldown_counter = 0
 
 	missile_cooldown_lvls = { 120, 90, 75 }
 	missile_damage_lvls = { 2.5, 3.2, 4.1 }
-	missile_lvl = 1
-	missile_n = 4
-	missile_damage = missile_damage_lvls[missile_lvl]
-	missile_cooldown_rate = missile_cooldown_lvls[missile_lvl]
+	missile_damage = missile_damage_lvls[1]
+	missile_cooldown_rate = missile_cooldown_lvls[1]
 	missile_cooldown = false
 	missile_cooldown_counter = 0
 	missile_locked_on_enemy = 1
 
 	stun_cooldown_lvls = { 100, 75, 45 }
-	stun_damage_lvls = { 0.7, 0.9, 1.1 }
-	stun_proximity_damage_lvs = { 0.1, 0.16, 0.22 }
-	stun_lvl = 1
-	stun_n = 0
-	stun_damage = stun_damage_lvls[stun_lvl]
-	stun_proximity_damage = stun_proximity_damage_lvs[stun_lvl]
-	stun_cooldown_rate = stun_cooldown_lvls[stun_lvl]
+	stun_damage_lvls = { 1, 1.2, 1.4 }
+	stun_proximity_damage_lvs = { 0.16, 0.22, 0.28 }
+	stun_damage = stun_damage_lvls[1]
+	stun_proximity_damage = stun_proximity_damage_lvs[1]
+	stun_cooldown_rate = stun_cooldown_lvls[1]
 	stun_cooldown = false
 	stun_cooldown_counter = 0
 
 	cluster_cooldown_lvls = { 95, 70, 35 }
-	cluster_damage_lvls = { 0.5, 0.65, 0.7 }
-	cluster_frag_damage_lvls = { 0.85, 1.15, 1.3 }
-	cluster_lvl = 1
-	cluster_n = 0
-	cluster_damage = cluster_damage_lvls[cluster_lvl]
-	cluster_frag_damage = cluster_frag_damage_lvls[cluster_lvl]
-	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lvl]
+	cluster_damage_lvls = { 0.85, 1.1, 1.3 }
+	cluster_frag_damage_lvls = { 1.2, 1.35, 1.45 }
+	cluster_damage = cluster_damage_lvls[1]
+	cluster_frag_damage = cluster_frag_damage_lvls[1]
+	cluster_cooldown_rate = cluster_cooldown_lvls[1]
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
 
@@ -105,33 +92,33 @@ function _init()
 
 		health_lvl = 1,
 		health_max_lvl = 3,
-		health = max_health,
-		max_health = max_health,
+		health = stat_lvl[1],
+		max_health = stat_lvl[1],
 
 		armor_lvl = 1,
 		armor_max_lvl = 3,
-		armor = max_armor,
-		max_armor = max_armor,
+		armor = stat_lvl[1],
+		max_armor = stat_lvl[1],
 
-		missile_lvl = missile_lvl,
+		missile_lvl = 1,
 		missile_max_lvl = 3,
-		missile_n = missile_n,
-		missile_max_capacity = special_ammo_lvls[missile_lvl],
+		missile_n = 4,
+		missile_max_capacity = special_ammo_lvls[1],
 
-		stun_lvl = stun_lvl,
+		stun_lvl = 1,
 		stun_max_lvl = 3,
-		stun_n = stun_n,
-		stun_max_capacity = special_ammo_lvls[stun_lvl],
+		stun_n = 0,
+		stun_max_capacity = special_ammo_lvls[1],
 
-		cluster_lvl = cluster_lvl,
+		cluster_lvl = 1,
 		cluster_max_lvl = 3,
-		cluster_n = cluster_n,
-		cluster_max_capacity = special_ammo_lvls[cluster_lvl],
+		cluster_n = 0,
+		cluster_max_capacity = special_ammo_lvls[1],
 		
-		laser_lvl = laser_lvl,
+		laser_lvl = 1,
 		laser_max_lvl = 3,
 
-		weapon_system_lvl = weapon_system_lvl,
+		weapon_system_lvl = 1,
 		weapon_system_max_lvl = 3
 	}
 
@@ -151,7 +138,7 @@ function _init()
 	shop_selector_spr = 002
 	shop_selector_y = 16
 	shop_selector = 1
-	current_shop_item = null
+	current_shop_item = {}
 	shop_last_bought = ""
 	shop_items = {}
 	all_shop_items = {
@@ -173,7 +160,7 @@ function _init()
 		},
 		{
 			name = "health_lvl",
-			price = 50 * health_lvl,
+			price = 50 * player.health_lvl,
 			formatted_name = "health upgrade",
 			shops = "civ",
 			compare_with = "health_max_lvl",
@@ -190,7 +177,7 @@ function _init()
 		},
 		{
 			name = "armor_lvl",
-			price = 65 * armor_lvl,
+			price = 65 * player.armor_lvl,
 			formatted_name = "armor upgrade",
 			shops = "civ",
 			compare_with = "armor_max_lvl",
@@ -199,7 +186,7 @@ function _init()
 		},
 		{
 			name = "weapon_system_lvl",
-			price = 75 * weapon_system_lvl,
+			price = 75 * player.weapon_system_lvl,
 			formatted_name = "weapon system upgrade",
 			shops = "civ",
 			compare_with = "weapon_system_max_lvl",
@@ -207,7 +194,7 @@ function _init()
 		},
 		{
 			name = "laser_lvl",
-			price = 55 * laser_lvl,
+			price = 55 * player.laser_lvl,
 			formatted_name = "laser upgrade",
 			shops = "civ",
 			compare_with = "laser_max_lvl",
@@ -223,28 +210,11 @@ function _init()
 		},
 		{
 			name = "missile_lvl",
-			price = 55 * missile_lvl,
+			price = 55 * player.missile_lvl,
 			formatted_name = "missile upgrade",
 			shops = "civ",
 			compare_with = "missile_max_lvl",
 			relates_to = "missile_n",
-			enabled = true
-		},
-		{
-			name = "stun_n",
-			price = 4,
-			formatted_name = "stun ammo",
-			shops = "both",
-			compare_with = "stun_max_capacity",
-			enabled = true
-		},
-		{
-			name = "stun_lvl",
-			price = 45 * stun_lvl,
-			formatted_name = "stun upgrade",
-			shops = "civ",
-			compare_with = "stun_max_lvl",
-			relates_to = "stun_n",
 			enabled = true
 		},
 		{
@@ -257,11 +227,28 @@ function _init()
 		},
 		{
 			name = "cluster_lvl",
-			price = 35 * cluster_lvl,
+			price = 35 * player.cluster_lvl,
 			formatted_name = "cluster upgrade",
 			shops = "civ",
 			compare_with = "cluster_max_lvl",
 			relates_to = "cluster_n",
+			enabled = true
+		},
+		{
+			name = "stun_n",
+			price = 4,
+			formatted_name = "stun ammo",
+			shops = "both",
+			compare_with = "stun_max_capacity",
+			enabled = true
+		},
+		{
+			name = "stun_lvl",
+			price = 45 * player.stun_lvl,
+			formatted_name = "stun upgrade",
+			shops = "civ",
+			compare_with = "stun_max_lvl",
+			relates_to = "stun_n",
 			enabled = true
 		},
 		{
@@ -1536,8 +1523,9 @@ function nav_store()
 			end
 			if (item_copy.name == "pirate_bribe" and pirate_rep == 0) item_copy.enabled = false
 			if ((item_copy.compare_with != nil) and player[item_copy.name] == player[item_copy.compare_with]) item_copy.enabled = false
-			if ((item_copy.name == "stun_n" or item_copy.name == "stun_lvl") and player.weapon_system_lvl < 2) item_copy.enabled = false
-			if ((item_copy.name == "cluster_n" or item_copy.name == "cluster_lvl") and player.weapon_system_lvl < 3) item_copy.enabled = false
+			if ((item_copy.name == "cluster_n" or item_copy.name == "cluster_lvl") and player.weapon_system_lvl < 2) item_copy.enabled = false
+			if ((item_copy.name == "stun_n" or item_copy.name == "stun_lvl") and player.weapon_system_lvl < 3) item_copy.enabled = false
+			if (item_copy.shops == "civ") item_copy.price *= player[item_copy.name]
 			add(shop_items, item_copy)
 
 			::skip_to_next::
