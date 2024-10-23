@@ -19,7 +19,7 @@ function _init()
 		6,	-- 6 start screen
 		7 	-- 7 tutorial
 	]]--
-	pirate_rep = 1
+	pirate_rep = 0
 	clock = 0
 	current_view = 6
 	pause_menu = false
@@ -70,7 +70,7 @@ function _init()
 	missile_cooldown_lvls = { 120, 90, 75 }
 	missile_damage_lvls = { 2.5, 3.2, 4.1 }
 	missile_lvl = 1
-	missile_n = 2
+	missile_n = 4
 	missile_damage = missile_damage_lvls[missile_lvl]
 	missile_cooldown_rate = missile_cooldown_lvls[missile_lvl]
 	missile_cooldown = false
@@ -81,7 +81,7 @@ function _init()
 	stun_damage_lvls = { 0.7, 0.9, 1.1 }
 	stun_proximity_damage_lvs = { 0.1, 0.16, 0.22 }
 	stun_lvl = 1
-	stun_n = 4
+	stun_n = 0
 	stun_damage = stun_damage_lvls[stun_lvl]
 	stun_proximity_damage = stun_proximity_damage_lvs[stun_lvl]
 	stun_cooldown_rate = stun_cooldown_lvls[stun_lvl]
@@ -92,7 +92,7 @@ function _init()
 	cluster_damage_lvls = { 0.5, 0.65, 0.7 }
 	cluster_frag_damage_lvls = { 0.85, 1.15, 1.3 }
 	cluster_lvl = 1
-	cluster_n = 3
+	cluster_n = 0
 	cluster_damage = cluster_damage_lvls[cluster_lvl]
 	cluster_frag_damage = cluster_frag_damage_lvls[cluster_lvl]
 	cluster_cooldown_rate = cluster_cooldown_lvls[cluster_lvl]
@@ -160,14 +160,16 @@ function _init()
 			formatted_name = "fuel",
 			price = 3,
 			shops = "both",
-			compare_with = "max_fuel"
+			compare_with = "max_fuel",
+			enabled = true
 		},
 		{
 			name = "health",
 			price = 4,
 			formatted_name = "health",
 			shops = "both",
-			compare_with = "max_health"
+			compare_with = "max_health",
+			enabled = true
 		},
 		{
 			name = "health_lvl",
@@ -175,6 +177,7 @@ function _init()
 			formatted_name = "health upgrade",
 			shops = "civ",
 			compare_with = "health_max_lvl",
+			relates_to = "health",
 			enabled = true
 		},
 		{
@@ -182,7 +185,8 @@ function _init()
 			price = 4,
 			formatted_name = "armor",
 			shops = "both",
-			compare_with = "max_armor"
+			compare_with = "max_armor",
+			enabled = true
 		},
 		{
 			name = "armor_lvl",
@@ -190,6 +194,7 @@ function _init()
 			formatted_name = "armor upgrade",
 			shops = "civ",
 			compare_with = "armor_max_lvl",
+			relates_to = "armor",
 			enabled = true
 		},
 		{
@@ -213,7 +218,8 @@ function _init()
 			price = 7,
 			formatted_name = "missile ammo",
 			shops = "both",
-			compare_with = "missile_max_capacity"
+			compare_with = "missile_max_capacity",
+			enabled = true
 		},
 		{
 			name = "missile_lvl",
@@ -221,6 +227,7 @@ function _init()
 			formatted_name = "missile upgrade",
 			shops = "civ",
 			compare_with = "missile_max_lvl",
+			relates_to = "missile_n",
 			enabled = true
 		},
 		{
@@ -228,7 +235,8 @@ function _init()
 			price = 4,
 			formatted_name = "stun ammo",
 			shops = "both",
-			compare_with = "stun_max_capacity"
+			compare_with = "stun_max_capacity",
+			enabled = true
 		},
 		{
 			name = "stun_lvl",
@@ -236,6 +244,7 @@ function _init()
 			formatted_name = "stun upgrade",
 			shops = "civ",
 			compare_with = "stun_max_lvl",
+			relates_to = "stun_n",
 			enabled = true
 		},
 		{
@@ -243,7 +252,8 @@ function _init()
 			price = 3,
 			formatted_name = "cluster ammo",
 			shops = "both",
-			compare_with = "cluster_max_capacity"
+			compare_with = "cluster_max_capacity",
+			enabled = true
 		},
 		{
 			name = "cluster_lvl",
@@ -251,13 +261,15 @@ function _init()
 			formatted_name = "cluster upgrade",
 			shops = "civ",
 			compare_with = "cluster_max_lvl",
+			relates_to = "cluster_n",
 			enabled = true
 		},
 		{
 			name = "pirate_bribe",
-			price = 50 * pirate_rep,
+			price = 125 * pirate_rep,
 			formatted_name = "bribe pirate faction",
-			shops = "pirate"
+			shops = "pirate",
+			enabled = true
 		}
 	}
 
@@ -386,7 +398,7 @@ function _draw()
 	if (current_view == 1 or current_view == 2 and not transition_animation) spr(ship_spr,ship_x,ship_y)
 
 	if current_view == 1 then -- world
-		draw_threat()
+		if (pirate_rep > 0) draw_threat()
 		foreach(encounters, draw_encounter)
 
 		if pause_menu then
@@ -402,20 +414,20 @@ function _draw()
 
 			if pause_menu_battlerep then
 				print("battle report", 26, 26, 11)
-				spr(enemy_list[pause_menu_battlerep_page]["spr"], 26, 39)
-				print("the " .. "\""..enemy_list[pause_menu_battlerep_page]["name"].."\"", 37, 40, 7)
+				spr(enemy_list[pause_menu_battlerep_page].spr, 26, 39)
+				print("the " .. "\""..enemy_list[pause_menu_battlerep_page].name.."\"", 37, 40, 7)
 
-				print("hull: " .. enemy_list[pause_menu_battlerep_page]["b_health"], 26, 48, 7)
-				print("shield: " .. enemy_list[pause_menu_battlerep_page]["b_energy"], 26, 54, 7)
-				print("speed: " .. enemy_list[pause_menu_battlerep_page]["b_speed"], 26, 60, 7)
-				print("shot speed: " .. enemy_list[pause_menu_battlerep_page]["b_shot_speed"], 26, 66, 7)
-				print("damage: " .. enemy_list[pause_menu_battlerep_page]["b_damage"], 26, 72, 7)
-				print("cooldown: " .. enemy_list[pause_menu_battlerep_page]["b_cdr"], 26, 78, 7)
+				print("hull: " .. enemy_list[pause_menu_battlerep_page].b_health, 26, 48, 7)
+				print("shield: " .. enemy_list[pause_menu_battlerep_page].b_energy, 26, 54, 7)
+				print("speed: " .. enemy_list[pause_menu_battlerep_page].b_speed, 26, 60, 7)
+				print("shot speed: " .. enemy_list[pause_menu_battlerep_page].b_shot_speed, 26, 66, 7)
+				print("damage: " .. enemy_list[pause_menu_battlerep_page].b_damage, 26, 72, 7)
+				print("cooldown: " .. enemy_list[pause_menu_battlerep_page].b_cdr, 26, 78, 7)
 				
 				threath = (pause_menu_battlerep_page == 1) and "low" or (pause_menu_battlerep_page == 2 or pause_menu_battlerep_page == 3) and "mid" or "high"
 				print("threath level: " .. threath, 26, 84, 7)
-				print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page]["n_destroyed"], 26, 90, 7)
-				print("proficiency: " .. enemy_list[pause_menu_battlerep_page]["knowledge_level"], 26, 96, 7)
+				print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page].n_destroyed, 26, 90, 7)
+				print("proficiency: " .. enemy_list[pause_menu_battlerep_page].knowledge_level, 26, 96, 7)
 			end
 
 			if pause_menu_myship then
@@ -518,10 +530,10 @@ function _draw()
 		i = 0
 		for item in all (shop_items) do 
 			price = (pirate_store == false) and item.price or (item.name == "pirate_bribe") and item.price or ceil(item.price/2)
-			if (not item.enabled and item.shops != "both" and item.shops != "pirate") price = "---"
+
 			print(item.formatted_name, 14, 16 + i * 6, 7)
-			print("$", 100, 16 + i * 6, 3)
-			print(price, 104, 16 + i * 6, 7)
+			if (item.enabled) print("$", 100, 16 + i * 6, 3)
+			if (item.enabled) print(price, 104, 16 + i * 6, 7)
 			i += 1
 		end
 
@@ -856,6 +868,8 @@ function start_battle()
 	enemy_by_difficulty ={ { 1,2 }, { 2, 3 }, { 3, 4 } }
 	bounty_chance = { 0.9, 0.8, 0.7 }
 	bounty_lvls = { 40, 55, 70 }
+
+	local pirate_rep = (pirate_rep == 0) and 1 or pirate_rep
 
 	enemy_count = rnd(enemy_by_difficulty[pirate_rep])
 
@@ -1508,8 +1522,6 @@ end
 -- shop
 
 function nav_store()
-	current_shop_item = shop_items[shop_selector]
-
 	if count(shop_items) == 0 then
 		for item in all (all_shop_items) do
 			if pirate_store == false then
@@ -1518,34 +1530,39 @@ function nav_store()
 				if (item.shops == "civ") goto skip_to_next
 			end
 
-			add(shop_items, item)
+			local item_copy = {}
+			for k, v in pairs(item) do
+				item_copy[k] = v
+			end
+			if (item_copy.name == "pirate_bribe" and pirate_rep == 0) item_copy.enabled = false
+			if ((item_copy.compare_with != nil) and player[item_copy.name] == player[item_copy.compare_with]) item_copy.enabled = false
+			if ((item_copy.name == "stun_n" or item_copy.name == "stun_lvl") and player.weapon_system_lvl < 2) item_copy.enabled = false
+			if ((item_copy.name == "cluster_n" or item_copy.name == "cluster_lvl") and player.weapon_system_lvl < 3) item_copy.enabled = false
+			add(shop_items, item_copy)
 
 			::skip_to_next::
 		end
 	end
 
-	if btnp(5) then
-		sfx(00)
-		shop_items = {}
-		current_view = 1
-		shop_last_bought = ""
-		pirate_store = false
-		shop_selector = 1
-	end
+	current_shop_item = shop_items[shop_selector]
 
 	if btnp(4) then
 		price = (pirate_store == false) and current_shop_item.price or (current_shop_item.name == "pirate_bribe") and current_shop_item.price or ceil(current_shop_item.price/2)
 		if scraps >= price then
 			if current_shop_item.name == "pirate_bribe" then
-				if pirate_rep > 1 then
+				if pirate_rep > 0 then
 					scraps -= price
 					pirate_rep -= 1
 					current_shop_item.price = pirate_rep * 75
 					shop_last_bought = "pirate rep downgraded"
+					if (pirate_rep == 0) current_shop_item.enabled = false
 				else
 					shop_last_bought = "already at minimum pirate rep"
 				end
-			elseif player[current_shop_item.name] < player[current_shop_item.compare_with] then
+			elseif not current_shop_item.enabled then
+				shop_last_bought = current_shop_item.formatted_name .. " unavailable"
+				if (player[current_shop_item.name] == player[current_shop_item.compare_with]) shop_last_bought = current_shop_item.formatted_name .. " maxed out"
+			elseif player[current_shop_item.name] < player[current_shop_item.compare_with] and current_shop_item.enabled then
 				player[current_shop_item.name] = flr(player[current_shop_item.name])
 				player[current_shop_item.name] += 1
 				shop_last_bought = "bought " .. current_shop_item.formatted_name
@@ -1571,14 +1588,37 @@ function nav_store()
 					stun_proximity_damage = stun_proximity_damage_lvs[player.stun_lvl]
 					stun_cooldown_rate = stun_cooldown_lvls[player.stun_lvl]
 					player.stun_max_capacity = special_ammo_lvls[player.stun_lvl]
+				elseif current_shop_item.name == "weapon_system_lvl" then
+					-- this is for enabling the new weapon system and ammo as you upgrade the weapon system
+					if player.weapon_system_lvl > 1 then
+						for item in all(shop_items) do
+							if (item.name == "cluster_n" or item.name == "cluster_lvl") and player.weapon_system_lvl == 2 then
+								item.enabled = true
+							end
+							if (item.name == "stun_n" or item.name == "stun_lvl") and player.weapon_system_lvl == 3 then
+								item.enabled = true
+							end
+						end
+					end
 				end
 
+				-- this is for enabling the consumables once its related "parent" shop items are purchased
+				if current_shop_item.relates_to != nil then
+					for item in all(shop_items) do
+						if item.name == current_shop_item.relates_to then
+							item.enabled = true
+						end
+					end
+				end
+
+				if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
+
+				-- updating the price of upgrades
 				if current_shop_item.shops == "civ" then
 					current_shop_item.price = player[current_shop_item.name] * price
-					if (player[current_shop_item.name] == player[current_shop_item.compare_with]) current_shop_item.enabled = false
 				end
 			else
-				shop_last_bought = current_shop_item.formatted_name .. " maxed out"
+				current_shop_item.enabled = false
 			end
 		else
 			shop_last_bought = "not enough credits"
@@ -1594,6 +1634,15 @@ function nav_store()
 	if btnp(2) then
 		sfx(02)
 		if (shop_selector > 1) shop_selector -= 1
+	end
+
+	if btnp(5) then
+		sfx(00)
+		shop_items = {}
+		current_view = 1
+		shop_last_bought = ""
+		pirate_store = false
+		shop_selector = 1
 	end
 end
 
