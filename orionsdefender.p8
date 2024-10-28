@@ -28,6 +28,7 @@ function _init()
 	pause_menu_myship_page = 0
 	pause_menu_battlerep = false
 	pause_menu_battlerep_page = 0
+	pause_menu_quest_text = false
 	help_text_y = 0
 	stars = {}
 
@@ -47,6 +48,11 @@ function _init()
 		"missile", -- 2
 		"cluster", -- 3
 		"stun" -- 4
+	}
+	encounters_spr = {
+		64,
+		72,
+		96
 	}
 
 	stat_lvl = { 5, 10, 15 }
@@ -319,7 +325,7 @@ function _init()
 			b_health = 4.2,
 			b_energy = 5,
 			b_damage = 2,
-			b_shot_speed = 1.3,
+			b_shot_speed = 1.8,
 			b_speed =  1.5,
 			b_cdr = 50,
 			score = 175,
@@ -335,11 +341,27 @@ function _init()
 			b_health = 5,
 			b_energy = 7,
 			b_damage = 3,
-			b_shot_speed = 1.7,
+			b_shot_speed = 2,
 			b_speed =  1.7,
 			b_cdr = 50,
 			score = 250,
 			reward = 20,
+			n_destroyed = 0,
+			knowledge_level = 0
+		},
+		{
+			id = 6,
+			name = "spider",
+			spr = 061,
+			spr_damage = 029,
+			b_health = 7,
+			b_energy = 6,
+			b_damage = 4,
+			b_shot_speed = 2.5,
+			b_speed =  2,
+			b_cdr = 55,
+			score = 300,
+			reward = 30,
 			n_destroyed = 0,
 			knowledge_level = 0
 		}
@@ -373,6 +395,15 @@ function _init()
 	music_battle_end_playing = false
 
 	siren_spr = 015
+
+	-- quests
+	current_quest = false
+	current_quest_text = "no quest ongoing"
+	showing_quest_prompt = false
+	current_quest_option = false
+	quest_enemy_warned = false
+	quest_ended = false
+	quest_reward = 0
 end
 
 function _draw()
@@ -394,103 +425,114 @@ function _draw()
 
 			-- line(64,0,64,127, 7)
 
-			if not pause_menu_myship and not pause_menu_battlerep then
-				print("ship systems", 40, 58, (pause_menu_option == 1) and 7 or 11)
-				print("battle report", 38, 64, (pause_menu_option == 2) and 7 or 11)
-			end
+			if not showing_quest_prompt then
+				if not pause_menu_myship and not pause_menu_battlerep and not pause_menu_quest_text then
+					print("ship systems", 40, 58, (pause_menu_option == 1) and 7 or 11)
+					print("battle report", 38, 64, (pause_menu_option == 2) and 7 or 11)
+					print("current quest", 38, 70, (pause_menu_option == 3) and 7 or 11)
+				end
 
-			if pause_menu_battlerep then
-				print("battle report", 26, 26, 11)
-				spr(enemy_list[pause_menu_battlerep_page].spr, 26, 39)
-				print("the " .. "\""..enemy_list[pause_menu_battlerep_page].name.."\"", 37, 40, 7)
+				if pause_menu_battlerep then
+					print("battle report", 26, 26, 11)
+					spr(enemy_list[pause_menu_battlerep_page].spr, 26, 39)
+					print("the " .. "\""..enemy_list[pause_menu_battlerep_page].name.."\"", 37, 40, 7)
 
-				print("hull: " .. enemy_list[pause_menu_battlerep_page].b_health, 26, 48, 7)
-				print("shield: " .. enemy_list[pause_menu_battlerep_page].b_energy, 26, 54, 7)
-				print("speed: " .. enemy_list[pause_menu_battlerep_page].b_speed, 26, 60, 7)
-				print("shot speed: " .. enemy_list[pause_menu_battlerep_page].b_shot_speed, 26, 66, 7)
-				print("damage: " .. enemy_list[pause_menu_battlerep_page].b_damage, 26, 72, 7)
-				print("cooldown: " .. enemy_list[pause_menu_battlerep_page].b_cdr, 26, 78, 7)
-				
-				threath = (pause_menu_battlerep_page == 1) and "low" or (pause_menu_battlerep_page == 2 or pause_menu_battlerep_page == 3) and "mid" or "high"
-				print("threath level: " .. threath, 26, 84, 7)
-				print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page].n_destroyed, 26, 90, 7)
-				print("proficiency: " .. enemy_list[pause_menu_battlerep_page].knowledge_level, 26, 96, 7)
-			end
+					print("hull: " .. enemy_list[pause_menu_battlerep_page].b_health, 26, 48, 7)
+					print("shield: " .. enemy_list[pause_menu_battlerep_page].b_energy, 26, 54, 7)
+					print("speed: " .. enemy_list[pause_menu_battlerep_page].b_speed, 26, 60, 7)
+					print("shot speed: " .. enemy_list[pause_menu_battlerep_page].b_shot_speed, 26, 66, 7)
+					print("damage: " .. enemy_list[pause_menu_battlerep_page].b_damage, 26, 72, 7)
+					print("cooldown: " .. enemy_list[pause_menu_battlerep_page].b_cdr, 26, 78, 7)
+					
+					threath = (pause_menu_battlerep_page == 1) and "low" or (pause_menu_battlerep_page == 2 or pause_menu_battlerep_page == 3) and "mid" or "high"
+					print("threath level: " .. threath, 26, 84, 7)
+					print("confirmed kills: " .. enemy_list[pause_menu_battlerep_page].n_destroyed, 26, 90, 7)
+					print("proficiency: " .. enemy_list[pause_menu_battlerep_page].knowledge_level, 26, 96, 7)
+				end
 
-			if pause_menu_myship then
-				if pause_menu_myship_page == 1 then
-					print("ship systems", 26, 26, 11)
+				if pause_menu_myship then
+					if pause_menu_myship_page == 1 then
+						print("ship systems", 26, 26, 11)
 
-					spr(003, 26, 40)
-					print("health", 34, 41, 7)
-					print(player.health.."/"..player.max_health, 92, 41, 7)
-					print("current ver: ", 26, 49, 7)
-					print(player.health_lvl .. "/3", 92, 49, 7)
+						spr(003, 26, 40)
+						print("health", 34, 41, 7)
+						print(player.health.."/"..player.max_health, 92, 41, 7)
+						print("current ver: ", 26, 49, 7)
+						print(player.health_lvl .. "/3", 92, 49, 7)
 
-					spr(004, 26, 55)
-					print("armor", 34, 56, 7)
-					print(player.armor.."/"..player.max_armor, 92, 56, 7)
-					print("current ver: ", 26, 64, 7)
-					print(player.armor_lvl .. "/3", 92, 64, 7)
+						spr(004, 26, 55)
+						print("armor", 34, 56, 7)
+						print(player.armor.."/"..player.max_armor, 92, 56, 7)
+						print("current ver: ", 26, 64, 7)
+						print(player.armor_lvl .. "/3", 92, 64, 7)
 
-					spr(005, 26, 70)
-					print("fuel", 34, 71, 7)
-					print(flr(player.fuel).."/"..player.max_fuel, 84, 71, 7)
-				elseif pause_menu_myship_page == 2 then
-					print("laser weapon", 26, 26, 11)
+						spr(005, 26, 70)
+						print("fuel", 34, 71, 7)
+						print(flr(player.fuel).."/"..player.max_fuel, 84, 71, 7)
+					elseif pause_menu_myship_page == 2 then
+						print("laser weapon", 26, 26, 11)
 
-					print("system lv", 26, 40, 7)
-					print(player.laser_lvl, 100, 40, 7)
-					print("damage", 26, 46, 7)
-					print(laser_damage, 92, 46, 7)
-					print("reload time", 26, 52, 7)
-					print(laser_cooldown_rate, 96, 52, 7)
-				elseif pause_menu_myship_page == 3 then
-					print("guided shot", 26, 26, 11)
-
-					print("system lv", 26, 40, 7)
-					print(player.missile_lvl, 100, 40, 7)
-					print("damage", 26, 46, 7)
-					print(missile_damage, 92, 46, 7)
-					print("reload time", 26, 52, 7)
-					print(missile_cooldown_rate, 92, 52, 7)
-					print("stockpile", 26, 58, 7)
-					print(player.missile_n.."/"..player.missile_max_capacity, 92, 58, 7)
-				elseif pause_menu_myship_page == 4 then
-					print("cluster shot", 26, 26, 11)
-
-					if player.weapon_system_lvl >= 2 then
 						print("system lv", 26, 40, 7)
-						print(player.cluster_lvl, 100, 40, 7)
+						print(player.laser_lvl, 100, 40, 7)
 						print("damage", 26, 46, 7)
-						print(cluster_damage, 92, 46, 7)
-						print("cluster damage", 26, 52, 7)
-						print(cluster_frag_damage, 88, 52, 7)
-						print("reload time", 26, 58, 7)
-						print(cluster_cooldown_rate, 96, 58, 7)
-						print("stockpile", 26, 64, 7)
-						print(player.cluster_n.."/"..player.cluster_max_capacity, 92, 64, 7)
-					else
-						print("unavailable", 26, 40, 7)
-					end
-				elseif pause_menu_myship_page == 5 then
-					print("stun shot", 26, 26, 11)
+						print(laser_damage, 92, 46, 7)
+						print("reload time", 26, 52, 7)
+						print(laser_cooldown_rate, 96, 52, 7)
+					elseif pause_menu_myship_page == 3 then
+						print("guided shot", 26, 26, 11)
 
-					if player.weapon_system_lvl == 3 then
 						print("system lv", 26, 40, 7)
-						print(player.stun_lvl, 100, 40, 7)
+						print(player.missile_lvl, 100, 40, 7)
 						print("damage", 26, 46, 7)
-						print(stun_damage, 92, 46, 7)
-						print("prox damage", 26, 52, 7)
-						print(stun_proximity_damage, 92, 52, 7)
-						print("reload time", 26, 58, 7)
-						print(stun_cooldown_rate, 92, 58, 7)
-						print("stockpile", 26, 64, 7)
-						print(player.stun_n.."/"..player.stun_max_capacity, 92, 64, 7)
-					else
-						print("unavailable", 26, 40, 7)
+						print(missile_damage, 92, 46, 7)
+						print("reload time", 26, 52, 7)
+						print(missile_cooldown_rate, 92, 52, 7)
+						print("stockpile", 26, 58, 7)
+						print(player.missile_n.."/"..player.missile_max_capacity, 92, 58, 7)
+					elseif pause_menu_myship_page == 4 then
+						print("cluster shot", 26, 26, 11)
+
+						if player.weapon_system_lvl >= 2 then
+							print("system lv", 26, 40, 7)
+							print(player.cluster_lvl, 100, 40, 7)
+							print("damage", 26, 46, 7)
+							print(cluster_damage, 92, 46, 7)
+							print("cluster damage", 26, 52, 7)
+							print(cluster_frag_damage, 88, 52, 7)
+							print("reload time", 26, 58, 7)
+							print(cluster_cooldown_rate, 96, 58, 7)
+							print("stockpile", 26, 64, 7)
+							print(player.cluster_n.."/"..player.cluster_max_capacity, 92, 64, 7)
+						else
+							print("unavailable", 26, 40, 7)
+						end
+					elseif pause_menu_myship_page == 5 then
+						print("stun shot", 26, 26, 11)
+
+						if player.weapon_system_lvl == 3 then
+							print("system lv", 26, 40, 7)
+							print(player.stun_lvl, 100, 40, 7)
+							print("damage", 26, 46, 7)
+							print(stun_damage, 92, 46, 7)
+							print("prox damage", 26, 52, 7)
+							print(stun_proximity_damage, 92, 52, 7)
+							print("reload time", 26, 58, 7)
+							print(stun_cooldown_rate, 92, 58, 7)
+							print("stockpile", 26, 64, 7)
+							print(player.stun_n.."/"..player.stun_max_capacity, 92, 64, 7)
+						else
+							print("unavailable", 26, 40, 7)
+						end
 					end
 				end
+
+				if pause_menu_quest_text then
+					print(current_quest_text, 26, 26, 7)
+				end
+			else
+				print(showing_quest_prompt, 26, 26, 7)
+				print("[z/🅾️] accept", 26, 92, 7)
+				print("[x/❎] decline", 26, 98, 7)
 			end
 		end
 	end
@@ -510,6 +552,7 @@ function _draw()
 		draw_transition_animation()
 		print("victory!", 48,64, 0)
 		print("found " .. battle_rewards .. " scraps", 35,72, 0)
+		if (quest_ended) print("quest rewards " .. quest_reward, 35,78, 0)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104, 0)
 	end
 
@@ -609,32 +652,38 @@ function _update()
 			if (clock % 60 == 0) create_encounter()
 			if (player.fuel <= 0) current_view = 5
 			foreach(encounters, move_encounter)
+			if (btnp(4)) pause_menu = true
 		else
-			if btnp(3) then
-				if (pause_menu_option < 2) pause_menu_option += 1
-			elseif btnp(2) then
-				if (pause_menu_option > 1) pause_menu_option -= 1
+			if not showing_quest_prompt then
+				if btnp(3) then
+					if (pause_menu_option < 3) pause_menu_option += 1
+				elseif btnp(2) then
+					if (pause_menu_option > 1) pause_menu_option -= 1
+				end
+
+				if btnp(0) then
+					if (pause_menu_myship and pause_menu_myship_page > 1) pause_menu_myship_page -= 1
+					if (pause_menu_battlerep and pause_menu_battlerep_page > 1) pause_menu_battlerep_page -= 1
+				elseif btnp(1) then
+					if (pause_menu_myship and pause_menu_myship_page < 6) pause_menu_myship_page += 1
+					if (pause_menu_battlerep and pause_menu_battlerep_page < 6) pause_menu_battlerep_page += 1
+				end
+
+				if btnp(4) then
+					if (pause_menu_option == 1) pause_menu_myship = true pause_menu_myship_page = 1 pause_menu_battlerep = false
+					if (pause_menu_option == 2) pause_menu_myship = false pause_menu_battlerep = true pause_menu_battlerep_page = 1
+					if (pause_menu_option == 3) pause_menu_quest_text = true
+				end
+			else
+				if (btnp(4)) pause_menu = false current_quest = current_quest_option current_quest_text = showing_quest_prompt showing_quest_prompt = false
 			end
 
-			if btnp(0) then
-				if (pause_menu_myship and pause_menu_myship_page > 1) pause_menu_myship_page -= 1
-				if (pause_menu_battlerep and pause_menu_battlerep_page > 1) pause_menu_battlerep_page -= 1
-			elseif btnp(1) then
-				if (pause_menu_myship and pause_menu_myship_page < 5) pause_menu_myship_page += 1
-				if (pause_menu_battlerep and pause_menu_battlerep_page < 5) pause_menu_battlerep_page += 1
+			if btnp(5) then
+				if (not pause_menu_myship and not pause_menu_battlerep and not pause_menu_quest_text) pause_menu = false showing_quest_prompt = false
+				if (pause_menu_myship) pause_menu_myship_page = 0 pause_menu_myship = false
+				if (pause_menu_battlerep) pause_menu_battlerep_page = 0 pause_menu_battlerep = false
+				if (pause_menu_quest_text) pause_menu_quest_text = false
 			end
-
-			if btnp(4) then
-				if (pause_menu_option == 1) pause_menu_myship = true pause_menu_myship_page = 1 pause_menu_battlerep = false
-				if (pause_menu_option == 2) pause_menu_myship = false pause_menu_battlerep = true pause_menu_battlerep_page = 1
-			end
-		end
-
-		if (btnp(4) and not pause_menu) pause_menu = true
-		if btnp(5) then
-			if (not pause_menu_myship and not pause_menu_battlerep) pause_menu = false
-			if (pause_menu_myship) pause_menu_myship_page = 0 pause_menu_myship = false
-			if (pause_menu_battlerep) pause_menu_battlerep_page = 0 pause_menu_battlerep = false
 		end
 	end
 
@@ -660,6 +709,7 @@ function _update()
 				scraps += battle_rewards
 				animation_direction = "out"
 				transition_animation = true
+				if (quest_ended) reset_quest_params()
 			end
 		end
 	end
@@ -873,40 +923,46 @@ function start_battle()
 	while(enemy_count > 0)
 	do
 		enemy_data = rnd(enemy_type_pool)
-
-		local enemy = {}
-		for k, v in pairs(enemy_data) do
-			enemy[k] = v
-		end
-
-		enemy.id = enemy_data.id
-		enemy.health = enemy_data.b_health
-		enemy.max_health = enemy_data.b_health
-		enemy.energy = enemy_data.b_energy
-		enemy.max_energy = enemy_data.b_energy
-		enemy.current_speed = 0
-		enemy.max_speed = enemy_data.b_speed
-		enemy.clock = 0
-		enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
-		enemy.x = flr(rnd(48)) + 48
-		enemy.y = 18
-		enemy.angle = 0
-		enemy.from_x = 0
-		enemy.to_x = 0
-		enemy.to_y = 0
-		enemy.moving = false
-		enemy.locked_on = false
-		enemy.stunned = false
-		enemy.energy_reboot = 300
-		enemy.energy_reboot_counter = 0
-		enemy.fire = true
-		enemy.collateral = false
-		add(enemies, enemy)
-
+		proccess_enemy(enemy_data)
 		enemy_count -= 1
 	end
 
+	if current_quest != false then
+		proccess_enemy(enemy_list[6])
+	end
+
 	battle_started = true
+end
+
+function proccess_enemy(enemy_data)
+	local enemy = {}
+	for k, v in pairs(enemy_data) do
+		enemy[k] = v
+	end
+
+	enemy.id = enemy_data.id
+	enemy.health = enemy_data.b_health
+	enemy.max_health = enemy_data.b_health
+	enemy.energy = enemy_data.b_energy
+	enemy.max_energy = enemy_data.b_energy
+	enemy.current_speed = 0
+	enemy.max_speed = enemy_data.b_speed
+	enemy.clock = 0
+	enemy.bounty = 0 --(rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
+	enemy.x = flr(rnd(48)) + 48
+	enemy.y = 18
+	enemy.angle = 0
+	enemy.from_x = 0
+	enemy.to_x = 0
+	enemy.to_y = 0
+	enemy.moving = false
+	enemy.locked_on = false
+	enemy.stunned = false
+	enemy.energy_reboot = 300
+	enemy.energy_reboot_counter = 0
+	enemy.fire = true
+	enemy.collateral = false
+	add(enemies, enemy)
 end
 
 function animate_explosion(exp)
@@ -1002,6 +1058,7 @@ function reset()
 	cluster_cooldown = false
 	cluster_cooldown_counter = 0
 	current_ammo_mode = 1
+	reset_quest_params()
 end
 
 function draw_ui()
@@ -1077,38 +1134,44 @@ end
 
 function create_encounter()
 	random_factor = rnd()
-	type = (random_factor <= 0.7) and 1 or (random_factor <= 0.875) and 2 or 3
+	type = (random_factor <= 0.4) and 1 or (random_factor <= 0.75) and 2 or 3
+	pirate_shop = (type == 2 and rnd() <= 0.7) and true or false
+	if (type == 3 and current_quest != false) type = 1
+
+	quest_type = false
+	if (type == 3) quest_type = (rnd() < 0.5) and 1 or 2
 
 	local encounter = {}
 	encounter.x = rnd({ 12, 36, 64, 96, 108})
 	encounter.y = 12
 	encounter.type = type
 	encounter.animate = false
-	encounter.sprite = (type == 1) and 064 or 072
-	encounter.skull_y = (type == 3) and encounter.y + 4 or false
-	encounter.skull_x = (type == 3) and encounter.x - 4 or false
-	encounter.move_left = true
+	encounter.sprite = encounters_spr[type]
+	encounter.skull_y = (pirate_shop) and encounter.y + 4 or pirate_shop
+	encounter.skull_x = (pirate_shop) and encounter.x - 4 or pirate_shop
+	encounter.move_skull_left = true
+	encounter.quest_type = quest_type
 	encounter.clock = 0
 	add(encounters, encounter)
 end
 
 function draw_encounter(e)
 	spr(e.sprite,e.x, e.y, 2, 2)
-	if (e.type == 3) spr(045, e.skull_x, e.skull_y)
+	if (e.skull_y) spr(045, e.skull_x, e.skull_y)
 end
 
 function move_encounter(e)
 	e.clock += 1
 	e.y += 1
 
-	if e.type == 3 then
+	if e.skull_y then
 		e.skull_y += 1
-		if e.move_left then
+		if e.move_skull_left then
 			e.skull_x += 1
-			if (e.skull_x >= e.x + 8) e.move_left = false
+			if (e.skull_x >= e.x + 8) e.move_skull_left = false
 		else
 			e.skull_x -= 1
-			if (e.skull_x <= e.x - 4) e.move_left = true
+			if (e.skull_x <= e.x - 4) e.move_skull_left = true
 		end
 	end
 
@@ -1120,10 +1183,11 @@ function move_encounter(e)
 		if e.type == 1 then
 			transition_animation = true
 			current_view = 2
-		end
-		if e.type == 2 or e.type == 3 then
+		elseif e.type == 2 then
 			current_view = 4
-			if (e.type == 3) pirate_store = true
+			if (e.skull_y) pirate_store = true
+		else
+			show_quest_prompt(e.quest_type)
 		end
 	end
 
@@ -1133,22 +1197,31 @@ function move_encounter(e)
 
 	if e.animate then
 		if (e.clock % 1.5 == 0) e.sprite += 2
-		if e.type == 1 then
-			if e.sprite > 070 then
-				e.animate = false
-				e.sprite = 064
-			end
-		else
-			if e.sprite > 078 then
-				e.animate = false
-				e.sprite = 072
-			end
-		end
+		if (e.type == 1 and e.sprite > 070) e.animate = false e.sprite = 064
+		if (e.type == 2 and e.sprite > 078) e.animate = false e.sprite = 072
+		if (e.type == 3 and e.sprite > 103) e.animate = false e.sprite = 096
 	end	
 
 	if (e.y >= 128) del(encounters,e)
 end
 
+function show_quest_prompt(q_type)
+	current_quest_option = q_type
+	pause_menu = true
+	showing_quest_prompt = (q_type == 1)
+		and "there's a pirate\naround these parts\nthat is causing too\nmuch trouble! he's\nattacking and\npillaging every\nship he sees!\n\ncan you take care\nof this?"
+		or "oh hi!\nwe need help getting\nto a planet, but\nit's dangerous to\ngo alone.\n\ncan you escort us\nto our destination?" 
+end
+
+function reset_quest_params()
+	current_quest = false
+	current_quest_text = "no quest ongoing"
+	showing_quest_prompt = false
+	current_quest_option = false
+	quest_enemy_warned = false
+	quest_reward = 0
+	quest_ended = false
+end
 -->8
 -- player
 
@@ -1486,6 +1559,7 @@ function draw_enemy(e)
 	energy_length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or (energy_percentage < 0.5 and energy_percentage > 0) and 2 or 0
 	if (e.energy > 0) line(e.x + 1, e.y - 5, e.x + energy_length, e.y - 5, 12)
 	if (e.locked_on) rect(e.x - 2, e.y - 2, e.x + 9, e.y + 9,8)
+	if (e.spr == 061 and not quest_enemy_warned) quest_enemy_warned = true create_warning("quest\nenemy", e)
 end
 
 function draw_enemy_bullet(eb)
@@ -1502,6 +1576,7 @@ function destroy_enemy(e)
 	score += e.score
 	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
 	create_explosion(e.x,e.y)
+	if (e.spr == 061) create_warning("quest\nenemy\ndestroyed", e) quest_ended = true quest_reward = 125 battle_rewards += quest_reward
 	sfx(05)
 	del(enemies,e)
 end
@@ -1664,14 +1739,14 @@ __gfx__
 005dd5008080080800000000058e8500051c15003b5b5b302888888228888882288ee882000d00000006000000050000000d0000066666000666660088888880
 00055000800000080000000000585000005150005333335002888820028888200288882000050000000d0000000000000000000006d6d60006d6d6006ddddd50
 00000000088888800000000000050000000500000555550000222200002222000022220000000000000000000000000000000000000000000000000055555550
-00000000000000000000000000000000000000000000000000000000000000000099990000999900009099000090990000900900000000000000000000000000
-000000000000000000000000000000000000000000000000000000000099990009aaaa900999aa900999aa900999aa9009090090000000000000000000000000
-000cc00000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa99a999a999a999a0990990000909000000000000000000000000
-00c7cc00000000000000000000000000000000000000000000999900099aa9909aaaaaa999aaaaa9999a99a99900900990000009000000000000000000000000
-00cccc00000000000000000000000000000000000000000000999900099aa9909aaaaaa999a999a9099999000909900000000000000000000000000000000000
-001cc10000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa9aa9900909999009009990000099000000000000000000000000
-000110000000000000000000000800000001000003333300000000000099990009aaaa9009999a90099909900990009009000090000000000000000000000000
-00000000000000000000000000050000000500000555550000000000000000000099990000999900000909000009090000090900000000000d6d6d0000000000
+00000000000000000000000000000000000000000000000000000000000000000099990000999900009099000090990000900900078778700000000000000000
+000000000000000000000000000000000000000000000000000000000099990009aaaa900999aa900999aa900999aa90090900907ee88ee70000000000000000
+000cc00000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa99a999a999a999a099099000090977e77e770000000000000000
+00c7cc00000000000000000000000000000000000000000000999900099aa9909aaaaaa999aaaaa9999a99a99900900990000009007ee7000000000000000000
+00cccc00000000000000000000000000000000000000000000999900099aa9909aaaaaa999a999a9099999000909900000000000787887870000000000000000
+001cc10000000000000000000000000000000000000000000009900009a99a909aaaaaa999aa9aa9900909999009009990000099077887700000000000000000
+000110000000000000000000000800000001000003333300000000000099990009aaaa9009999a90099909900990009009000090070ee0700000000000000000
+00000000000000000000000000050000000500000555550000000000000000000099990000999900000909000009090000090900070000700d6d6d0000000000
 00000000000000000000000000000000000000000000000000000000000000000000000330000000000000033000000000000003300000000000000770000000
 00000000000000000000000000000000000000000000000000000000000000000000000330000000000000033000000000000003300000000000000770000000
 00600000000006000060000000000600006000000000070000700000000006000000033333333000000003333333300000000333377770000000077773333000
@@ -1688,22 +1763,22 @@ __gfx__
 00d5050000505d0000d50500007077000077070000505d0000d5050000505d000003333333300000000333377770000000077773333000000003333333300000
 00500000000005000050000000000700007000000000050000500000000005000000000330000000000000077000000000000003300000000000000330000000
 00000000000000000000000000000000000000000000000000000000000000000000000330000000000000077000000000000003300000000000000330000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000005555550000000000555555000000000055577700000000007775550000000000cccc1100000000000000000000000000000000000000000000000000000
+0005566666655000000556666665500000055667777770000007777666655000000ccccccc111000000000000000000000000000000000000000000000000000
+005666666666750000566666666675000056667777777500007777666666750000ccccccccc11100000000000000000000000000000000000000000000000000
+05666500005667500566650000566750056665000077775007777500005667500cccbccccccc1110000000000000000000000000000000000000000000000000
+05675000000567500567500000056750056750000007775007775000000567500cccbbcccccc1110000000000000000000000000000000000000000000000000
+0577500000056650057750000005667005775000000777500777500000056650ccccbbbcccbb3111000000000000000000000000000000000000000000000000
+0055000000566500005500000056670000550000007775000055000000566500cccbbbbbcccb3111000000000000000000000000000000000000000000000000
+0000000005665000000000000566700000000000077750000000000005665000ccbbbbbbcccb3311000000000000000000000000000000000000000000000000
+0000000056650000000000005667000000000000777500000000000056650000ccccbbbbbccc3331000000000000000000000000000000000000000000000000
+00000005665000000000000566700000000000077750000000000005665000001ccccbbbccc13331000000000000000000000000000000000000000000000000
+000000566500000000000056670000000000007775000000000000566500000011cccccbcc111111000000000000000000000000000000000000000000000000
+000000576500000000000057770000000000007765000000000000576500000001ccccccc1111110000000000000000000000000000000000000000000000000
+00000005500000000000000770000000000000055000000000000005500000000111111111111110000000000000000000000000000000000000000000000000
+00000056650000000000007777000000000000566500000000000056650000000011111111111100000000000000000000000000000000000000000000000000
+00000057650000000000007777000000000000576500000000000057650000000001111111111000000000000000000000000000000000000000000000000000
+00000005500000000000000770000000000000055000000000000005500000000000011111100000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
