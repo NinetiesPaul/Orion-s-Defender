@@ -1146,8 +1146,8 @@ end
 function create_encounter()
 	random_factor = rnd()
 	quest_random_factor = (current_quest == 0) and 0.75 or 0.95
-	type = (random_factor <= 0.5) and 1 or (random_factor <= quest_random_factor) and 2 or 3
-	pirate_shop = (type == 2 and rnd() <= 0.7) and true or false
+	type = (random_factor <= 0.6) and 1 or (random_factor <= quest_random_factor) and 2 or 3
+	pirate_shop = (type == 2 and rnd() <= 0.3) and true or false
 	if (type == 3 and current_quest == 1) type = 1
 
 	local encounter = {}
