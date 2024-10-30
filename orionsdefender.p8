@@ -384,6 +384,8 @@ function _init()
 	battle_started = false
 	
 	transition_animation = false
+	hold_transition = false
+	skip_transition_hold = false
 	left_side = 0
 	right_side = 127
 	animation_direction = "in"
@@ -416,6 +418,7 @@ function _draw()
 	if (current_view == 1 or current_view == 2 or current_view == 6) foreach(stars, draw_star)
 	if (current_view == 1 or current_view == 2 and not transition_animation) spr(ship_spr,ship_x,ship_y)
 
+	draw_transition_animation()
 	if current_view == 1 then -- world
 		if (pirate_rep > 0) draw_threat()
 		foreach(encounters, draw_encounter)
@@ -546,18 +549,16 @@ function _draw()
 		foreach(explosions, draw_explosion)
 		foreach(warnings, print_warning)
 		if (count(warnings) == 0) foreach(enemies, create_enemy_bullet)
-		if (transition_animation) draw_transition_animation()
 	end
 
 	if current_view == 3 then -- rewards
-		draw_transition_animation()
 		print("victory!", 48,64, 0)
 		print("found " .. battle_rewards .. " scraps", 35,72, 0)
 		if (quest_ended_message) print(quest_ended_message, 35,78, 0)
 		if (stat(54) == 0) print("press z or x to continue", 18, 104, 0)
 	end
 
-	if current_view == 4 then -- shop
+	if current_view == 4 and not transition_animation then -- shop
 		i = 0
 		for item in all (shop_items) do 
 			price = (pirate_store == false) and item.price or (item.name == "pirate_bribe") and item.price or ceil(item.price/2)
@@ -580,10 +581,9 @@ function _draw()
 	end
 
 	if current_view == 5 then -- gameover
-		print("game over",44,64)
-		if (player.health <= 0) print("you were destroyed",24,72)
-		if (player.fuel <= 0) print("you ran out of fuel",23,72)
-		print("press any key", 18, 104)
+		print("game over", 44, 64, 0)
+		print("final score:" .. score, 38, 70, 0)
+		print("press any key", 38, 82, 0)
 	end
 
 	if current_view == 6 then -- start
@@ -650,8 +650,8 @@ function _update()
 	if current_view == 1 then -- world
 		if not pause_menu then
 			player.fuel -= fuel_comsumption
-			if (clock % 60 == 0) create_encounter()
-			if (player.fuel <= 0) current_view = 5
+			if (clock % 60 == 0 and not transition_animation) create_encounter()
+			if (player.fuel <= 0) transition_animation = true
 			foreach(encounters, move_encounter)
 			if (btnp(4)) pause_menu = true
 		else
@@ -716,11 +716,8 @@ function _update()
 
 	if current_view == 3 then
 		if stat(54) == 0 then
-			if btnp(4) or btnp(5) then
-				scraps += battle_rewards
-				animation_direction = "out"
-				transition_animation = true
-				quest_ended_message = false
+			if btnp(4) or btnp(5) and not transition_animation then
+				resume_transition()
 			end
 		end
 	end
@@ -740,10 +737,6 @@ function _update()
 		if (btn(3)) help_text_y -= 5
 		if (help_text_y > 0) help_text_y = 0
 		if (help_text_y < -210) help_text_y = -210
-	end
-
-	if current_view != 1 then
-		encounters = {}
 	end
 
 	-- music control
@@ -780,7 +773,7 @@ function _update()
 		foreach(stars, move_star)
 	end
 
-	if (current_view == 2 or current_view == 3) update_transition_animation()
+	update_transition_animation()
 end
 
 function create_stars()
@@ -812,8 +805,10 @@ function move_star(s)
 end
 
 function draw_transition_animation()
-	rectfill(0, 0, left_side, 128, 7)
-	rectfill(127, 0, right_side, 128, 7)
+	if transition_animation or hold_transition then
+		rectfill(0, 0, left_side, 128, 7)
+		rectfill(127, 0, right_side, 128, 7)
+	end
 end
 
 function update_transition_animation()
@@ -823,25 +818,34 @@ function update_transition_animation()
 			left_side += 5
 
 			if right_side < 64 and left_side > 64 then
-				if battle_started and count(explosions) == 0 and count(enemies) == 0 then
-					transition_animation = false 
-					current_view = 3
-				else
-					animation_direction = "out"
-				end
+				transition_animation = false
+				hold_transition = true
+
+				if (battle_started and count(explosions) == 0 and count(enemies) == 0) current_view = 3
+				if (player.fuel <= 0 or player.health <= 0) current_view = 5
+				if (skip_transition_hold != false) resume_transition()
 			end
 		else
 			right_side += 5
 			left_side -= 5
 
 			if right_side > 127 and left_side < 0 then
-				reset_transition_animation()
 				transition_animation = false
-
-				if (current_view == 3) reset() current_view = 1
+				hold_transition = false
+				animation_direction = "in" 
+ 
+				if (current_view == 3) scraps += battle_rewards current_view = 1 reset()
+				if (current_view == 5) _init()
+				if (skip_transition_hold != false) current_view = skip_transition_hold skip_transition_hold = false
 			end
 		end
 	end
+end
+
+function resume_transition()
+	animation_direction = "out"
+	transition_animation = true
+	hold_transition = false
 end
 
 function reset_transition_animation()
@@ -914,8 +918,6 @@ end
 function start_battle()
 	enemy_type_pool = {}
 	enemy_by_difficulty ={ { 1,2 }, { 2, 3 }, { 3, 4 } }
-	bounty_chance = { 0.9, 0.8, 0.7 }
-	bounty_lvls = { 40, 55, 70 }
 
 	local pirate_rep = (pirate_rep == 0) and 1 or pirate_rep
 
@@ -940,13 +942,17 @@ function start_battle()
 
 	if current_quest > 0 then
 		if (current_quest == 2 and rnd() > 0.7) proccess_enemy(enemy_list[6])
-		if (current_quest == 1 and rnd() > 0.5) proccess_enemy(enemy_list[6]) proccess_enemy(enemy_list[6]) proccess_enemy(enemy_list[6])
+		if (current_quest == 1 and rnd() > 0.5) for i=0,2 do proccess_enemy(enemy_list[6]) end
 	end
 
 	battle_started = true
 end
 
 function proccess_enemy(enemy_data)
+	local pirate_rep = (pirate_rep == 0) and 1 or pirate_rep
+	bounty_chance = { 0.8, 0.7, 0.6 }
+	bounty_lvls = { 20, 40, 60 }
+
 	local enemy = {}
 	for k, v in pairs(enemy_data) do
 		enemy[k] = v
@@ -960,9 +966,9 @@ function proccess_enemy(enemy_data)
 	enemy.current_speed = 0
 	enemy.max_speed = enemy_data.b_speed
 	enemy.clock = 0
-	enemy.bounty = 0 --(rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
+	enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and flr(rnd(bounty_lvls[pirate_rep]) + (bounty_lvls[pirate_rep] / 2)) or 0
 	enemy.x = flr(rnd(48)) + 48
-	enemy.y = 18
+	enemy.y = flr(rnd(24)) + 24
 	enemy.angle = 0
 	enemy.from_x = 0
 	enemy.to_x = 0
@@ -1136,8 +1142,8 @@ function draw_threat()
 end
 
 function restart_from_gameover()
-	if btnp(4) or btnp(5) then
-		_init()
+	if btnp(4) or btnp(5) and not transition_animation then
+		resume_transition()
 	end
 end
 -->8
@@ -1147,7 +1153,7 @@ function create_encounter()
 	random_factor = rnd()
 	quest_random_factor = (current_quest == 0) and 0.75 or 0.95
 	type = (random_factor <= 0.6) and 1 or (random_factor <= quest_random_factor) and 2 or 3
-	pirate_shop = (type == 2 and rnd() <= 0.3) and true or false
+	local pirate_shop = (type == 2 and rnd() <= 0.3) and true or false
 	if (type == 3 and current_quest == 1) type = 1
 
 	local encounter = {}
@@ -1156,8 +1162,9 @@ function create_encounter()
 	encounter.type = type
 	encounter.animate = false
 	encounter.sprite = encounters_spr[type]
-	encounter.skull_y = (pirate_shop) and encounter.y + 4 or pirate_shop
-	encounter.skull_x = (pirate_shop) and encounter.x - 4 or pirate_shop
+	encounter.pirate_shop = pirate_shop
+	encounter.skull_y = encounter.y + 4
+	encounter.skull_x = encounter.x - 4
 	encounter.move_skull_left = true
 	encounter.clock = 0
 	encounter.quest_type = rnd({1, 2})
@@ -1169,14 +1176,14 @@ function draw_encounter(e)
 	if (e.escort_destination and e.type == 3) pal(5,3) pal(6,11)
 	spr(e.sprite,e.x, e.y, 2, 2)
 	pal()
-	if (e.skull_y) spr(045, e.skull_x, e.skull_y)
+	if (e.pirate_shop) spr(045, e.skull_x, e.skull_y)
 end
 
 function move_encounter(e)
 	e.clock += 1
 	e.y += 1
 
-	if e.skull_y then
+	if e.pirate_shop then
 		e.skull_y += 1
 		if e.move_skull_left then
 			e.skull_x += 1
@@ -1191,13 +1198,19 @@ function move_encounter(e)
 	e.x <= ship_x+10 and
 	e.y >= ship_y-8 and
 	e.y <= ship_y+10 then
-		del(encounters,e)
+		encounters = {}
 		if e.type == 1 then
+			skip_transition_hold = 2
 			transition_animation = true
-			current_view = 2
 		elseif e.type == 2 then
-			current_view = 4
-			if (e.skull_y) pirate_store = true
+			shop_last_bought = ""
+			pirate_store = false
+			shop_selector = 1
+			shop_items = {}
+
+			skip_transition_hold = 4
+			pirate_store = (e.pirate_shop) and true or false
+			transition_animation = true
 		else
 			show_quest_prompt(e.quest_type)
 		end
@@ -1522,7 +1535,7 @@ function move_enemy_bullet(eb)
 			player.armor-=eb.damage
 			if (player.armor < 0) player.armor = 0
 		end
-		if (player.health <= 0) current_view = 5
+		if (player.health <= 0) transition_animation = true
 	end
 end
 
@@ -1594,7 +1607,7 @@ function destroy_enemy(e)
 	if (pirate_rep < 3 and total_enemies_destroyed % 10 == 0) pirate_rep += 1
 
 	score += e.score
-	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
+	battle_rewards += e.reward + e.bounty
 	create_explosion(e.x,e.y)
 	if (e.spr == 061 and current_quest == 1) create_warning("quest\nenemy\ndestroyed", e) hunt_quest_enemies_destroyed += 1
 	if (hunt_quest_enemies_destroyed == 3) quest_reward = 270 battle_rewards += quest_reward reset_quest_params() quest_ended_message = "hunt quest complete!"
@@ -1722,11 +1735,8 @@ function nav_store()
 
 	if btnp(5) then
 		sfx(00)
-		shop_items = {}
-		current_view = 1
-		shop_last_bought = ""
-		pirate_store = false
-		shop_selector = 1
+		skip_transition_hold = 1
+		transition_animation = true
 	end
 end
 
