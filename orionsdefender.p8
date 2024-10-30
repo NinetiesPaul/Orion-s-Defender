@@ -709,7 +709,7 @@ function _update()
 		end
 		foreach(warnings, move_warning)
 
-		if (battle_started and count(enemies) > 0) missile_ui()
+		if (battle_started and count(enemies) > 0 and current_ammo_mode == 2 and not missile_cooldown) missile_ui()
 		foreach(missiles, move_missile)
 		if (battle_started and count(explosions) == 0 and count(enemies) == 0) transition_animation = true
 	end
@@ -974,7 +974,6 @@ function proccess_enemy(enemy_data)
 	enemy.to_x = 0
 	enemy.to_y = 0
 	enemy.moving = false
-	enemy.locked_on = false
 	enemy.stunned = false
 	enemy.energy_reboot = 300
 	enemy.energy_reboot_counter = 0
@@ -1311,12 +1310,6 @@ function fire()
 		if (player.weapon_system_lvl == 1 and current_ammo_mode > 2) current_ammo_mode = 1
 		if (player.weapon_system_lvl == 2 and current_ammo_mode > 3) current_ammo_mode = 1
 		if (current_ammo_mode > 4) current_ammo_mode = 1
-
-		if current_ammo_mode != 2 then
-			for e in all (enemies) do
-				e.locked_on = false
-			end
-		end
 	end
 
 	if laser_cooldown then
@@ -1354,26 +1347,16 @@ function draw_bullet(b)
 end
 
 function missile_ui()
-	if current_ammo_mode == 2 and not missile_cooldown then
-		last_enemy = count(enemies)
+	last_enemy = count(enemies)
 
-		if btnp(2) then
-			enemies[missile_locked_on_enemy].locked_on = false
-			missile_locked_on_enemy += 1
-			if (missile_locked_on_enemy > last_enemy) missile_locked_on_enemy = 1
-		end
+	if btnp(2) then
+		missile_locked_on_enemy += 1
+		if (missile_locked_on_enemy > last_enemy) missile_locked_on_enemy = 1
+	end
 
-		if btnp(3) then
-			enemies[missile_locked_on_enemy].locked_on = false
-			missile_locked_on_enemy -= 1
-			if (missile_locked_on_enemy <= 0) missile_locked_on_enemy = last_enemy
-		end
-
-		enemies[missile_locked_on_enemy].locked_on = true
-	else
-		for e in all(enemies) do
-			e.locked_on = false
-		end
+	if btnp(3) then
+		missile_locked_on_enemy -= 1
+		if (missile_locked_on_enemy <= 0) missile_locked_on_enemy = last_enemy
 	end
 end
 
@@ -1591,7 +1574,7 @@ function draw_enemy(e)
 	energy_percentage = e.energy/e.max_energy
 	energy_length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or (energy_percentage < 0.5 and energy_percentage > 0) and 2 or 0
 	if (e.energy > 0) line(e.x + 1, e.y - 5, e.x + energy_length, e.y - 5, 12)
-	if (e.locked_on) rect(e.x - 2, e.y - 2, e.x + 9, e.y + 9,8)
+	if (current_ammo_mode == 2) rect(enemies[missile_locked_on_enemy].x - 2, enemies[missile_locked_on_enemy].y - 2, enemies[missile_locked_on_enemy].x + 9, enemies[missile_locked_on_enemy].y + 9,8)
 	if (e.spr == 061 and not quest_enemy_warned) quest_enemy_warned = true create_warning("quest\nenemy", e)
 end
 
