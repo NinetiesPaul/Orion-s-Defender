@@ -918,8 +918,6 @@ end
 function start_battle()
 	enemy_type_pool = {}
 	enemy_by_difficulty ={ { 1,2 }, { 2, 3 }, { 3, 4 } }
-	bounty_chance = { 0.9, 0.8, 0.7 }
-	bounty_lvls = { 40, 55, 70 }
 
 	local pirate_rep = (pirate_rep == 0) and 1 or pirate_rep
 
@@ -944,13 +942,17 @@ function start_battle()
 
 	if current_quest > 0 then
 		if (current_quest == 2 and rnd() > 0.7) proccess_enemy(enemy_list[6])
-		if (current_quest == 1 and rnd() > 0.5) proccess_enemy(enemy_list[6]) proccess_enemy(enemy_list[6]) proccess_enemy(enemy_list[6])
+		if (current_quest == 1 and rnd() > 0.5) for i=0,2 do proccess_enemy(enemy_list[6]) end
 	end
 
 	battle_started = true
 end
 
 function proccess_enemy(enemy_data)
+	local pirate_rep = (pirate_rep == 0) and 1 or pirate_rep
+	bounty_chance = { 0.8, 0.7, 0.6 }
+	bounty_lvls = { 20, 40, 60 }
+
 	local enemy = {}
 	for k, v in pairs(enemy_data) do
 		enemy[k] = v
@@ -964,9 +966,9 @@ function proccess_enemy(enemy_data)
 	enemy.current_speed = 0
 	enemy.max_speed = enemy_data.b_speed
 	enemy.clock = 0
-	enemy.bounty = 0 --(rnd() > bounty_chance[pirate_rep]) and rnd(bounty_lvls) or 0
+	enemy.bounty = (rnd() > bounty_chance[pirate_rep]) and flr(rnd(bounty_lvls[pirate_rep]) + (bounty_lvls[pirate_rep] / 2)) or 0
 	enemy.x = flr(rnd(48)) + 48
-	enemy.y = 18
+	enemy.y = flr(rnd(24)) + 24
 	enemy.angle = 0
 	enemy.from_x = 0
 	enemy.to_x = 0
@@ -1605,7 +1607,7 @@ function destroy_enemy(e)
 	if (pirate_rep < 3 and total_enemies_destroyed % 10 == 0) pirate_rep += 1
 
 	score += e.score
-	battle_rewards += flr(10 + (e.reward * (pirate_rep/2))) + e.bounty
+	battle_rewards += e.reward + e.bounty
 	create_explosion(e.x,e.y)
 	if (e.spr == 061 and current_quest == 1) create_warning("quest\nenemy\ndestroyed", e) hunt_quest_enemies_destroyed += 1
 	if (hunt_quest_enemies_destroyed == 3) quest_reward = 270 battle_rewards += quest_reward reset_quest_params() quest_ended_message = "hunt quest complete!"
