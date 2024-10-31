@@ -808,7 +808,7 @@ function update_transition_animation()
 				hold_transition = false
 				animation_direction = "in" 
  
-				if (current_view == 3) scraps += battle_rewards current_view = 1 reset()
+				if (current_view == 3) scraps += battle_rewards current_view = 1 reset() quest_ended_message = false
 				if (current_view == 5) _init()
 				if (skip_transition_hold != false) current_view = skip_transition_hold skip_transition_hold = false
 			end
@@ -1249,6 +1249,7 @@ function move_missile(m)
 		sfx(04)
 		e = enemies[missile_locked_on_enemy]
 		e.health -= m.damage
+		e.spr = e.spr_damage
 		del(missiles, m)
 		if e.health <= 0 then
 			missile_locked_on_enemy = 1
@@ -1449,7 +1450,7 @@ function draw_enemy(e)
 	energy_length = (energy_percentage == 1) and 6 or (energy_percentage < 1 and energy_percentage >= 0.5) and 4 or (energy_percentage < 0.5 and energy_percentage > 0) and 2 or 0
 	if (e.energy > 0) line(e.x + 1, e.y - 5, e.x + energy_length, e.y - 5, 12)
 	if (current_ammo_mode == 2) rect(enemies[missile_locked_on_enemy].x - 2, enemies[missile_locked_on_enemy].y - 2, enemies[missile_locked_on_enemy].x + 9, enemies[missile_locked_on_enemy].y + 9,8)
-	if (e.spr == 061 and not quest_enemy_warned) quest_enemy_warned = true create_warning("quest\nenemy", e)
+	if (e.id == 6 and not quest_enemy_warned) quest_enemy_warned = true create_warning("quest\nenemy", e)
 end
 
 function draw_enemy_bullet(eb)
@@ -1466,7 +1467,7 @@ function destroy_enemy(e)
 	score += e.score
 	battle_rewards += e.reward + e.bounty
 	create_explosion(e.x,e.y)
-	if (e.spr == 061 and current_quest == 1) create_warning("quest\nenemy\ndestroyed", e) hunt_quest_enemies_destroyed += 1
+	if (e.id == 6 and current_quest == 1) create_warning("quest\nenemy\ndestroyed", e) hunt_quest_enemies_destroyed += 1
 	if (hunt_quest_enemies_destroyed == 3) quest_reward = 270 battle_rewards += quest_reward reset_quest_params() quest_ended_message = "hunt quest complete!"
 	sfx(05)
 	del(enemies,e)
