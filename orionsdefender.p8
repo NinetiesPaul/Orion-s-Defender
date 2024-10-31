@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 34
 __lua__
--- general code
+-- _init
 
 function _init()
 	-- encounters variable
@@ -409,6 +409,8 @@ function _init()
 	hunt_quest_enemies_destroyed = 0
 end
 
+-->8
+-- _draw
 function _draw()
 	cls()
 
@@ -637,12 +639,15 @@ function _draw()
 	end
 end
 
+-->8
+-- _update
 function _update()
 	clock+=1
 
 	if (clock % 1 == 0) siren_spr += 16
 	if (siren_spr > 31) siren_spr = 015
 
+	if (current_view == 1 or current_view == 2 or current_view == 6) create_stars() foreach(stars, move_star)
 	if (count(warnings) == 0) move()
 	update_threat()
 	update_icons()
@@ -727,7 +732,9 @@ function _update()
 	end
 
 	if current_view == 5 then
-		restart_from_gameover()
+		if btnp(4) or btnp(5) and not transition_animation then
+			resume_transition()
+		end
 	end
 
 	if current_view == 6 or current_view == 7 then
@@ -768,40 +775,7 @@ function _update()
 		music_battle_end_playing = false
 	end
 
-	if current_view == 1 or current_view == 2 or current_view == 6 then
-		create_stars()
-		foreach(stars, move_star)
-	end
-
 	update_transition_animation()
-end
-
-function create_stars()
-	interval = rnd({15, 5})
-	if clock % interval == 0 then 
-		local star = {}
-		star.x = rnd({ 12, 24, 48, 56, 72, 82, 96})
-		star.y = 12
-		star.type = rnd({ "far", "near"})
-		add(stars, star)
-	end
-end
-
-function draw_star(s)
-	star_spr = (s.type == "far") and 044 or 042
-	if (clock % 1.5 == 0) then
-		star_spr = (s.type == "far") and 043 or 041
-	end
-	spr(star_spr, s.x, s.y)
-end
-
-function move_star(s)
-	divider = (current_view == 2) and 0.5 or 1 
-	s.y += (s.type == "far") and 1.5 * divider or 3 * divider
-
-	if s.y >= 128 then
-		del(stars,s)
-	end
 end
 
 function draw_transition_animation()
@@ -855,31 +829,14 @@ function reset_transition_animation()
 	ship_x = 64
 end
 
-function draw_missile(m)
-	spr(016,m.x,m.y)
-end
+function create_warning(msg, e)
+	local warning = {}
 
-function move_missile(m)
-	target_x = enemies[missile_locked_on_enemy].x
-	target_y = enemies[missile_locked_on_enemy].y
-
-	angle = atan2(target_x - m.x, target_y - m.y)
-	m.x += cos(angle) * m.v
-	m.y += sin(angle) * m.v
-
-	if m.x >= target_x and
-	m.x <= target_x+8 and
-	m.y >= target_y-2 and
-	m.y <= target_y+6 then
-		sfx(04)
-		e = enemies[missile_locked_on_enemy]
-		e.health -= m.damage
-		del(missiles, m)
-		if e.health <= 0 then
-			missile_locked_on_enemy = 1
-			destroy_enemy(e)
-		end
-	end
+	warning.x = e.x+10
+	warning.y = e.y
+	warning.msg = msg
+	warning.duration = 6
+	add(warnings, warning)
 end
 
 function print_warning(w)
@@ -892,27 +849,6 @@ function move_warning(w)
 		w.duration -= 1
 		if (w.duration == 0) del(warnings, w)
 	end
-end
-
-function update_icons()
-	health_pct = player.health/player.max_health
-	health_spr = (health_pct == 1) and 8 or flr(health_pct * 10)
-
-	fuel_pct = player.fuel/player.max_fuel
-	fuel_spr = (fuel_pct == 1) and 8 or flr(fuel_pct * 10)
-
-	armor_pct = player.armor/player.max_armor
-	armor_spr = (armor_pct == 1) and 8 or flr(armor_pct * 10)
-end
-
-function create_warning(msg, e)
-	local warning = {}
-
-	warning.x = e.x+10
-	warning.y = e.y
-	warning.msg = msg
-	warning.duration = 6
-	add(warnings, warning)
 end
 
 function start_battle()
@@ -982,79 +918,6 @@ function proccess_enemy(enemy_data)
 	add(enemies, enemy)
 end
 
-function animate_explosion(exp)
-	if (clock % 2 == 0) exp.stage += 1
-
-	if exp.stage == 4 then
-		exp.base_stg4_px1 = flr(rnd(3))+1
-		exp.base_stg4_py1 = flr(rnd(3))+1
-		exp.base_stg4_px2 = flr(rnd(3))+1
-		exp.base_stg4_py2 = flr(rnd(3))+1
-		exp.base_stg4_px3 = flr(rnd(3))+1
-		exp.base_stg4_py3 = flr(rnd(3))+1
-		exp.base_stg4_px4 = flr(rnd(3))+1
-		exp.base_stg4_py4 = flr(rnd(3))+1
-		exp.base_stg4_px5 = flr(rnd(3))+1
-		exp.base_stg4_py5 = flr(rnd(3))+1
-		exp.base_stg4_px6 = flr(rnd(3))+1
-		exp.base_stg4_py6 = flr(rnd(3))+1
-		exp.base_stg4_px7 = flr(rnd(3))+1
-		exp.base_stg4_px8 = flr(rnd(3))+1
-	end
-
-	if exp.stage == 8 then
-		del(explosions, exp)
-	end
-end
-
-function draw_explosion(exp)
-	if exp.stage < 4 then
-		if (exp.stage == 2)	exp.spr = 055
-		if (exp.stage == 3)	exp.spr = 056
-		spr(exp.spr,exp.px,exp.py)	
-	elseif exp.stage == 4 then
-		exp.spr = 057
-		spr(exp.spr,exp.px-exp.base_stg4_px1,exp.py-exp.base_stg4_py1)	
-		spr(exp.spr,exp.px-exp.base_stg4_px2,exp.py+exp.base_stg4_py2)	
-		spr(exp.spr,exp.px+exp.base_stg4_px3,exp.py-exp.base_stg4_py3)	
-		spr(exp.spr,exp.px-exp.base_stg4_px4,exp.py+exp.base_stg4_py4)	
-		spr(exp.spr,exp.px+exp.base_stg4_px5,exp.py+exp.base_stg4_py5)	
-		spr(exp.spr,exp.px+exp.base_stg4_px6,exp.py+exp.base_stg4_py6)	
-		spr(exp.spr,exp.px-exp.base_stg4_px7,exp.py)	
-		spr(exp.spr,exp.px+exp.base_stg4_px8,exp.py)
-	elseif exp.stage == 5 then
-		exp.spr = 058
-		spr(exp.spr,exp.px-(exp.base_stg4_px1+2),exp.py-(exp.base_stg4_py1+2))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px2+2),exp.py+(exp.base_stg4_py2+2))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px3+2),exp.py-(exp.base_stg4_py3+2))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px4+2),exp.py+(exp.base_stg4_py4+2))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px5+2),exp.py+(exp.base_stg4_py5+2))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px6+2),exp.py+(exp.base_stg4_py6+2))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px7+2),exp.py)	
-		spr(exp.spr,exp.px+(exp.base_stg4_px8+2),exp.py)
-	elseif exp.stage == 6 then
-		exp.spr = 059
-		spr(exp.spr,exp.px-(exp.base_stg4_px1+4),exp.py-(exp.base_stg4_py1+4))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px2+4),exp.py+(exp.base_stg4_py2+4))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px3+4),exp.py-(exp.base_stg4_py3+4))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px4+4),exp.py+(exp.base_stg4_py4+4))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px5+4),exp.py+(exp.base_stg4_py5+4))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px6+4),exp.py+(exp.base_stg4_py6+4))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px7+4),exp.py)	
-		spr(exp.spr,exp.px+(exp.base_stg4_px8+4),exp.py)
-	elseif exp.stage == 7 then
-		exp.spr = 060
-		spr(exp.spr,exp.px-(exp.base_stg4_px1+6),exp.py-(exp.base_stg4_py1+6))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px2+6),exp.py+(exp.base_stg4_py2+6))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px3+6),exp.py-(exp.base_stg4_py3+6))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px4+6),exp.py+(exp.base_stg4_py4+6))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px5+6),exp.py+(exp.base_stg4_py5+6))	
-		spr(exp.spr,exp.px+(exp.base_stg4_px6+6),exp.py+(exp.base_stg4_py6+6))	
-		spr(exp.spr,exp.px-(exp.base_stg4_px7+6),exp.py)	
-		spr(exp.spr,exp.px+(exp.base_stg4_px8+6),exp.py)
-	end
-end
-
 function reset()
 	enemies = {}
 	enemy_bullets = {}
@@ -1116,6 +979,26 @@ function draw_ui()
 	end
 end
 
+function update_icons()
+	health_pct = player.health/player.max_health
+	health_spr = (health_pct == 1) and 8 or flr(health_pct * 10)
+
+	fuel_pct = player.fuel/player.max_fuel
+	fuel_spr = (fuel_pct == 1) and 8 or flr(fuel_pct * 10)
+
+	armor_pct = player.armor/player.max_armor
+	armor_spr = (armor_pct == 1) and 8 or flr(armor_pct * 10)
+end
+
+function draw_threat()
+	rectfill(116,1,126,11, 0)
+	pirate_sprite = (pirate_rep == 1) and 014 or (pirate_rep == 2) and 030 or 046
+	pirate_mouth = 062
+
+	spr(pirate_sprite, 118, pirate_sprite_y)
+	spr(pirate_mouth, 118, 4)
+end
+
 function update_threat()
 	pirate_refresh_rate = (pirate_rep == 1) and 5 or (pirate_rep == 2) and 2 or 1
 	if (clock % pirate_refresh_rate == 0) then
@@ -1131,20 +1014,6 @@ function update_threat()
 	end
 end
 
-function draw_threat()
-	rectfill(116,1,126,11, 0)
-	pirate_sprite = (pirate_rep == 1) and 014 or (pirate_rep == 2) and 030 or 046
-	pirate_mouth = 062
-
-	spr(pirate_sprite, 118, pirate_sprite_y)
-	spr(pirate_mouth, 118, 4)
-end
-
-function restart_from_gameover()
-	if btnp(4) or btnp(5) and not transition_animation then
-		resume_transition()
-	end
-end
 -->8
 -- encounters
 
@@ -1360,6 +1229,33 @@ function missile_ui()
 	end
 end
 
+function draw_missile(m)
+	spr(016,m.x,m.y)
+end
+
+function move_missile(m)
+	target_x = enemies[missile_locked_on_enemy].x
+	target_y = enemies[missile_locked_on_enemy].y
+
+	angle = atan2(target_x - m.x, target_y - m.y)
+	m.x += cos(angle) * m.v
+	m.y += sin(angle) * m.v
+
+	if m.x >= target_x and
+	m.x <= target_x+8 and
+	m.y >= target_y-2 and
+	m.y <= target_y+6 then
+		sfx(04)
+		e = enemies[missile_locked_on_enemy]
+		e.health -= m.damage
+		del(missiles, m)
+		if e.health <= 0 then
+			missile_locked_on_enemy = 1
+			destroy_enemy(e)
+		end
+	end
+end
+
 function move_bullet(b)
 	if b.mode == "cluster" then
 		b.timer += 1
@@ -1437,31 +1333,6 @@ function create_clusters(b)
 		add(bullets, bullet)
 	end
 	del(bullets,b)
-end
-
-function create_explosion(ex,ey)
-	local explosion = {}
-	explosion.spr = 054
-	explosion.px = ex
-	explosion.py = ey
-	explosion.stage = 1
-	explosion.base_stg4_px1 = 0
-	explosion.base_stg4_py1 = 0
-	explosion.base_stg4_px2 = 0
-	explosion.base_stg4_py2 = 0
-	explosion.base_stg4_px3 = 0
-	explosion.base_stg4_py3 = 0
-	explosion.base_stg4_px4 = 0
-	explosion.base_stg4_py4 = 0
-	explosion.base_stg4_px5 = 0
-	explosion.base_stg4_py5 = 0
-	explosion.base_stg4_px6 = 0
-	explosion.base_stg4_py6 = 0
-	explosion.base_stg4_px7 = 0
-	explosion.base_stg4_px8 = 0
-
-	sfx(07)
-	add(explosions, explosion)
 end
 
 function move()
@@ -1727,6 +1598,134 @@ function animate_shop_selector()
 	if (clock % 5 == 0) shop_selector_spr += 16
 	if (shop_selector_spr > 034) shop_selector_spr = 002
 	spr(shop_selector_spr, 4, (shop_selector_y - 7) + shop_selector * 6)
+end
+-->8
+-- visuals
+
+function create_stars()
+	interval = rnd({15, 5})
+	if clock % interval == 0 then 
+		local star = {}
+		star.x = rnd({ 12, 24, 48, 56, 72, 82, 96})
+		star.y = 12
+		star.type = rnd({ "far", "near"})
+		add(stars, star)
+	end
+end
+
+function draw_star(s)
+	star_spr = (s.type == "far") and 044 or 042
+	if (clock % 1.5 == 0) then
+		star_spr = (s.type == "far") and 043 or 041
+	end
+	spr(star_spr, s.x, s.y)
+end
+
+function move_star(s)
+	divider = (current_view == 2) and 0.5 or 1 
+	s.y += (s.type == "far") and 1.5 * divider or 3 * divider
+
+	if s.y >= 128 then
+		del(stars,s)
+	end
+end
+
+function create_explosion(ex,ey)
+	local explosion = {}
+	explosion.spr = 054
+	explosion.px = ex
+	explosion.py = ey
+	explosion.stage = 1
+	explosion.base_stg4_px1 = 0
+	explosion.base_stg4_py1 = 0
+	explosion.base_stg4_px2 = 0
+	explosion.base_stg4_py2 = 0
+	explosion.base_stg4_px3 = 0
+	explosion.base_stg4_py3 = 0
+	explosion.base_stg4_px4 = 0
+	explosion.base_stg4_py4 = 0
+	explosion.base_stg4_px5 = 0
+	explosion.base_stg4_py5 = 0
+	explosion.base_stg4_px6 = 0
+	explosion.base_stg4_py6 = 0
+	explosion.base_stg4_px7 = 0
+	explosion.base_stg4_px8 = 0
+
+	sfx(07)
+	add(explosions, explosion)
+end
+
+function draw_explosion(exp)
+	if exp.stage < 4 then
+		if (exp.stage == 2)	exp.spr = 055
+		if (exp.stage == 3)	exp.spr = 056
+		spr(exp.spr,exp.px,exp.py)	
+	elseif exp.stage == 4 then
+		exp.spr = 057
+		spr(exp.spr,exp.px-exp.base_stg4_px1,exp.py-exp.base_stg4_py1)	
+		spr(exp.spr,exp.px-exp.base_stg4_px2,exp.py+exp.base_stg4_py2)	
+		spr(exp.spr,exp.px+exp.base_stg4_px3,exp.py-exp.base_stg4_py3)	
+		spr(exp.spr,exp.px-exp.base_stg4_px4,exp.py+exp.base_stg4_py4)	
+		spr(exp.spr,exp.px+exp.base_stg4_px5,exp.py+exp.base_stg4_py5)	
+		spr(exp.spr,exp.px+exp.base_stg4_px6,exp.py+exp.base_stg4_py6)	
+		spr(exp.spr,exp.px-exp.base_stg4_px7,exp.py)	
+		spr(exp.spr,exp.px+exp.base_stg4_px8,exp.py)
+	elseif exp.stage == 5 then
+		exp.spr = 058
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+2),exp.py-(exp.base_stg4_py1+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+2),exp.py+(exp.base_stg4_py2+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+2),exp.py-(exp.base_stg4_py3+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+2),exp.py+(exp.base_stg4_py4+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+2),exp.py+(exp.base_stg4_py5+2))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+2),exp.py+(exp.base_stg4_py6+2))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+2),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+2),exp.py)
+	elseif exp.stage == 6 then
+		exp.spr = 059
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+4),exp.py-(exp.base_stg4_py1+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+4),exp.py+(exp.base_stg4_py2+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+4),exp.py-(exp.base_stg4_py3+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+4),exp.py+(exp.base_stg4_py4+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+4),exp.py+(exp.base_stg4_py5+4))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+4),exp.py+(exp.base_stg4_py6+4))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+4),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+4),exp.py)
+	elseif exp.stage == 7 then
+		exp.spr = 060
+		spr(exp.spr,exp.px-(exp.base_stg4_px1+6),exp.py-(exp.base_stg4_py1+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px2+6),exp.py+(exp.base_stg4_py2+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px3+6),exp.py-(exp.base_stg4_py3+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px4+6),exp.py+(exp.base_stg4_py4+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px5+6),exp.py+(exp.base_stg4_py5+6))	
+		spr(exp.spr,exp.px+(exp.base_stg4_px6+6),exp.py+(exp.base_stg4_py6+6))	
+		spr(exp.spr,exp.px-(exp.base_stg4_px7+6),exp.py)	
+		spr(exp.spr,exp.px+(exp.base_stg4_px8+6),exp.py)
+	end
+end
+
+function animate_explosion(exp)
+	if (clock % 2 == 0) exp.stage += 1
+
+	if exp.stage == 4 then
+		exp.base_stg4_px1 = flr(rnd(3))+1
+		exp.base_stg4_py1 = flr(rnd(3))+1
+		exp.base_stg4_px2 = flr(rnd(3))+1
+		exp.base_stg4_py2 = flr(rnd(3))+1
+		exp.base_stg4_px3 = flr(rnd(3))+1
+		exp.base_stg4_py3 = flr(rnd(3))+1
+		exp.base_stg4_px4 = flr(rnd(3))+1
+		exp.base_stg4_py4 = flr(rnd(3))+1
+		exp.base_stg4_px5 = flr(rnd(3))+1
+		exp.base_stg4_py5 = flr(rnd(3))+1
+		exp.base_stg4_px6 = flr(rnd(3))+1
+		exp.base_stg4_py6 = flr(rnd(3))+1
+		exp.base_stg4_px7 = flr(rnd(3))+1
+		exp.base_stg4_px8 = flr(rnd(3))+1
+	end
+
+	if exp.stage == 8 then
+		del(explosions, exp)
+	end
 end
 __gfx__
 0000000000000000000000000e80880011111dd03303330000333300003333000033330000777700000770000777777077777777700770070666660000888000
